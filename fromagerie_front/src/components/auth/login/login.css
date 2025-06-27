@@ -1,0 +1,451 @@
+.login {
+    background-color: #fffffffa;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .login .overlap-wrapper {
+    background-color: #fffffffa;
+    height: 1024px;
+    overflow: hidden;
+    width: 1440px;
+  }
+  .input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+  
+  .login .overlap {
+    height: 937px;
+    left: 60px;
+    position: relative;
+    top: 81px;
+    width: 1408px;
+  }
+  
+  .login .overlap-group {
+    height: 937px;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 1408px;
+  }
+  
+  .login .text-wrapper {
+    color: #000000;
+    font-family: "Noto Sans-SemiBold", Helvetica;
+    font-size: 96px;
+    font-weight: 600;
+    left: 0;
+    letter-spacing: 0;
+    line-height: normal;
+    position: absolute;
+    top: 299px;
+  }
+  
+  .login .frame {
+    align-items: flex-start;
+    border: 4px solid;
+    border-color: #000000;
+    display: inline-flex;
+    gap: 10px;
+    left: 18px;
+    padding: 14px 24px;
+    position: absolute;
+    top: 427px;
+  }
+  
+  .login .div {
+    color: #000000;
+    font-family: "Noto Sans-DisplaySemiBold Italic", Helvetica;
+    font-size: 32px;
+    font-style: italic;
+    font-weight: 600;
+    letter-spacing: 0;
+    line-height: normal;
+    position: relative;
+    width: fit-content;
+  }
+  
+  .login .ellipse {
+    background: linear-gradient(
+      180deg,
+      rgba(224, 224, 224, 1) 0%,
+      rgba(255, 255, 255, 0.94) 100%
+    );
+    border-radius: 151px;
+    height: 302px;
+    left: 689px;
+    position: absolute;
+    top: 0;
+    width: 302px;
+  }
+  
+  .login .ellipse-2 {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 1) 0%,
+      rgba(233, 219, 213, 1) 100%
+    );
+    border-radius: 110px;
+    height: 220px;
+    left: 1149px;
+    position: absolute;
+    top: 678px;
+    transform: rotate(-28.50deg);
+    width: 220px;
+  }
+  
+  .login .frame-wrapper {
+    -webkit-backdrop-filter: blur(26.5px) brightness(100%);
+    backdrop-filter: blur(26.5px) brightness(100%);
+    background: linear-gradient(
+        321deg,
+        rgba(191, 191, 191, 0.06) 20%,
+        rgba(0, 0, 0, 0) 71%
+      ), linear-gradient(0deg, rgba(0, 0, 0, 0.14) 0%, rgba(0, 0, 0, 0.14) 100%);
+    border: none;
+    border-radius: 20px;
+    box-shadow: -2px 3px 2px #edf3ff;
+    height: 798px;
+    left: 839px;
+    overflow: hidden;
+    position: absolute;
+    top: 32px;
+    width: 482px;
+  }
+  
+  .login .frame-wrapper::before {
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    background: linear-gradient(
+      318deg,
+      rgba(255, 255, 255, 0.6) 0%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    border-radius: 20px;
+    content: "";
+    inset: 0;
+    mask-composite: exclude;
+    padding: 1px;
+    pointer-events: none;
+    position: absolute;
+    z-index: 1;
+  }
+  
+  .login .frame-2 {
+    align-items: center;
+    display: inline-flex;
+    flex-direction: column;
+    gap: 101px;
+    left: 40px;
+    position: relative;
+    top: 97px;
+  }
+  
+  .login .frame-3 {
+    align-items: flex-start;
+    display: inline-flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: 47px;
+    position: relative;
+  }
+  
+  .login .upper-section {
+    align-items: flex-start;
+    display: inline-flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: 14px;
+    position: relative;
+  }
+  
+  .login .login-text {
+    align-items: flex-start;
+    display: inline-flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    position: relative;
+  }
+  
+  .login .text-wrapper-2 {
+    color: #000000;
+    font-family: "Poppins-SemiBold", Helvetica;
+    font-size: 36px;
+    font-weight: 600;
+    letter-spacing: 0;
+    line-height: normal;
+    margin-top: -1.00px;
+    position: relative;
+    width: fit-content;
+  }
+  
+  .login .text-wrapper-3 {
+    color: #434343;
+    font-family: "Poppins-Medium", Helvetica;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0;
+    line-height: normal;
+    position: relative;
+    width: fit-content;
+  }
+  
+  .login .credentials {
+    align-items: flex-start;
+    display: inline-flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: 25px;
+    position: relative;
+  }
+  
+  .login .username {
+    align-items: center;
+    border: 1px solid;
+    border-color: #434343;
+    border-radius: 12px;
+    display: flex;
+    flex: 0 0 auto;
+    gap: 10px;
+    padding: 14px 16px;
+    position: relative;
+    width: 400px;
+  }
+  
+  .login .text-wrapper-4 {
+    color: #434343;
+    font-family: "Poppins-Regular", Helvetica;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: normal;
+    margin-top: -1.00px;
+    position: relative;
+    width: fit-content;
+  }
+  
+  .login .password-rem {
+    align-items: flex-start;
+    display: inline-flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+  }
+  
+  .login .password {
+    align-items: center;
+    border: 1px solid;
+    border-color: #434343;
+    border-radius: 12px;
+    display: flex;
+    flex: 0 0 auto;
+    justify-content: space-between;
+    padding: 14px 16px;
+    position: relative;
+    width: 400px;
+  }
+  
+  .login .img {
+    height: 18px;
+    position: relative;
+    width: 18px;
+  }
+  
+  .login .remember {
+    align-items: center;
+    display: inline-flex;
+    flex: 0 0 auto;
+    gap: 4px;
+    position: relative;
+  }
+  
+  .login .text-wrapper-5 {
+    color: #434343;
+    font-family: "Poppins-Medium", Helvetica;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0;
+    line-height: normal;
+    margin-top: -1.00px;
+    position: relative;
+    width: fit-content;
+  }
+  
+  .login .login-bt-fp {
+    align-items: center;
+    display: inline-flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: 12px;
+    justify-content: center;
+    position: relative;
+  }
+  
+  .login .div-wrapper {
+    align-items: center;
+    background-color: #000000;
+    border-radius: 12px;
+    display: flex;
+    flex: 0 0 auto;
+    gap: 10px;
+    justify-content: center;
+    padding: 14px 10px;
+    position: relative;
+    width: 400px;
+  }
+  
+  .login .text-wrapper-6 {
+    color: #ffffff;
+    font-family: "Poppins-SemiBold", Helvetica;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0;
+    line-height: normal;
+    margin-top: -1.00px;
+    position: relative;
+    width: fit-content;
+  }
+  
+  .login .text-wrapper-7 {
+    color: #000000;
+    font-family: "Poppins-Medium", Helvetica;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0;
+    line-height: normal;
+    position: relative;
+    width: fit-content;
+  }
+  
+  .login .other-logins {
+    align-items: center;
+    display: inline-flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+  }
+  
+  .login .or {
+    align-items: center;
+    display: inline-flex;
+    flex: 0 0 auto;
+    gap: 20px;
+    position: relative;
+  }
+  
+  .login .line {
+    height: 2px;
+    position: relative;
+    width: 170px;
+  }
+  
+  .login .text-wrapper-8 {
+    color: #4c4c4c;
+    font-family: "Noto Sans-Medium", Helvetica;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0;
+    line-height: normal;
+    margin-top: -1.00px;
+    position: relative;
+    width: fit-content;
+  }
+  
+  .login .frame-4 {
+    align-items: center;
+    display: inline-flex;
+    flex: 0 0 auto;
+    gap: 18px;
+    justify-content: center;
+    position: relative;
+  }
+  
+  .login .img-2 {
+    height: 42px;
+    position: relative;
+    width: 42px;
+  }
+  
+  .login .frame-5 {
+    align-items: center;
+    display: inline-flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+  }
+  
+  .login .don-t-have-an {
+    color: transparent;
+    font-family: "Poppins-Medium", Helvetica;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0;
+    line-height: normal;
+    margin-top: -1.00px;
+    position: relative;
+    width: fit-content;
+  }
+  
+  .login .span {
+    color: #000000;
+  }
+  
+  .login .text-wrapper-9 {
+    color: #4285f4;
+  }
+  
+  .login .customer-care {
+    align-items: center;
+    background: linear-gradient(
+      180deg,
+      rgba(98, 98, 98, 0) 0%,
+      rgba(98, 98, 98, 0.07) 100%
+    );
+    border-radius: 6px;
+    display: flex;
+    flex: 0 0 auto;
+    justify-content: space-between;
+    padding: 4px 6px;
+    position: relative;
+    width: 400px;
+  }
+  
+  .login .frame-6 {
+    align-items: flex-start;
+    display: inline-flex;
+    flex: 0 0 auto;
+    gap: 10px;
+    position: relative;
+  }
+  
+  .login .text-wrapper-10 {
+    color: #000000;
+    font-family: "Poppins-Regular", Helvetica;
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: normal;
+    margin-top: -1.00px;
+    position: relative;
+    width: fit-content;
+  }
+  
+  .login .line-2 {
+    height: 2px;
+    left: 270px;
+    position: absolute;
+    top: 467px;
+    width: 561px;
+  }

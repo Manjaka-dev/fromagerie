@@ -1,0 +1,4 @@
+npm install 
+npm install react-router-dom (installation route)
+npm run dev ( pour demarrer )
+
