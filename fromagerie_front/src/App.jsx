@@ -1,16 +1,28 @@
-import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Login } from "./components/auth/login/Login";
-import { TableauDeBord } from "./components/tableauDeBord/Home"; 
+// src/App.jsx
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Sidebar from './components/Sidebar';
+import Dashboard from './pages/Dashboard';
+import Stock from './pages/Stock';
+import Statistiques from './pages/Statistiques';
+import Promotions from './pages/Promotions';
+import Livraisons from './pages/Livraisons';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/TableauDeBord" element={<TableauDeBord />} />
-      </Routes>
-    </BrowserRouter>
+    <Router>
+      <div style={{ display: 'flex', height: '100vh', fontFamily: 'Segoe UI, sans-serif' }}>
+        <Sidebar />
+        <div style={{ flex: 1, padding: '30px', backgroundColor: '#f9f9fb' }}>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/stock" element={<Stock />} />
+            <Route path="/statistiques" element={<Statistiques />} />
+            <Route path="/promotions" element={<Promotions />} />
+            <Route path="/livraisons" element={<Livraisons />} />
+          </Routes>
+        </div>
+      </div>
+    </Router>
   );
 }
 
