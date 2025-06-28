@@ -69,11 +69,17 @@
   }
   
   .ventes-badge {
-    background-color: #333;
-    color: white;
-    padding: 4px 10px;
-    border-radius: 10px;
+    background-color: white;
+    color: black;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
   }
+  
   
   .ventes-card {
     background: white;
