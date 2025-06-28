@@ -36,10 +36,10 @@ const Sidebar = () => {
       <NavLink to="/statistiques" style={({ isActive }) => ({ ...navItemStyle, ...(isActive ? activeStyle : {}) })}>
         <FaChartBar style={{ marginRight: '10px' }} /> Statistiques
       </NavLink>
-      <NavLink to="#" style={({ isActive }) => ({ ...navItemStyle, ...(isActive ? activeStyle : {}) })}>
+      <NavLink to="/comptabilite" style={({ isActive }) => ({ ...navItemStyle, ...(isActive ? activeStyle : {}) })}>
         <FaChartBar style={{ marginRight: '10px' }} /> Comptabilité
       </NavLink>
-      <NavLink to="/promotions" style={({ isActive }) => ({ ...navItemStyle, ...(isActive ? activeStyle : {}) })}>
+      <NavLink to="/Vente" style={({ isActive }) => ({ ...navItemStyle, ...(isActive ? activeStyle : {}) })}>
         <FaCashRegister style={{ marginRight: '10px' }} /> Ventes
       </NavLink>
       <NavLink to="/livraisons" style={({ isActive }) => ({ ...navItemStyle, ...(isActive ? activeStyle : {}) })}>
@@ -48,7 +48,7 @@ const Sidebar = () => {
       <NavLink to="#" style={navItemStyle}>
         <FaTools style={{ marginRight: '10px' }} /> Administration
       </NavLink>
-      <NavLink to="#" style={navItemStyle}>
+      <NavLink to="/production" style={({ isActive }) => ({ ...navItemStyle, ... (isActive? activeStyle : {})})}>
         <FaIndustry style={{ marginRight: '10px' }} /> Production
       </NavLink>
     </div>
