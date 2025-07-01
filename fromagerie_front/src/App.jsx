@@ -1,32 +1,26 @@
-// src/App.jsx
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Sidebar from './components/Sidebar';
-import Dashboard from './pages/Dashboard';
-import Stock from './pages/Stock';
-import Statistiques from './pages/Statistiques';
-import Promotions from './pages/Promotions';
-import Livraisons from './pages/Livraisons';
-import Production from './pages/Production';
-import Vente from './pages/Vente';
-
+import React from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Login } from "./pages/auth/login/Login";
+import { Inscription } from "./pages/auth/Inscription/Inscription";
+import { TableauDeBord } from "./pages/tableauDeBord/Home";
+import {CommandesPage} from "./pages/commande/Commande"; 
+import Promotions from "./pages/Promotions";
+import Livraison from "./pages/Livraisons";
+import Production from "./pages/Production";
 function App() {
   return (
-    <Router>
-      <div style={{ display: 'flex', height: '100%', fontFamily: 'Segoe UI, sans-serif' }}>
-        <Sidebar />
-        <div style={{ flex: 1, padding: '30px', backgroundColor: '#f9f9fb' }}>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/stock" element={<Stock />} />
-            <Route path="/statistiques" element={<Statistiques />} />
-            <Route path="/promotion" element={<Promotions />} />
-            <Route path="/livraisons" element={<Livraisons />} />
-            <Route path="/production" element={<Production />} />
-            <Route path="/Vente" element={<Vente />} />
-          </Routes>
-        </div>
-      </div>
-    </Router>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/inscription" element={<Inscription />} />
+        <Route path="/TableauDeBord" element={<TableauDeBord />} />
+        <Route path="/commandes" element={<CommandesPage />} />     
+        <Route path="/promotion" element={<Promotions />} />     
+        <Route path="/livraisons" element={<Livraison />} />     
+        <Route path="/production" element={<Production />} />     
+      </Routes>
+    </BrowserRouter>
   );
 }
 
