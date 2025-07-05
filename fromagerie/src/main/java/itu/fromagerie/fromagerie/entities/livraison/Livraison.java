@@ -34,8 +34,15 @@ public class Livraison {
     @Column(length = 100)
     private String zone;
     
+    @Enumerated(EnumType.STRING)
+    @Column(name = "statut_livraison")
+    private StatutLivraisonEnum statutLivraison;
+    
     @OneToMany(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<StatutLivraison> statuts;
+    
+    @OneToMany(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<LivraisonProduit> produitsALivrer;
     
     @OneToOne(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private ConfirmationReception confirmationReception;
@@ -44,6 +51,9 @@ public class Livraison {
     private List<RetourLivraison> retours;
     
     public String getStatut() {
+        if (statutLivraison != null) {
+            return statutLivraison.getLibelle();
+        }
         if (statuts != null && !statuts.isEmpty()) {
             // Return the most recent status
             return statuts.stream()
@@ -53,4 +63,5 @@ public class Livraison {
                     .orElse("En attente");
         }
         return "En attente";
+    }
 }
