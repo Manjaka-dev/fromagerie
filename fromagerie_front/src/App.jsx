@@ -1,35 +1,32 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Login } from "./pages/auth/login/Login";
+import { Inscription } from "./pages/auth/Inscription/Inscription";
+import { TableauDeBord } from "./pages/tableauDeBord/Home";
+import { CommandesPage } from "./pages/commande/Commande"; 
+import Promotions from "./pages/Promotions";
+import Livraison from "./pages/Livraisons";
+import Production from "./pages/Production";
+import Comptabilite from "./pages/Comptabilite"; // Import the Comptabilite component
+import Stock from "./pages/Stock"; // Import the Stock component
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/stock" element={<Stock />} />
+        <Route path="/inscription" element={<Inscription />} />
+        <Route path="/TableauDeBord" element={<TableauDeBord />} />
+        <Route path="/commandes" element={<CommandesPage />} />     
+        <Route path="/promotion" element={<Promotions />} />     
+        <Route path="/livraisons" element={<Livraison />} />     
+        <Route path="/production" element={<Production />} />     
+        <Route path="/comptabilite" element={<Comptabilite />} /> {/* Add the route */}
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
