@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Commandes avec livraisons</title>
+</head>
+<body>
+<h1>Liste des commandes avec livraisons</h1>
+
+<div th:if="${message}" th:text="${message}"></div>
+<div th:if="${error}" th:text="${error}"></div>
+<table border="1">
+    <thead>
+    <tr>
+        <th>Commande ID</th>
+        <th>Client</th>
+        <th>Produit</th>
+        <th>Quantité</th>
+        <th>Date Commande</th>
+        <th>Date Livraison</th>
+        <th>Assignation Livreurs</th>
+        <th>Retour commandes</th>
+        <th>Exporter PDF</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="commande : ${liste}">
+        <td th:text="${commande.commandeId}"></td>
+        <td th:text="${commande.clientNom}"></td>
+        <td>
+            <ul>
+                <li th:each="prod : ${commande.produits}" th:text="${prod.nom}"></li>
+            </ul>
+        </td>
+        <td>
+            <ul>
+                <li th:each="prod : ${commande.produits}" th:text="${prod.quantite}"></li>
+            </ul>
+        </td>
+        <td th:text="${commande.dateCommande}"></td>
+        <td th:text="${commande.dateLivraison}"></td>
+        <td>
+            <form th:action="@{/assign-livreur}" method="post">
+                <input type="hidden" name="commandeId" th:value="${commande.commandeId}" />
+                <select name="livreurId" id="livreurSelect" required>
+                    <option value="">Sélectionnez un livreur</option>
+                    <option th:each="liv : ${livreur}"
+                            th:value="${liv.id}"
+                            th:text="${liv.nom}">
+                    </option>
+                </select>
+                <button type="submit">Assigner</button>
+            </form>
+        </td>
+
+        <td>
+            <form th:action="@{/retour-livraison}" method="post" style="display:inline;">
+                <input type="hidden" name="commandeId" th:value="${commande.commandeId}" />
+                <button type="submit">Retour livraison</button>
+            </form>
+        </td>
+
+        <td>
+            <form th:action="@{/commandes/export-pdf/{id}(id=${commande.commandeId})}" method="get" style="display:inline;">
+                <button type="submit">Exporter PDF</button>
+            </form>
+        </td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

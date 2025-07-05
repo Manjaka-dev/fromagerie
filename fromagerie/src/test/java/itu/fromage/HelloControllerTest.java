@@ -1,45 +1,47 @@
 package itu.fromage;
 
-import com.jayway.restassured.RestAssured;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import io.restassured.RestAssured;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.IntegrationTest;
-import org.springframework.boot.test.SpringApplicationConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import static com.jayway.restassured.RestAssured.given;
-import static com.jayway.restassured.RestAssured.when;
-import static org.hamcrest.CoreMatchers.is;
+import static io.restassured.RestAssured.given;
+import static io.restassured.RestAssured.when;
+import static org.hamcrest.Matchers.is;
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@SpringApplicationConfiguration(classes = App.class)
-@WebAppConfiguration
-@IntegrationTest({"server.port:0",
-        "spring.datasource.url:jdbc:h2:mem:fromagerie;DB_CLOSE_ON_EXIT=FALSE"})
+@ExtendWith(SpringExtension.class)
+@SpringBootTest(classes = App.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class HelloControllerTest {
-    @Value("${local.server.port}")
-    int port;
 
-    @Before
-    public void setUp() throws Exception {
+    @LocalServerPort
+    private int port;
+
+    @BeforeEach
+    public void setUp() {
         RestAssured.port = port;
     }
 
     @Test
-    public void testHello() throws Exception {
-        when().get("/").then()
+    public void testHello() {
+        when().get("/")
+                .then()
+                .statusCode(200)
                 .body(is("Hello World!"));
     }
 
     @Test
-    public void testCalc() throws Exception {
-        given().param("left", 100)
+    public void testCalc() {
+        given()
+                .param("left", 100)
                 .param("right", 200)
+                .when()
                 .get("/calc")
                 .then()
+                .statusCode(200)
                 .body("left", is(100))
                 .body("right", is(200))
                 .body("answer", is(300));

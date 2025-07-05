@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des livraisons</title>
+</head>
+<body>
+<h1>Liste des livraisons</h1>
+
+<!-- Affichage des messages de succès ou d'erreur -->
+<div th:if="${message}" th:text="${message}" style="color: green;"></div>
+<div th:if="${error}" th:text="${error}" style="color: red;"></div>
+
+<table border="1">
+    <thead>
+        <tr>
+            <th>ID Livraison</th>
+            <th>Statut</th>
+            <th>Zone</th>
+            <th>Montant Total</th>
+            <th>Livreur ID</th>
+            <th>Livreur</th>
+            <th>Client</th>
+            <th>Téléphone client</th>
+            <th>Produits Commandés</th>
+            <th>Ajouter un Statut</th>
+        </tr>
+    </thead>
+    <tbody>
+    <tr th:each="liv : ${livraisons}">
+        <td th:text="${liv.livraisonId}"></td>
+        <td th:text="${liv.statutLivraison}"></td>
+        <td th:text="${liv.zone}"></td>
+        <td th:text="${liv.montantTotal != null ? liv.montantTotal + ' Ar' : '0 Ar'}"></td>
+        <td th:text="${liv.livreurId != null ? liv.livreurId : 'Non assigné'}"></td>
+        <td th:text="${liv.livreurNom != null ? liv.livreurNom : 'Non assigné'}"></td>
+        <td th:text="${liv.clientNom}"></td>
+        <td th:text="${liv.clientTelephone}"></td>
+        <td th:text="${liv.produitsCommandes != null ? liv.produitsCommandes : 'Aucun produit'}"></td>
+        <td>
+            <form th:action="@{/add-statut}" method="post">
+                <input type="hidden" name="livraisonId" th:value="${liv.livraisonId}" />
+                <button type="submit">Ajouter un Statut</button>
+            </form>
+        </td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

@@ -1,4 +1,23 @@
-# See http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
 spring:
-  thymeleaf.cache: false
-  main.show-banner: false
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+    encoding: UTF-8
+    mode: HTML
+
+  main:
+    show-banner: false
+
+  datasource:
+    driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+    url: jdbc:log4jdbc:postgresql://localhost:5432/fromage
+    username: postgres
+    password: fenohasina
+
+log4jdbc:
+  dump:
+    sql:
+      maxlinelength: 0
+  spylogdelegator:
+    name: net.sf.log4jdbc.log.slf4j.Slf4jSpyLogDelegator
