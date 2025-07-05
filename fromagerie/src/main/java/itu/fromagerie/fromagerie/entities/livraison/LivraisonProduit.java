@@ -1,18 +1,17 @@
 package itu.fromagerie.fromagerie.entities.livraison;
 
+import itu.fromagerie.fromagerie.entities.produit.Produit;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Entity
-@Table(name = "statut_livraison")
+@Table(name = "livraison_produit")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class StatutLivraison {
+public class LivraisonProduit {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,12 +21,13 @@ public class StatutLivraison {
     @JoinColumn(name = "livraison_id")
     private Livraison livraison;
     
-    @Column(length = 30)
-    private String statut;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "produit_id")
+    private Produit produit;
     
-    @Column(name = "date_statut")
-    private LocalDateTime dateStatut = LocalDateTime.now();
+    @Column(name = "quantite_a_livrer")
+    private Integer quantiteALivrer;
     
-    @Column(columnDefinition = "TEXT")
-    private String commentaire;
+    @Column(name = "quantite_livree")
+    private Integer quantiteLivree = 0;
 }

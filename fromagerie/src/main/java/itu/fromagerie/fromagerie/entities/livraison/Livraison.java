@@ -53,5 +53,4 @@ public class Livraison {
                     .orElse("En attente");
         }
         return "En attente";
-    }
 }
