@@ -1,0 +1,26 @@
+npm install 
+npm install react-router-dom (installation route)
+npm run dev ( pour demarrer )
+
+-----------------------------------------
+
+Modules commandes : 
+    details commande : apina btn + listes deroulantes livreurs  assigner livreurs
+
+Modules livraisons : 
+    Info livraisons : 
+            date de livraisons 
+            dates commandes 
+            numero clients 
+            nom clients 
+            lieu 
+            statuts : planifier , en cours , livré
+            produits à livrer 
+            quantités 
+            nom livreur 
+
+----------------------------------------
+
+ npm install -D tailwindcss@3.4.1
+
+ 

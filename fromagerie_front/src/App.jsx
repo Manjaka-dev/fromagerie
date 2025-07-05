@@ -8,7 +8,7 @@ import Promotions from "./pages/Promotions";
 import Livraison from "./pages/Livraisons";
 import Production from "./pages/Production";
 import Comptabilite from "./pages/Comptabilite"; // Import the Comptabilite component
-import StockProduitsFinis from "./pages/stock/StockProduitFini";
+import Stock from "./pages/Stock"; // Import the Stock component
 
 function App() {
   return (
@@ -16,7 +16,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/stock" element={<StockProduitsFinis />}></Route>
+        <Route path="/stock" element={<Stock />} />
         <Route path="/inscription" element={<Inscription />} />
         <Route path="/TableauDeBord" element={<TableauDeBord />} />
         <Route path="/commandes" element={<CommandesPage />} />     
