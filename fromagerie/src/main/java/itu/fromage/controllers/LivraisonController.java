@@ -12,12 +12,12 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -25,8 +25,8 @@ import com.lowagie.text.*;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 
-@Controller
-@RequestMapping("/")
+@RestController
+@RequestMapping("/api/livraisons")
 public class LivraisonController {
     private final LivraisonService livraisonService;
     private final RetourLivraisonService retourLivraisonService;
@@ -38,56 +38,70 @@ public class LivraisonController {
     }
 
     @GetMapping("/commandes")
-    public ModelAndView showCommand() {
-        ModelAndView mv = new ModelAndView("commandes");
-        mv.addObject("liste", livraisonService.getCommandeLivraison());
-        mv.addObject("livreur", livraisonService.listeLivreur());
-        return mv;
+    public ResponseEntity<Map<String, Object>> getCommandes() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("commandes", livraisonService.getCommandeLivraison());
+        response.put("livreurs", livraisonService.listeLivreur());
+        return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/create/livraison/{id}")
-    public ModelAndView showFormLivraison(@PathVariable("id") int id){
-        ModelAndView mv = new ModelAndView("livraison-form");
-        mv.addObject("id", id);
-        mv.addObject("livreurs", livraisonService.listeLivreur());
-        return mv;
+    @GetMapping("/commandes/{id}/form")
+    public ResponseEntity<Map<String, Object>> getFormLivraison(@PathVariable("id") int id) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("commandeId", id);
+        response.put("livreurs", livraisonService.listeLivreur());
+        return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/create/commandeID")
-    public ModelAndView getCommandeID(@RequestParam("commandeId") Integer commandeID){
-        return new ModelAndView("redirect:/create/livraison/"+commandeID);
+    @PostMapping("/commandes/{commandeId}")
+    public ResponseEntity<Map<String, Object>> getCommandeById(@PathVariable("commandeId") Integer commandeId) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("commandeId", commandeId);
+        response.put("message", "Commande trouvée");
+        return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/livraison/save")
-    public ModelAndView saveLivraison(
-            @RequestParam("livreur") Integer livreur,
-            @RequestParam("dateLivraison") LocalDate dateLivraison,
-            @RequestParam("commandeId") Integer commandeId,
-            @RequestParam("zone") String zone
-            ){
-        livraisonService.saveLivraison(commandeId, dateLivraison, zone, livreur);
-        return new ModelAndView("redirect:/commandes");
+    @PostMapping("/livraison")
+    public ResponseEntity<Map<String, Object>> saveLivraison(@RequestBody Map<String, Object> request) {
+        try {
+            Integer livreur = (Integer) request.get("livreur");
+            LocalDate dateLivraison = LocalDate.parse((String) request.get("dateLivraison"));
+            Integer commandeId = (Integer) request.get("commandeId");
+            String zone = (String) request.get("zone");
+            
+            livraisonService.saveLivraison(commandeId, dateLivraison, zone, livreur);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Livraison créée avec succès");
+            response.put("commandeId", commandeId);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Erreur lors de la création de la livraison: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
-
 
     @PostMapping("/assign-livreur")
-    public String assignLivreur(@RequestParam("commandeId") Integer commandeId,
-                                @RequestParam("livreurId") Integer livreurId,
-                                RedirectAttributes redirectAttributes) {
+    public ResponseEntity<Map<String, Object>> assignLivreur(@RequestBody Map<String, Object> request) {
         try {
+            Integer commandeId = (Integer) request.get("commandeId");
+            Integer livreurId = (Integer) request.get("livreurId");
+            
             livraisonService.assignLivreur(commandeId, livreurId);
-            redirectAttributes.addFlashAttribute("message", "Livreur assigné avec succès !");
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Livreur assigné avec succès");
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Erreur lors de l'assignation du livreur : " + e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Erreur lors de l'assignation du livreur: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
-        return "redirect:/commandes";
     }
 
-
-    @GetMapping("/livraisons")
-    public ModelAndView showLivraisonDetails() {
-        ModelAndView mv = new ModelAndView("livraisons");
-        
+    @GetMapping
+    public ResponseEntity<Map<String, Object>> getLivraisons() {
         // Déboguer les statuts en base
         livraisonService.debugStatutsLivraison();
         
@@ -105,31 +119,25 @@ public class LivraisonController {
         }
         System.out.println("=== FIN DÉBOGAGE ===");
         
-        if (livraisons.isEmpty()) {
-            System.out.println("Aucune livraison trouvée !");
-        }
-        
-        // Ajouter un timestamp pour éviter le cache
-        mv.addObject("timestamp", System.currentTimeMillis());
-        mv.addObject("livraisons", livraisons);
-        return mv;
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", System.currentTimeMillis());
+        response.put("livraisons", livraisons);
+        return ResponseEntity.ok(response);
     }
 
-
-
-    @PostMapping("/add-statut")
-    public String addStatutLivraison(@RequestParam("livraisonId") Integer livraisonId,
-                                     RedirectAttributes redirectAttributes) {
-
+    @PostMapping("/{livraisonId}/statut")
+    public ResponseEntity<Map<String, Object>> addStatutLivraison(@PathVariable("livraisonId") Integer livraisonId) {
         if (livraisonId == null) {
-            redirectAttributes.addFlashAttribute("error", "ID de livraison invalide.");
-            return "redirect:/livraisons";
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "ID de livraison invalide.");
+            return ResponseEntity.badRequest().body(response);
         }
 
         Optional<Livraison> livraisonOpt = livraisonService.findLivraisonById(livraisonId);
         if (livraisonOpt.isEmpty()) {
-            redirectAttributes.addFlashAttribute("error", "Livraison non trouvée.");
-            return "redirect:/livraisons";
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Livraison non trouvée.");
+            return ResponseEntity.notFound().build();
         }
 
         LivraisonProjection livraisonProjection = livraisonService.getLivraisonDetails()
@@ -139,23 +147,29 @@ public class LivraisonController {
                 .orElse(null);
 
         if (livraisonProjection == null) {
-            redirectAttributes.addFlashAttribute("error", "Détails de la livraison introuvables.");
-            return "redirect:/livraisons";
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Détails de la livraison introuvables.");
+            return ResponseEntity.notFound().build();
         }
 
         String statutActuel = livraisonProjection.getStatutLivraison();
         System.out.println("Statut actuel: " + statutActuel);
         
         // Si le statut actuel est "En cours" et qu'on veut passer à "Livrée", 
-        // rediriger vers le formulaire de confirmation de paiement
+        // retourner les informations pour la confirmation de paiement
         if ("En cours".equalsIgnoreCase(statutActuel) || "en cours".equalsIgnoreCase(statutActuel)) {
-            return "redirect:/confirmation-paiement/" + livraisonId;
+            Map<String, Object> response = new HashMap<>();
+            response.put("action", "confirmation_paiement");
+            response.put("livraisonId", livraisonId);
+            response.put("livraison", livraisonProjection);
+            return ResponseEntity.ok(response);
         }
         
         // Si le statut est déjà "Livrée", empêcher le changement
         if ("Livrée".equalsIgnoreCase(statutActuel) || "Livre".equalsIgnoreCase(statutActuel)) {
-            redirectAttributes.addFlashAttribute("error", "Cette livraison est déjà terminée et ne peut plus être modifiée.");
-            return "redirect:/livraisons";
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Cette livraison est déjà terminée et ne peut plus être modifiée.");
+            return ResponseEntity.badRequest().body(response);
         }
 
         // Pour les autres cas (Planifiée/Planifié -> En cours)
@@ -176,14 +190,14 @@ public class LivraisonController {
         // Forcer le rafraîchissement des données
         livraisonService.debugStatutsLivraison();
         
-        redirectAttributes.addFlashAttribute("message", "Statut mis à jour : En cours !");
-        return "redirect:/livraisons?refresh=" + System.currentTimeMillis();
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Statut mis à jour : En cours !");
+        response.put("statutId", statutSauvegarde.getId());
+        return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/confirmation-paiement/{livraisonId}")
-    public ModelAndView showConfirmationPaiement(@PathVariable("livraisonId") Integer livraisonId) {
-        ModelAndView mv = new ModelAndView("confirmation-paiement");
-        
+    @GetMapping("/{livraisonId}/confirmation-paiement")
+    public ResponseEntity<Map<String, Object>> getConfirmationPaiement(@PathVariable("livraisonId") Integer livraisonId) {
         LivraisonProjection livraisonProjection = livraisonService.getLivraisonDetails()
                 .stream()
                 .filter(l -> l.getLivraisonId().equals(livraisonId))
@@ -191,24 +205,27 @@ public class LivraisonController {
                 .orElse(null);
 
         if (livraisonProjection == null) {
-            mv.setViewName("redirect:/livraisons");
-            return mv;
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Livraison non trouvée");
+            return ResponseEntity.notFound().build();
         }
 
-        mv.addObject("livraison", livraisonProjection);
-        mv.addObject("livraisonId", livraisonId);
-        return mv;
+        Map<String, Object> response = new HashMap<>();
+        response.put("livraison", livraisonProjection);
+        response.put("livraisonId", livraisonId);
+        return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/confirmer-livraison-paiement")
-    public String confirmerLivraisonEtPaiement(
-            @RequestParam("livraisonId") Integer livraisonId,
-            @RequestParam("montantPaiement") Double montantPaiement,
-            @RequestParam("methodePaiement") String methodePaiement,
-            @RequestParam("datePaiement") String datePaiement,
-            RedirectAttributes redirectAttributes) {
+    @PostMapping("/{livraisonId}/confirmer-livraison-paiement")
+    public ResponseEntity<Map<String, Object>> confirmerLivraisonEtPaiement(
+            @PathVariable("livraisonId") Integer livraisonId,
+            @RequestBody Map<String, Object> request) {
         
         try {
+            Double montantPaiement = (Double) request.get("montantPaiement");
+            String methodePaiement = (String) request.get("methodePaiement");
+            String datePaiement = (String) request.get("datePaiement");
+            
             System.out.println("=== DÉBUT CONFIRMATION LIVRAISON ===");
             System.out.println("Livraison ID: " + livraisonId);
             System.out.println("Montant: " + montantPaiement);
@@ -218,8 +235,9 @@ public class LivraisonController {
             // 1. Mettre à jour le statut de la livraison à "Livrée"
             Optional<Livraison> livraisonOpt = livraisonService.findLivraisonById(livraisonId);
             if (livraisonOpt.isEmpty()) {
-                redirectAttributes.addFlashAttribute("error", "Livraison non trouvée.");
-                return "redirect:/livraisons";
+                Map<String, Object> response = new HashMap<>();
+                response.put("error", "Livraison non trouvée.");
+                return ResponseEntity.notFound().build();
             }
 
             Livraison livraison = livraisonOpt.get();
@@ -244,28 +262,35 @@ public class LivraisonController {
             livraisonService.debugStatutsLivraison();
 
             System.out.println("=== FIN CONFIRMATION LIVRAISON ===");
-            redirectAttributes.addFlashAttribute("message", "Livraison confirmée, paiement enregistré et confirmation de réception créée avec succès !");
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Livraison confirmée, paiement enregistré et confirmation de réception créée avec succès !");
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             System.out.println("ERREUR lors de la confirmation: " + e.getMessage());
             e.printStackTrace();
-            redirectAttributes.addFlashAttribute("error", "Erreur lors de la confirmation : " + e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Erreur lors de la confirmation : " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
-        
-        return "redirect:/livraisons?refresh=" + System.currentTimeMillis();
     }
 
     @PostMapping("/retour-livraison")
-    public String retourLivraison(@RequestParam("commandeId") Integer commandeId, RedirectAttributes redirectAttributes) {
+    public ResponseEntity<Map<String, Object>> retourLivraison(@RequestBody Map<String, Object> request) {
         try {
+            Integer commandeId = (Integer) request.get("commandeId");
             livraisonService.annulerCommandeEtRetourLivraison(commandeId);
-            redirectAttributes.addFlashAttribute("message", "Commande annulée et retour livraison enregistré !");
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Commande annulée et retour livraison enregistré !");
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Erreur lors du retour livraison : " + e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Erreur lors du retour livraison : " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
-        return "redirect:/commandes";
     }
 
-    @GetMapping("/commandes/export-pdf/{id}")
+    @GetMapping("/commandes/{id}/export-pdf")
     public void exportCommandePdf(@PathVariable("id") Integer commandeId, HttpServletResponse response) {
         response.setContentType("application/pdf");
         response.setHeader("Content-Disposition", "attachment; filename=commande_" + commandeId + ".pdf");
@@ -315,5 +340,4 @@ public class LivraisonController {
             }
         }
     }
-
 }

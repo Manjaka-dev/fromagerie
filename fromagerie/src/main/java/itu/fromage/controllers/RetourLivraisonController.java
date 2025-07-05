@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/retours-livraison")
+@RequestMapping("/api/retours-livraison")
 public class RetourLivraisonController {
     private final RetourLivraisonService retourLivraisonService;
 
