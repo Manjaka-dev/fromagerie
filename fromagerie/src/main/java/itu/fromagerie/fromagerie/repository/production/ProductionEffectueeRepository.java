@@ -19,4 +19,10 @@ public interface ProductionEffectueeRepository extends JpaRepository<ProductionE
     
     @Query("SELECT SUM(p.quantiteProduite) FROM ProductionEffectuee p WHERE p.produit = :produit")
     Integer getTotalProducedByProduit(Produit produit);
+
+    @Query("SELECT SUM(p.quantiteProduite) FROM ProductionEffectuee p WHERE p.dateProduction BETWEEN :dateDebut AND :dateFin")
+    Integer getTotalProductionBetween(LocalDate dateDebut, LocalDate dateFin);
+
+    @Query("SELECT AVG(p.quantiteProduite) FROM ProductionEffectuee p WHERE p.dateProduction BETWEEN :dateDebut AND :dateFin")
+    Double getTauxQualiteMoyen(LocalDate dateDebut, LocalDate dateFin);
 }

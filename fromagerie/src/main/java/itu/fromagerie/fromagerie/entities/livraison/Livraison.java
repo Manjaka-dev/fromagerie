@@ -36,17 +36,32 @@ public class Livraison {
     
     @Enumerated(EnumType.STRING)
     @Column(name = "statut_livraison")
-    private StatutLivraisonEnum statutLivraison = StatutLivraisonEnum.PLANIFIEE;
+    private StatutLivraisonEnum statutLivraison;
+    
+    @OneToMany(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<StatutLivraison> statuts;
     
     @OneToMany(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<LivraisonProduit> produitsALivrer;
-    
-    @OneToMany(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<StatutLivraison> historiquesStatuts;
     
     @OneToOne(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private ConfirmationReception confirmationReception;
     
     @OneToMany(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<RetourLivraison> retours;
+    
+    public String getStatut() {
+        if (statutLivraison != null) {
+            return statutLivraison.getLibelle();
+        }
+        if (statuts != null && !statuts.isEmpty()) {
+            // Return the most recent status
+            return statuts.stream()
+                    .sorted((s1, s2) -> s2.getDateStatut().compareTo(s1.getDateStatut()))
+                    .findFirst()
+                    .map(StatutLivraison::getStatut)
+                    .orElse("En attente");
+        }
+        return "En attente";
+    }
 }
