@@ -7,7 +7,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class CommandeService {
@@ -25,6 +27,22 @@ public class CommandeService {
         this.clientRepository = clientRepository;
         this.produitService = produitService;
         this.lotProduitRepository = lotProduitRepository;
+    }
+
+    public List<Commande> getAllCommandes() {
+        return commandeRepository.findAll();
+    }
+
+    public Optional<Commande> getCommandeById(Integer id) {
+        return commandeRepository.findById(id);
+    }
+
+    public Commande updateCommande(Commande commande) {
+        return commandeRepository.save(commande);
+    }
+
+    public void deleteCommande(Integer id) {
+        commandeRepository.deleteById(id);
     }
 
     public int getLastInsertCommandID(){
