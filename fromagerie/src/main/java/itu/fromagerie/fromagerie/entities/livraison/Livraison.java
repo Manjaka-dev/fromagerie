@@ -34,8 +34,15 @@ public class Livraison {
     @Column(length = 100)
     private String zone;
     
+    @Enumerated(EnumType.STRING)
+    @Column(name = "statut_livraison")
+    private StatutLivraisonEnum statutLivraison = StatutLivraisonEnum.PLANIFIEE;
+    
     @OneToMany(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<StatutLivraison> statuts;
+    private List<LivraisonProduit> produitsALivrer;
+    
+    @OneToMany(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<StatutLivraison> historiquesStatuts;
     
     @OneToOne(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private ConfirmationReception confirmationReception;

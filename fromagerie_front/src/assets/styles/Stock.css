@@ -1,0 +1,37 @@
+
+.contenuesStock{
+    padding-left: 2rem;
+    padding-right: 2rem;
+    padding-top: 1rem;
+}
+.main-content{
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.lienStock{
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    padding-left: 2rem;
+    align-items: center;
+}
+.contenusStockTab{
+    padding: 2rem;
+}
+.typeStock{
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+}
+.btnTypeStock{
+    gap: 1rem;
+}
+.select-input{
+    height: 2.5rem;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    border: 1px solid #d1d5db;
+    background-color: #f9fafb;
+    color: #374151;
+    font-size: 0.875rem;
+}
