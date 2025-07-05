@@ -17,4 +17,20 @@ public interface MouvementStockMatiereRepository extends JpaRepository<Mouvement
     
     @Query("SELECT m FROM MouvementStockMatiere m WHERE m.matiere = :matiere ORDER BY m.dateMouvement DESC")
     List<MouvementStockMatiere> findByMatiereOrderByDateDesc(MatierePremiere matiere);
+    
+    // Méthodes pour la gestion des déchets
+    List<MouvementStockMatiere> findByTypeMouvementAndCommentaireContaining(String typeMouvement, String commentaire);
+    
+    @Query("SELECT m FROM MouvementStockMatiere m WHERE m.typeMouvement = 'dechet' ORDER BY m.dateMouvement DESC")
+    List<MouvementStockMatiere> findAllDechets();
+    
+    // Méthodes par matière ID
+    @Query("SELECT m FROM MouvementStockMatiere m WHERE m.matiere.id = :matiereId AND m.dateMouvement BETWEEN :dateDebut AND :dateFin")
+    List<MouvementStockMatiere> findByMatiereIdAndDateMouvementBetween(Long matiereId, LocalDateTime dateDebut, LocalDateTime dateFin);
+    
+    @Query("SELECT m FROM MouvementStockMatiere m WHERE m.matiere.id = :matiereId ORDER BY m.dateMouvement DESC")
+    List<MouvementStockMatiere> findByMatiereIdOrderByDateMouvementDesc(Long matiereId);
+    
+    @Query("SELECT m FROM MouvementStockMatiere m ORDER BY m.dateMouvement DESC")
+    List<MouvementStockMatiere> findAllByOrderByDateMouvementDesc();
 }
