@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import '../assets/styles/production.css';
+import SidebarMenu from "../components/SidebarMenu";
 import {
   BarChart3,
   Package,
@@ -25,20 +26,6 @@ import { NavLink } from 'react-router-dom';
 
 const Production = () => {
 
-
-  const menuItems = [
-    { name: 'Tableau de Bord', icon: BarChart3, active: true, path: '/TableauDeBord' },
-    { name: 'Stock', icon: Package, path: '/stock' },
-    { name: 'Statistiques', icon: TrendingUp, path: '/statistiques' },
-    { name: 'Comptabilité', icon: Calculator, path: '/comptabilite' },
-    { name: 'Ventes', icon: ShoppingCart, path: '/ventes' },
-    { name: 'Commandes', icon: ShoppingCart, path: '/commandes' },
-    { name: 'Livraisons', icon: Truck, path: '/livraisons' },
-    { name: 'Administration', icon: Settings, path: '/administration' },
-    { name: 'Production', icon: Factory, path: '/production' }
-  ];
-
-  // -----------------RECHERCHE-------------------------------
   const [searchQuery, setSearchQuery] = useState('');
 
   const [product, setProduct] = useState({
@@ -87,15 +74,12 @@ const Production = () => {
     }));
   };
 
-
   const handleSave = () => {
-    // Logique pour sauvegarder le produit
     console.log('Produit sauvegardé:', product);
     alert('Produit sauvegardé avec succès!');
   };
 
   const handleCancel = () => {
-    // Réinitialiser le formulaire
     setProduct({
       category: '',
       name: '',
@@ -107,9 +91,9 @@ const Production = () => {
       expirationDate: ''
     });
   };
+
   return (
     <div className="dashboard-container">
-
       {/* Sidebar */}
       <div className="sidebar">
         <div className="sidebar-header">
@@ -118,20 +102,7 @@ const Production = () => {
           <p className="app-subtitle">Gouda Artisanale</p>
         </div>
 
-        <nav className="sidebar-nav">
-          {menuItems.map((item) => (
-            <NavLink
-              key={item.name}
-              to={item.path}
-              className={({ isActive }) =>
-                `menu-item ${isActive ? 'menu-item-active' : ''}`
-              }
-            >
-              <item.icon className="menu-icon" />
-              <span className="menu-text">{item.name}</span>
-            </NavLink>
-          ))}
-        </nav>
+        <SidebarMenu />
       </div>
 
       {/* Main Content */}
@@ -144,22 +115,13 @@ const Production = () => {
                 • Mise à jour: 11 Juin 2025, 14:30
               </div>
             </div>
-            {/* Barre de recherche centrée avec Lucide Search icon */}
-            {/* <Search className="search-icon" size={18} /> */}
             <input
               type="text"
               placeholder="Rechercher des produits, références..."
-              className="search-input"
+              className="searchInput"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            {/* {searchQuery && (
-                                <X
-                                  className="clear-search-icon"
-                                  size={18}
-                                  onClick={() => setSearchQuery('')}
-                                />
-                              )} */}
 
             <div className="header-right">
               <div className="time-selector">
@@ -179,154 +141,176 @@ const Production = () => {
         </header>
 
         <div className="production-page">
-          <h1>Informations du produit</h1>
+          <div className="production-container">
+            {/* Formulaire unifié */}
+            <div className="form-container">
+              <h1 className="production-title">Nouvelle Production</h1>
+              
+              <div className="form-grid">
+              <div className="form-group">
+                  <label>Catégorie</label>
+                  <select
+                    name="category"
+                    value={product.category}
+                    onChange={handleChange}
+                    className="formInputText"
+                  >
+                    <option value="">Sélectionner une catégorie</option>
+                  </select>
+              </div>
 
-          <div className="product-form">
-            <div className="form-section">
-              <h2>Catégorie</h2>
-              <select
-                name="category"
-                value={product.category}
-                onChange={handleChange}
-                className="form-input"
-              >
-                <option value="">Sélectionner une catégorie --</option>
-                {/* Add actual category options here */}
-              </select>
+                <div className="form-group">
+                  <label>Nom du produit</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={product.name}
+                    onChange={handleChange}
+                    placeholder="Ex : Goudra anticanci primium"
+                    className="formInputText"
+                  />
+                </div>
 
-              <input
-                type="text"
-                name="name"
-                value={product.name}
-                onChange={handleChange}
-                placeholder="Nom du produit"
-                className="form-input"
-              />
-              <span className="example">Ex : Goudra anticanci primium</span>
+                <div className="form-group">
+                  <label>Poids (g)</label>
+                  <input
+                    type="text"
+                    name="weight"
+                    value={product.weight}
+                    onChange={handleChange}
+                    placeholder="B00"
+                    className="formInputText"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Prix de vente (A4)</label>
+                  <input
+                    type="text"
+                    name="sellingPrice"
+                    value={product.sellingPrice}
+                    onChange={handleChange}
+                    placeholder="26 000"
+                    className="formInputText"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Prix de revient (A4)</label>
+                  <input
+                    type="text"
+                    name="costPrice"
+                    value={product.costPrice}
+                    onChange={handleChange}
+                    placeholder="8 000"
+                    className="formInputText"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Date de pérémption</label>
+                  <input
+                    type="date"
+                    name="expirationDate"
+                    value={product.expirationDate}
+                    onChange={handleChange}
+                    className="formInputText"
+                  />
+                </div>
+
+                <div className="form-group full-width">
+                  <label>Ingredients</label>
+                  <textarea
+                    name="ingredients"
+                    value={product.ingredients}
+                    onChange={handleChange}
+                    placeholder="Séi, présures, fermant yaourt ..."
+                    className="formInputText"
+                    rows="3"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Allergènes</label>
+                  <select
+                    name="allergens"
+                    value={product.allergens}
+                    onChange={handleChange}
+                    className="formInputText"
+                  >
+                    <option value="">Sélectionner les allergènes</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-actions">
+                <button className="cancel-btn" onClick={handleCancel}>
+                  Annuler
+                </button>
+                <button className="save-btn" onClick={handleSave}>
+                  Sauvegarder
+                </button>
+              </div>
             </div>
 
-            <div className="form-section">
-              <h2>Poids (g)</h2>
-              <input
-                type="text"
-                name="weight"
-                value={product.weight}
-                onChange={handleChange}
-                placeholder="B00"
-                className="form-input"
-              />
-
-              <h2>Prix de vente (A4)</h2>
-              <input
-                type="text"
-                name="sellingPrice"
-                value={product.sellingPrice}
-                onChange={handleChange}
-                placeholder="26 000"
-                className="form-input"
-              />
-            </div>
-
-            <div className="form-section">
-              <h2>Prix de revient (A4)</h2>
-              <input
-                type="text"
-                name="costPrice"
-                value={product.costPrice}
-                onChange={handleChange}
-                placeholder="8 000"
-                className="form-input"
-              />
-            </div>
-
-            <div className="form-section">
-              <h2>Ingredients</h2>
-              <textarea
-                name="ingredients"
-                value={product.ingredients}
-                onChange={handleChange}
-                placeholder="Séi, prélaises, fermant yacuit ..."
-                className="form-input"
-              />
-            </div>
-
-            <div className="form-section">
-              <h2>Allergènes</h2>
-              <select
-                name="allergens"
-                value={product.allergens}
-                onChange={handleChange}
-                className="form-input"
-              >
-                <option value="">Sélectionner les allergènes --</option>
-                {/* Add actual allergen options here */}
-              </select>
-            </div>
-
-            <div className="form-section">
-              <h2>Date de préemption</h2>
-              <input
-                type="date"
-                name="expirationDate"
-                value={product.expirationDate}
-                onChange={handleChange}
-                className="form-input"
-              />
-            </div>
-          </div>
-          <div>
-            <div className="form-actions">
-              <button className="cancel-btn" onClick={handleCancel}>
-                Annuler
-              </button>
-              <button className="save-btn" onClick={handleSave}>
-                Sauvegarder
-              </button>
-            </div>
-          </div>
-          <hr />
-
-          <div className="recent-productions">
-            <h3>Productions Récentes</h3>
-            <table>
-              <tbody>
+            {/* Liste des productions récentes */}
+            <div className="recent-productions">
+              <h2 className="section-title">Productions Récentes</h2>
+              <div className="production-list">
                 {recentProductions.map((prod, index) => (
-                  <React.Fragment key={index}>
-                    <tr>
-                      <td><strong>{prod.category}</strong></td>
-                      <td>{prod.name}</td>
-                    </tr>
-                    <tr>
-                      <td>{prod.weight}</td>
-                      <td>Prix de revient : {prod.costPrice}</td>
-                    </tr>
-                    <tr>
-                      <td>Ingredients : {prod.ingredients}</td>
-                      <td>Prix de vente : {prod.sellingPrice}</td>
-                    </tr>
-                  </React.Fragment>
+                  <div key={index} className="production-item">
+                    <div className="production-header">
+                      <span className="production-category">{prod.category}</span>
+                      <span className="production-name">{prod.name}</span>
+                    </div>
+                    <div className="production-details">
+                      <div className="detail-group">
+                        <span className="detail-label">Poids:</span>
+                        <span>{prod.weight}</span>
+                      </div>
+                      <div className="detail-group">
+                        <span className="detail-label">Prix revient:</span>
+                        <span>{prod.costPrice}</span>
+                      </div>
+                      <div className="detail-group">
+                        <span className="detail-label">Ingredients:</span>
+                        <span>{prod.ingredients}</span>
+                      </div>
+                      <div className="detail-group">
+                        <span className="detail-label">Prix vente:</span>
+                        <span>{prod.sellingPrice}</span>
+                      </div>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </div>
+            </div>
 
-          <hr />
-
-          <div className="production-tips">
-            <h3>Conseils Production</h3>
-            <ul>
-              <li>Respectez les temps d'offrinage pour chaque catégorie</li>
-              <li>Veillre la température de stockage</li>
-              <li>Documents chaque étage de production</li>
-              <li>Contrôlez régulièrement la qualité</li>
-            </ul>
+            {/* Conseils de production */}
+            <div className="production-tips">
+              <h2 className="section-title">Conseils de Production</h2>
+              <div className="tips-container">
+                <div className="tip-card">
+                  <Factory className="tip-icon" />
+                  <p>Respectez les temps d'affinage pour chaque catégorie</p>
+                </div>
+                <div className="tip-card">
+                  <AlertTriangle className="tip-icon" />
+                  <p>Veillez à la température de stockage</p>
+                </div>
+                <div className="tip-card">
+                  <Calendar className="tip-icon" />
+                  <p>Documentez chaque étape de production</p>
+                </div>
+                <div className="tip-card">
+                  <Package className="tip-icon" />
+                  <p>Contrôlez régulièrement la qualité</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-
       </div>
-
-
-
     </div>
   );
 };

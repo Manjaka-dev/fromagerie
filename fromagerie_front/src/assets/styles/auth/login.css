@@ -53,6 +53,10 @@
 
 .welcome-title {
   font-size: 2.8rem;
+  align-items: flex-start;
+  justify-content: flex-start;
+  display: flex;
+  flex-direction: column;
   font-weight: 700;
   color: #2c3e50;
   margin-bottom: 1.5rem;
@@ -61,6 +65,7 @@
 }
 
 .skip-button {
+  margin-left: 30%;
   align-self: flex-start;
   padding: 0.8rem 1.8rem;
   font-size: 1rem;
@@ -403,6 +408,11 @@
   .welcome-title {
     font-size: 2rem;
     margin-bottom: 1rem;
+    justify-content: flex-start;
+    text-align: left;
+    align-items: flex-start;
+    align-self: flex-start;
+
   }
 
   .skip-button {

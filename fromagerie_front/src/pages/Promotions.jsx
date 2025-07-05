@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import '../assets/styles/Promotions.css';
+import { NavLink , Link} from 'react-router-dom';
+import { FaTag } from 'react-icons/fa';
+import SidebarMenu from "../components/SidebarMenu";
 import {
   BarChart3,
   Package,
@@ -21,7 +24,6 @@ import {
   MoreHorizontal,
   AlertTriangle
 } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
 
 const Promotions = () => {
   // Données des promotions
@@ -49,17 +51,6 @@ const Promotions = () => {
     }
   ];
 
-  const menuItems = [
-    { name: 'Tableau de Bord', icon: BarChart3, active: true, path: '/TableauDeBord' },
-    { name: 'Stock', icon: Package, path: '/stock' },
-    { name: 'Statistiques', icon: TrendingUp, path: '/statistiques' },
-    { name: 'Comptabilité', icon: Calculator, path: '/comptabilite' },
-    { name: 'Ventes', icon: ShoppingCart, path: '/ventes' },
-    { name: 'Commandes', icon: ShoppingCart, path: '/commandes' },
-    { name: 'Livraisons', icon: Truck, path: '/livraisons' },
-    { name: 'Administration', icon: Settings, path: '/administration' },
-    { name: 'Production', icon: Factory, path: '/production' }
-  ];
 
   // -----------------RECHERCHE-------------------------------
   const [searchQuery, setSearchQuery] = useState('');
@@ -84,18 +75,7 @@ const Promotions = () => {
         </div>
 
         <nav className="sidebar-nav">
-          {menuItems.map((item) => (
-            <NavLink
-              key={item.name}
-              to={item.path}
-              className={({ isActive }) =>
-                `menu-item ${isActive ? 'menu-item-active' : ''}`
-              }
-            >
-              <item.icon className="menu-icon" />
-              <span className="menu-text">{item.name}</span>
-            </NavLink>
-          ))}
+        <SidebarMenu />
         </nav>
       </div>
 
@@ -114,10 +94,13 @@ const Promotions = () => {
             <input
               type="text"
               placeholder="Rechercher des produits, références..."
-              className="search-input"
+              className="searchInput"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            <Link to="/commandes" className="ventes_promo_btn">
+                <FaTag className="gestion_promotion"/> Gestion Commandes
+            </Link>
             {/* {searchQuery && (
                     <X
                       className="clear-search-icon"

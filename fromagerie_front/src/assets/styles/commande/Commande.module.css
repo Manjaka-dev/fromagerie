@@ -12,7 +12,25 @@
   box-shadow:0px 2px 5px 0px #dcdcdf;
   z-index: 999px;
 
+}
 
+  .searchInput{
+  width: 40%;
+  height: 40px;
+  color: var(--text-color);
+    background-color: white;
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+    border-radius: 16px;
+  border: 1px solid var(--border-color);
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+  .searchInput:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(109, 92, 63, 0.221);
 }
 .ventes_promo_btn{
   background-color: #ffedd5;
@@ -20,18 +38,20 @@
   padding: 10px 5px;
   width: 120px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
   height: 40px;
+  width: 150px;
   font-size: 10px;
   color: #111827;
+  gap: 5px;
   border: 1px solid wheat;
   font-weight: 900;
 }
 .gestion_promotion{
-  width: 10px;
-  height: 20px;
+  width: 12px;
+  height: 12px;
 }
 .sidebarNav{
   margin-top: 0.5rem;

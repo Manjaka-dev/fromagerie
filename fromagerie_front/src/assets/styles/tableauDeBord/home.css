@@ -339,42 +339,59 @@ body {
 }
 
 /* Search Input */
-.search-input-container {
-  position: relative;
-}
 
-.search-icon {
-  position: absolute;
-  left: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 1rem;
-  height: 1rem;
-  color: #6b7280;
-}
-
-.search-input {
+.searchInputFilter{
   width: 100%;
-  padding: 0.5rem 0.75rem 0.5rem 2.5rem;
+  padding: 0.5rem 0.75rem;
+  color: var(--text-gray);
   border: 1px solid #d1d5db;
   border-radius: 0.375rem;
   font-size: 0.875rem;
   background-color: white;
   transition: border-color 0.2s;
 }
-
-.search-input:focus {
+.searchInputFilter :hover{
   outline: none;
+  color: var(--text-gray);
   border-color: #412c0a;
-  box-shadow: 0 0 0 3px #2563eb1a;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+.search-icon {
+  position: relative;
+  left: 5.2rem;
+  top: 8px;
+  transform: translateY(-50%);
+  width: 1rem;
+  height: 1rem;
+  color: #6b7280;
 }
 
-.search-input::placeholder {
+.search_input {
+  width: 50%;
+  background-color: #fff;
+  outline: none;
+  border-radius: 50px;
+  color: #6b7280;
+  padding: 0.5rem 0.75rem 0.5rem 2.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  transition: border-color 0.2s;
+}
+
+.search_input:focus {
+  outline: none;
+    border: 1px solid #d1d5db;
+  border-color: #412c0a;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.search_input::placeholder {
   color: #9ca3af;
 }
 
 /* Date Input */
-.date-input {
+.dateInputFilter {
   width: 100%;
   padding: 0.5rem 0.75rem;
   border: 1px solid #d1d5db;
@@ -384,13 +401,14 @@ body {
   transition: border-color 0.2s;
 }
 
-.date-input:focus {
+.dateInputFilter:focus {
   outline: none;
+  color: var(--text-gray);
   border-color: #412c0a;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-.date-input::placeholder {
+.dateInputFilter::placeholder {
   color: #9ca3af;
 }
 
@@ -401,6 +419,7 @@ body {
   border: 1px solid #d1d5db;
   border-radius: 0.375rem;
   font-size: 0.875rem;
+  color: var(--text-gray);
   background-color: white;
   cursor: pointer;
   transition: border-color 0.2s;
@@ -408,6 +427,7 @@ body {
 
 .status-select:focus {
   outline: none;
+  color: var(--text-gray);
   border-color: #412c0a;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
@@ -1332,18 +1352,7 @@ body {
   flex-shrink: 0;
 }
 
-.search-input {
-  border: none;
-  background: transparent;
-  width: 50%;
-  font-size: 14px;
-  color: #fed7aa;
-  border: 1px solid #6d6c6c92;
-  border-radius: 10px;
-  display: flex;
-  flex-direction: row;
-  outline: none;
-}
+
 
 .clear-search-icon {
   color: #9ca3af;

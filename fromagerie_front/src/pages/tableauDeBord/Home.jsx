@@ -23,7 +23,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import './../../assets/styles/tableauDeBord/home.css';
-
+import SidebarMenu from "../../components/SidebarMenu";
 const TableauDeBord = () => {
   const [activeMenuItem, setActiveMenuItem] = useState('Tableau de Bord');
   const [showFilters, setShowFilters] = useState(false);
@@ -134,9 +134,7 @@ const TableauDeBord = () => {
   const menuItems = [
     { name: 'Tableau de Bord', icon: BarChart3, active: true, path: '/TableauDeBord' },
     { name: 'Stock', icon: Package, path: '/stock' },
-    { name: 'Statistiques', icon: TrendingUp, path: '/statistiques' },
     { name: 'Comptabilité', icon: Calculator, path: '/comptabilite' },
-    { name: 'Ventes', icon: ShoppingCart, path: '/ventes' },
     { name: 'Commandes', icon: ShoppingCart, path: '/commandes' },
     { name: 'Livraisons', icon: Truck, path: '/livraisons' },
     { name: 'Administration', icon: Settings, path: '/administration' },
@@ -292,20 +290,7 @@ const TableauDeBord = () => {
           <p className="app-subtitle">Gouda Artisanale</p>
         </div>
 
-        <nav className="sidebar-nav">
-          {menuItems.map((item) => (
-            <NavLink
-              key={item.name}
-              to={item.path}
-              className={({ isActive }) =>
-                `menu-item ${isActive ? 'menu-item-active' : ''}`
-              }
-            >
-              <item.icon className="menu-icon" />
-              <span className="menu-text">{item.name}</span>
-            </NavLink>
-          ))}
-        </nav>
+        <SidebarMenu />
       </div>
 
       {/* Main Content */}
@@ -319,11 +304,11 @@ const TableauDeBord = () => {
               </div>
             </div>
             {/* Barre de recherche centrée avec Lucide Search icon */}
-            {/* <Search className="search-icon" size={18} /> */}
+            <Search className="search-icon" size={18} />
             <input
               type="text"
               placeholder="Rechercher des produits, références..."
-              className="search-input"
+              className="search_input"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -407,16 +392,14 @@ const TableauDeBord = () => {
                     <div className="filters-row">
                       <div className="filter-group">
                         <label className="filter-label">Rechercher par nom</label>
-                        <div className="search-input-container">
-                          <Search className="search-icon" />
-                          <input
-                            type="text"
-                            placeholder="Nom du client..."
-                            value={searchName}
-                            onChange={(e) => setSearchName(e.target.value)}
-                            className="search-input"
-                          />
-                        </div>
+                        {/* <Search className="search-icon" /> */}
+                        <input
+                          type="text"
+                          placeholder="Nom du client..."
+                          value={searchName}
+                          onChange={(e) => setSearchName(e.target.value)}
+                          className="searchInputFilter"
+                        />
                       </div>
 
                       <div className="filter-group">
@@ -426,7 +409,7 @@ const TableauDeBord = () => {
                           placeholder="Ex: 12 Juin, 13 Juin..."
                           value={searchDate}
                           onChange={(e) => setSearchDate(e.target.value)}
-                          className="date-input"
+                          className="dateInputFilter"
                         />
                       </div>
 

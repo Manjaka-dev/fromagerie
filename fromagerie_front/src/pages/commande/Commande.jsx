@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 
 import styles from './../../assets/styles/commande/Commande.module.css';
+import SidebarMenu from "../../components/SidebarMenu";
 import { FaTag } from 'react-icons/fa';
 const CommandesPage = () => {
   const [showFilters, setShowFilters] = useState(false);
@@ -194,45 +195,7 @@ const CommandesPage = () => {
           <p className="app-subtitle">Production</p>
           <p className="app-subtitle">Gouda Artisanale</p>
         </div>
-
-        <nav className={styles.sidebarNav}>
-          <NavLink to="/TableauDeBord" className={({ isActive }) => `menu-item ${isActive ? 'menu-item-active' : ''}`}>
-            <BarChart3 className="menu-icon" />
-            <span className="menu-text">Tableau de Bord</span>
-          </NavLink>
-          <NavLink to="/stock" className={({ isActive }) => `menu-item ${isActive ? 'menu-item-active' : ''}`}>
-            <Package className="menu-icon" />
-            <span className="menu-text">Stock</span>
-          </NavLink>
-          <NavLink to="/statistiques" className={({ isActive }) => `menu-item ${isActive ? 'menu-item-active' : ''}`}>
-            <TrendingUp className="menu-icon" />
-            <span className="menu-text">Statistiques</span>
-          </NavLink>
-          <NavLink to="/comptabilite" className={({ isActive }) => `menu-item ${isActive ? 'menu-item-active' : ''}`}>
-            <Calculator className="menu-icon" />
-            <span className="menu-text">Comptabilité</span>
-          </NavLink>
-          <NavLink to="/ventes" className={({ isActive }) => `menu-item ${isActive ? 'menu-item-active' : ''}`}>
-            <ShoppingCart className="menu-icon" />
-            <span className="menu-text">Ventes</span>
-          </NavLink>
-          <NavLink to="/commandes" className={({ isActive }) => `menu-item ${isActive ? 'menu-item-active' : ''}`}>
-            <ShoppingCart className="menu-icon" />
-            <span className="menu-text">Commandes</span>
-          </NavLink>
-          <NavLink to="/livraisons" className={({ isActive }) => `menu-item ${isActive ? 'menu-item-active' : ''}`}>
-            <Truck className="menu-icon" />
-            <span className="menu-text">Livraisons</span>
-          </NavLink>
-          <NavLink to="/production" className={({ isActive }) => `menu-item ${isActive ? 'menu-item-active' : ''}`}>
-            <Factory className="menu-icon" />
-            <span className="menu-text">Production</span>
-          </NavLink>
-          <NavLink to="/administration" className={({ isActive }) => `menu-item ${isActive ? 'menu-item-active' : ''}`}>
-            <Settings className="menu-icon" />
-            <span className="menu-text">Administration</span>
-          </NavLink>
-        </nav>
+          <SidebarMenu />
       </div>
 
       {/* Main Content */}
@@ -249,7 +212,7 @@ const CommandesPage = () => {
             <input
               type="text"
               placeholder="Rechercher des commandes..."
-              className="search-input"
+              className={styles.searchInput}
               value={searchClient}
               onChange={(e) => setSearchClient(e.target.value)}
             />

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import '../assets/styles/Livraison.css';
+import SidebarMenu from "../components/SidebarMenu";
 import {
   BarChart3,
   Package,
@@ -24,17 +25,6 @@ import {
 import { NavLink } from 'react-router-dom';
 const Livraison = () => {
 
-  const menuItems = [
-    { name: 'Tableau de Bord', icon: BarChart3, active: true, path: '/TableauDeBord' },
-    { name: 'Stock', icon: Package, path: '/stock' },
-    { name: 'Statistiques', icon: TrendingUp, path: '/statistiques' },
-    { name: 'Comptabilité', icon: Calculator, path: '/comptabilite' },
-    { name: 'Ventes', icon: ShoppingCart, path: '/ventes' },
-    { name: 'Commandes', icon: ShoppingCart, path: '/commandes' },
-    { name: 'Livraisons', icon: Truck, path: '/livraisons' },
-    { name: 'Administration', icon: Settings, path: '/administration' },
-    { name: 'Production', icon: Factory, path: '/production' }
-  ];
 
   // -----------------RECHERCHE-------------------------------
   const [searchQuery, setSearchQuery] = useState('');
@@ -89,20 +79,7 @@ const Livraison = () => {
           <p className="app-subtitle">Gouda Artisanale</p>
         </div>
 
-        <nav className="sidebar-nav">
-          {menuItems.map((item) => (
-            <NavLink
-              key={item.name}
-              to={item.path}
-              className={({ isActive }) =>
-                `menu-item ${isActive ? 'menu-item-active' : ''}`
-              }
-            >
-              <item.icon className="menu-icon" />
-              <span className="menu-text">{item.name}</span>
-            </NavLink>
-          ))}
-        </nav>
+        <SidebarMenu />
       </div>
 
       {/* Main Content */}
@@ -120,7 +97,7 @@ const Livraison = () => {
             <input
               type="text"
               placeholder="Rechercher des produits, références..."
-              className="search-input"
+              className="searchInput"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
