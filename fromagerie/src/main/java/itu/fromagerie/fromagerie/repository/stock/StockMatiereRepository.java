@@ -17,4 +17,10 @@ public interface StockMatiereRepository extends JpaRepository<StockMatiere, Long
     
     @Query("SELECT s FROM StockMatiere s WHERE s.quantite > 0")
     List<StockMatiere> findStocksDisponibles();
+    
+    @Query("SELECT s FROM StockMatiere s ORDER BY s.matiere.nom")
+    List<StockMatiere> findAllOrderByMatiereNom();
+    
+    @Query("SELECT s FROM StockMatiere s WHERE s.matiere.id = :matiereId")
+    Optional<StockMatiere> findByMatiereId(Long matiereId);
 }
