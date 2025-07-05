@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../assets/styles/Livraison.css';
 import SidebarMenu from "../components/SidebarMenu";
 import {
@@ -25,40 +25,36 @@ import {
 import { NavLink } from 'react-router-dom';
 const Livraison = () => {
 
-
   // -----------------RECHERCHE-------------------------------
   const [searchQuery, setSearchQuery] = useState('');
+  const [livraisons, setLivraisons] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Données des livraisons
-  const livraisons = [
-    {
-      id: 1,
-      fromagerie: "Fromagerie Martin",
-      client: "Anosibe.PIZZAMANIA",
-      montant: "200 000 Ar",
-      produits: "Couda affiné : 50 kg",
-      livreur: "Jean Dupont",
-      horaire: "10:30 - 11:45"
-    },
-    {
-      id: 2,
-      fromagerie: "Fromagerie Martin",
-      client: "Anosibe.PIZZAMANIA",
-      montant: "200 000 Ar",
-      produits: "Couda affiné : 50 kg",
-      livreur: "Jean Dupont",
-      horaire: "10:30 - 11:45"
-    },
-    {
-      id: 3,
-      fromagerie: "Fromagerie Martin",
-      client: "Anosibe.PIZZAMANIA",
-      montant: "200 000 Ar",
-      produits: "Couda affiné : 50 kg",
-      livreur: "Jean Dupont",
-      horaire: "10:30 - 11:45"
-    }
-  ];
+  useEffect(() => {
+    const zone = searchQuery.trim();
+
+    const endpoint = zone
+      ? `http://localhost:8080/api/livraisons/zone/${encodeURIComponent(zone)}`
+      : 'http://localhost:8080/api/livraisons';
+
+    setLoading(true);
+    fetch(endpoint)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Erreur lors du chargement des livraisons");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setLivraisons(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Erreur API :", err);
+        setLoading(false);
+      });
+  }, [searchQuery]);
+  // Données des livraison
 
   // Statistiques
   const stats = {
@@ -98,8 +94,6 @@ const Livraison = () => {
               type="text"
               placeholder="Rechercher des produits, références..."
               className="searchInput"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
             />
             {/* {searchQuery && (
                           <X
@@ -148,8 +142,14 @@ const Livraison = () => {
           {/* Section recherche et livreurs */}
           <div className="search-section">
             <div className="search-bar">
-              <input type="text" placeholder="Rechercher..." />
+              <input
+                type="text"
+                placeholder="Rechercher une zone..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
+
             <div className="livreurs-stat">
               <p className="livreurs-count">{stats.livreursActifs}</p>
               <p className="livreurs-label">Livreurs actifs</p>
@@ -158,25 +158,48 @@ const Livraison = () => {
 
           {/* Liste des livraisons */}
           <div className="livraison-list">
-            {livraisons.map(livraison => (
-              <div key={livraison.id} className="livraison-card">
-                <div className="livraison-header">
-                  <h3>{livraison.fromagerie}</h3>
-                  <span className="client-name">{livraison.client}</span>
+            {loading ? (
+              <p>Chargement des livraisons...</p>
+            ) : livraisons.length === 0 ? (
+              <p>Aucune livraison disponible.</p>
+            ) : (
+              livraisons.map((livraison) => (
+                <div key={livraison.livraisonId} className="livraison-card">
+                  <div className="livraison-header">
+                    <h3>Zone : {livraison.zone}</h3>
+                    <span className="client-name">Client : {livraison.nomClient}</span>
+                  </div>
+
+                  <div className="livraison-details">
+                    <p><strong>Date Livraison :</strong> {livraison.dateLivraison}</p>
+                    <p><strong>Statut :</strong> {livraison.statut}</p>
+                    <p><strong>Commande n° :</strong> {livraison.commandeId} (le {livraison.dateCommande})</p>
+                    <p><strong>Adresse :</strong> {livraison.adresseClient}</p>
+                    <p><strong>Tél. Client :</strong> {livraison.telephoneClient}</p>
+                    <p><strong>Livreur :</strong> {livraison.nomLivreur} ({livraison.telephoneLivreur})</p>
+                  </div>
+
+                  <div className="produits-livraison">
+                    <h4>Produits à livrer :</h4>
+                    <ul>
+                      {livraison.produitsALivrer.map((produit, index) => (
+                        <li key={index}>
+                          {produit.nomProduit} - {produit.quantiteALivrer} u (Livrés: {produit.quantiteLivree}) - Catégorie : {produit.categorieProduit}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="livraison-actions">
+                    <button className="track-btn">Suivre</button>
+                    <button className="contact-btn">Contacter</button>
+                  </div>
                 </div>
-                <div className="livraison-details">
-                  <p><strong>Montant :</strong> {livraison.montant}</p>
-                  <p><strong>Produits :</strong> {livraison.produits}</p>
-                  <p><strong>Livreur :</strong> {livraison.livreur}</p>
-                  <p><strong>Prévu :</strong> {livraison.horaire}</p>
-                </div>
-                <div className="livraison-actions">
-                  <button className="track-btn">Suivre</button>
-                  <button className="contact-btn">Contacter</button>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
+
+
 
           {/* Section carte et optimisation */}
           <div className="map-section">
