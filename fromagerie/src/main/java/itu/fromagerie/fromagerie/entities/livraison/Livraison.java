@@ -22,10 +22,12 @@ public class Livraison {
     
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "commande_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Commande commande;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "livreur_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Livreur livreur;
     
     @Column(name = "date_livraison")
@@ -39,14 +41,18 @@ public class Livraison {
     private StatutLivraisonEnum statutLivraison = StatutLivraisonEnum.PLANIFIEE;
     
     @OneToMany(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<LivraisonProduit> produitsALivrer;
     
     @OneToMany(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<StatutLivraison> historiquesStatuts;
     
     @OneToOne(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private ConfirmationReception confirmationReception;
     
     @OneToMany(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<RetourLivraison> retours;
 }

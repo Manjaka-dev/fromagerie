@@ -21,6 +21,7 @@ public class Commande {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Client client;
     
     @Column(name = "date_commande")
@@ -30,11 +31,14 @@ public class Commande {
     private String statut; // en_attente, confirmée, annulée, livrée
     
     @OneToMany(mappedBy = "commande", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<LigneCommande> lignesCommande;
     
     @OneToOne(mappedBy = "commande", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Facture facture;
     
     @OneToMany(mappedBy = "commande", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<Paiement> paiements;
 }

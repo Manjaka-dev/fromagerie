@@ -1,345 +1,257 @@
 package itu.fromagerie.fromagerie.service.livraison;
 
-import itu.fromagerie.fromagerie.dto.livraison.CreateLivraisonDTO;
-import itu.fromagerie.fromagerie.dto.livraison.LivraisonInfoDTO;
-import itu.fromagerie.fromagerie.dto.livraison.UpdateLivraisonDTO;
-import itu.fromagerie.fromagerie.entities.livraison.*;
 import itu.fromagerie.fromagerie.entities.vente.Commande;
-import itu.fromagerie.fromagerie.entities.produit.Produit;
-import itu.fromagerie.fromagerie.repository.livraison.*;
+import itu.fromagerie.fromagerie.entities.livraison.Livraison;
+import itu.fromagerie.fromagerie.entities.livraison.Livreur;
+import itu.fromagerie.fromagerie.entities.livraison.StatutLivraison;
+import itu.fromagerie.fromagerie.entities.livraison.RetourLivraison;
+import itu.fromagerie.fromagerie.entities.vente.Paiement;
+import itu.fromagerie.fromagerie.entities.livraison.ConfirmationReception;
+import itu.fromagerie.fromagerie.entities.vente.LigneCommande;
+import itu.fromagerie.fromagerie.projection.CommandeLivraisonGroup;
+import itu.fromagerie.fromagerie.projection.CommandeLivraisonProjection;
+import itu.fromagerie.fromagerie.projection.LivraisonProjection;
+import itu.fromagerie.fromagerie.service.produit.ProduitService;
+import itu.fromagerie.fromagerie.repository.livraison.LivraisonRepository;
+import itu.fromagerie.fromagerie.repository.livraison.LivreurRepository;
+import itu.fromagerie.fromagerie.repository.livraison.StatutLivraisonRepository;
+import itu.fromagerie.fromagerie.repository.livraison.ConfirmationReceptionRepository;
+import itu.fromagerie.fromagerie.repository.livraison.RetourLivraisonRepository;
 import itu.fromagerie.fromagerie.repository.vente.CommandeRepository;
-import itu.fromagerie.fromagerie.repository.produit.ProduitRepository;
+import itu.fromagerie.fromagerie.repository.vente.PaiementRepository;
+import itu.fromagerie.fromagerie.repository.vente.LigneCommandeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class LivraisonService {
-    
+    private final CommandeRepository commandeRepository;
+    private final LivreurRepository livreurRepository;
+    private final LivraisonRepository livraisonRepository;
+    private final StatutLivraisonRepository statutLivraisonRepository;
+    private final RetourLivraisonRepository retourLivraisonRepository;
+    private final LigneCommandeRepository ligneCommandeRepository;
+    private final PaiementRepository paiementRepository;
+    private final ConfirmationReceptionRepository confirmationReceptionRepository;
+    private final ProduitService produitService;
+
     @Autowired
-    private LivraisonRepository livraisonRepository;
-    
-    @Autowired
-    private LivraisonProduitRepository livraisonProduitRepository;
-    
-    @Autowired
-    private CommandeRepository commandeRepository;
-    
-    @Autowired
-    private LivreurRepository livreurRepository;
-    
-    @Autowired
-    private ProduitRepository produitRepository;
-    
-    @Autowired
-    private StatutLivraisonRepository statutLivraisonRepository;
-    
-    // ==================== CRUD OPERATIONS ====================
-    
-    /**
-     * Crée une nouvelle livraison
-     */
-    @Transactional
-    public LivraisonInfoDTO createLivraison(CreateLivraisonDTO createDTO) {
-        // Vérifier que la commande existe
-        Commande commande = commandeRepository.findById(createDTO.getCommandeId())
-                .orElseThrow(() -> new RuntimeException("Commande non trouvée"));
-        
-        // Vérifier que le livreur existe
-        Livreur livreur = livreurRepository.findById(createDTO.getLivreurId())
-                .orElseThrow(() -> new RuntimeException("Livreur non trouvé"));
-        
-        // Créer la livraison
-        Livraison livraison = new Livraison();
-        livraison.setCommande(commande);
-        livraison.setLivreur(livreur);
-        livraison.setDateLivraison(createDTO.getDateLivraison());
-        livraison.setZone(createDTO.getZone());
-        livraison.setStatutLivraison(createDTO.getStatutLivraison());
-        
-        // Sauvegarder la livraison
-        livraison = livraisonRepository.save(livraison);
-        
-        // Ajouter les produits à livrer
-        if (createDTO.getProduitsALivrer() != null) {
-            for (CreateLivraisonDTO.ProduitLivraisonCreateDTO produitDTO : createDTO.getProduitsALivrer()) {
-                Produit produit = produitRepository.findById(produitDTO.getProduitId())
-                        .orElseThrow(() -> new RuntimeException("Produit non trouvé"));
-                
-                LivraisonProduit livraisonProduit = new LivraisonProduit();
-                livraisonProduit.setLivraison(livraison);
-                livraisonProduit.setProduit(produit);
-                livraisonProduit.setQuantiteALivrer(produitDTO.getQuantiteALivrer());
-                livraisonProduit.setQuantiteLivree(0);
-                
-                livraisonProduitRepository.save(livraisonProduit);
-            }
-        }
-        
-        // Créer un historique de statut initial
-        createStatutHistory(livraison, createDTO.getStatutLivraison(), "Livraison créée");
-        
-        return convertToDTO(livraisonRepository.findById(livraison.getId()).orElse(livraison));
-    }
-    
-    /**
-     * Récupère une livraison par ID
-     */
-    public Optional<LivraisonInfoDTO> getLivraisonById(Long id) {
-        return livraisonRepository.findById(id)
-                .map(this::convertToDTO);
-    }
-    
-    /**
-     * Récupère toutes les livraisons
-     */
-    public List<LivraisonInfoDTO> getAllLivraisons() {
-        return livraisonRepository.findAll().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-    
-    /**
-     * Met à jour une livraison
-     */
-    @Transactional
-    public LivraisonInfoDTO updateLivraison(Long id, UpdateLivraisonDTO updateDTO) {
-        Livraison livraison = livraisonRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Livraison non trouvée"));
-        
-        // Mettre à jour les champs de base
-        if (updateDTO.getLivreurId() != null) {
-            Livreur livreur = livreurRepository.findById(updateDTO.getLivreurId())
-                    .orElseThrow(() -> new RuntimeException("Livreur non trouvé"));
-            livraison.setLivreur(livreur);
-        }
-        
-        if (updateDTO.getDateLivraison() != null) {
-            livraison.setDateLivraison(updateDTO.getDateLivraison());
-        }
-        
-        if (updateDTO.getZone() != null) {
-            livraison.setZone(updateDTO.getZone());
-        }
-        
-        if (updateDTO.getStatutLivraison() != null) {
-            StatutLivraisonEnum ancienStatut = livraison.getStatutLivraison();
-            livraison.setStatutLivraison(updateDTO.getStatutLivraison());
-            
-            // Créer un historique si le statut a changé
-            if (!ancienStatut.equals(updateDTO.getStatutLivraison())) {
-                createStatutHistory(livraison, updateDTO.getStatutLivraison(), "Statut mis à jour");
-            }
-        }
-        
-        // Mettre à jour les produits si fournis
-        if (updateDTO.getProduitsALivrer() != null) {
-            updateProduitsLivraison(livraison, updateDTO.getProduitsALivrer());
-        }
-        
-        livraison = livraisonRepository.save(livraison);
-        return convertToDTO(livraison);
-    }
-    
-    /**
-     * Supprime une livraison
-     */
-    @Transactional
-    public void deleteLivraison(Long id) {
-        if (!livraisonRepository.existsById(id)) {
-            throw new RuntimeException("Livraison non trouvée");
-        }
-        livraisonRepository.deleteById(id);
-    }
-    
-    /**
-     * Récupère toutes les informations de livraison pour une période donnée
-     */
-    public List<LivraisonInfoDTO> getLivraisonsInfo(LocalDate dateDebut, LocalDate dateFin) {
-        List<Livraison> livraisons = livraisonRepository.findLivraisonsCompletes(dateDebut, dateFin);
-        return livraisons.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-    
-    /**
-     * Récupère les livraisons par statut
-     */
-    public List<LivraisonInfoDTO> getLivraisonsByStatut(StatutLivraisonEnum statut) {
-        List<Livraison> livraisons = livraisonRepository.findByStatutWithDetails(statut);
-        return livraisons.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-    
-    /**
-     * Récupère les livraisons d'un livreur spécifique
-     */
-    public List<LivraisonInfoDTO> getLivraisonsByLivreur(Long livreurId) {
-        Livreur livreur = livreurRepository.findById(livreurId)
-                .orElseThrow(() -> new RuntimeException("Livreur non trouvé"));
-        
-        List<Livraison> livraisons = livraisonRepository.findByLivreur(livreur);
-        return livraisons.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-    
-    /**
-     * Récupère les livraisons d'une zone spécifique
-     */
-    public List<LivraisonInfoDTO> getLivraisonsByZone(String zone) {
-        List<Livraison> livraisons = livraisonRepository.findByZone(zone);
-        return livraisons.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-    
-    /**
-     * Récupère les livraisons d'un livreur pour une période donnée
-     */
-    public List<LivraisonInfoDTO> getLivraisonsByLivreurEtPeriode(Long livreurId, LocalDate dateDebut, LocalDate dateFin) {
-        Livreur livreur = livreurRepository.findById(livreurId)
-                .orElseThrow(() -> new RuntimeException("Livreur non trouvé"));
-        
-        List<Livraison> livraisons = livraisonRepository.findByLivreur(livreur).stream()
-                .filter(l -> !l.getDateLivraison().isBefore(dateDebut) && !l.getDateLivraison().isAfter(dateFin))
-                .collect(Collectors.toList());
-                
-        return livraisons.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public LivraisonService(CommandeRepository commandeRepository, LivreurRepository livreurRepository, LivraisonRepository livraisonRepository, StatutLivraisonRepository statutLivraisonRepository, RetourLivraisonRepository retourLivraisonRepository, LigneCommandeRepository ligneCommandeRepository, PaiementRepository paiementRepository, ConfirmationReceptionRepository confirmationReceptionRepository, ProduitService produitService) {
+        this.commandeRepository = commandeRepository;
+        this.livreurRepository = livreurRepository;
+        this.livraisonRepository = livraisonRepository;
+        this.statutLivraisonRepository = statutLivraisonRepository;
+        this.retourLivraisonRepository = retourLivraisonRepository;
+        this.ligneCommandeRepository = ligneCommandeRepository;
+        this.paiementRepository = paiementRepository;
+        this.confirmationReceptionRepository = confirmationReceptionRepository;
+        this.produitService = produitService;
     }
 
-    /**
-     * Convertit une entité Livraison en DTO
-     */
-    private LivraisonInfoDTO convertToDTO(Livraison livraison) {
-        LivraisonInfoDTO dto = new LivraisonInfoDTO();
+    public List<CommandeLivraisonGroup> getCommandeLivraison() {
+        List<CommandeLivraisonProjection> projections = commandeRepository.findCommandesLivraisons();
         
-        // Informations de base
-        dto.setLivraisonId(livraison.getId());
-        dto.setDateLivraison(livraison.getDateLivraison());
-        dto.setStatut(livraison.getStatutLivraison());
-        dto.setZone(livraison.getZone());
+        Map<Long, CommandeLivraisonGroup> groups = new HashMap<>();
         
-        // Informations commande
-        if (livraison.getCommande() != null) {
-            dto.setCommandeId(livraison.getCommande().getId());
-            dto.setDateCommande(livraison.getCommande().getDateCommande());
+        for (CommandeLivraisonProjection projection : projections) {
+            Long commandeId = projection.getCommandeId();
             
-            // Informations client
-            if (livraison.getCommande().getClient() != null) {
-                dto.setClientId(livraison.getCommande().getClient().getId());
-                dto.setNomClient(livraison.getCommande().getClient().getNom());
-                dto.setTelephoneClient(livraison.getCommande().getClient().getTelephone());
-                dto.setAdresseClient(livraison.getCommande().getClient().getAdresse());
+            if (!groups.containsKey(commandeId)) {
+                groups.put(commandeId, new CommandeLivraisonGroup(
+                    commandeId,
+                    projection.getClientNom(),
+                    new ArrayList<>(),
+                    projection.getDateCommande(),
+                    projection.getDateLivraison()
+                ));
             }
-        }
-        
-        // Informations livreur
-        if (livraison.getLivreur() != null) {
-            dto.setLivreurId(livraison.getLivreur().getId());
-            dto.setNomLivreur(livraison.getLivreur().getNom());
-            dto.setTelephoneLivreur(livraison.getLivreur().getTelephone());
-        }
-        
-        // Produits à livrer
-        if (livraison.getProduitsALivrer() != null) {
-            List<LivraisonInfoDTO.ProduitLivraisonDTO> produits = livraison.getProduitsALivrer().stream()
-                    .map(this::convertProduitToDTO)
-                    .collect(Collectors.toList());
-            dto.setProduitsALivrer(produits);
-        }
-        
-        return dto;
-    }
-    
-    /**
-     * Convertit un LivraisonProduit en DTO
-     */
-    private LivraisonInfoDTO.ProduitLivraisonDTO convertProduitToDTO(LivraisonProduit livraisonProduit) {
-        LivraisonInfoDTO.ProduitLivraisonDTO dto = new LivraisonInfoDTO.ProduitLivraisonDTO();
-        
-        if (livraisonProduit.getProduit() != null) {
-            dto.setProduitId(livraisonProduit.getProduit().getId());
-            dto.setNomProduit(livraisonProduit.getProduit().getNom());
-            dto.setQuantiteALivrer(livraisonProduit.getQuantiteALivrer());
-            dto.setQuantiteLivree(livraisonProduit.getQuantiteLivree());
             
-            if (livraisonProduit.getProduit().getCategorie() != null) {
-                dto.setCategorieProduit(livraisonProduit.getProduit().getCategorie().getNom());
-            }
+            CommandeLivraisonGroup.ProductInfo productInfo = new CommandeLivraisonGroup.ProductInfo(
+                projection.getProduitNom(),
+                projection.getPoids(),
+                projection.getQuantite()
+            );
+            
+            groups.get(commandeId).getProduits().add(productInfo);
         }
         
-        return dto;
+        return new ArrayList<>(groups.values());
     }
-    
-    /**
-     * Met à jour le statut d'une livraison avec historique
-     */
-    @Transactional
-    public void updateStatutLivraison(Long livraisonId, StatutLivraisonEnum nouveauStatut, String commentaire) {
-        Livraison livraison = livraisonRepository.findById(livraisonId)
-                .orElseThrow(() -> new RuntimeException("Livraison non trouvée"));
-        
-        StatutLivraisonEnum ancienStatut = livraison.getStatutLivraison();
-        livraison.setStatutLivraison(nouveauStatut);
+
+    public void saveLivraison(Long idCommande, LocalDate dateLivraison, String zone, Long livreur) {
+
+        Commande commande = commandeRepository.findById(idCommande).orElse(null);
+        Livreur livreur1 = livreurRepository.findById(livreur).orElse(null);
+
+        Livraison livraison = new Livraison();
+        livraison.setCommande(commande);
+        livraison.setDateLivraison(dateLivraison);
+        livraison.setLivreur(livreur1);
+        livraison.setZone(zone);
+
+        livraison = livraisonRepository.save(livraison);
+
+        StatutLivraison statutLivraison = new StatutLivraison();
+        statutLivraison.setStatut("Planifiée");
+        statutLivraison.setLivraison(livraison);
+        statutLivraisonRepository.save(statutLivraison);
+    }
+
+    public List<Livreur> listeLivreur() {
+        return livreurRepository.findAll();
+    }
+
+    public void assignLivreur(Long commandeId, Long livreurId) {
+        Commande commande = commandeRepository.findById(commandeId)
+                .orElseThrow(() -> new IllegalArgumentException("Commande non trouvée"));
+        Livreur livreur = livreurRepository.findById(livreurId)
+                .orElseThrow(() -> new IllegalArgumentException("Livreur non trouvé"));
+
+        Livraison livraison = livraisonRepository.findByCommandeId(commandeId)
+                .orElse(new Livraison());
+
+        livraison.setCommande(commande);
+        livraison.setLivreur(livreur);
+        livraison.setDateLivraison(LocalDate.now());
+        livraison.setZone("IVATO");
+
         livraisonRepository.save(livraison);
+
+        // Ajout du statut après assignation
+        StatutLivraison statut = new StatutLivraison();
+        statut.setLivraison(livraison);
+        statut.setStatut("Planifiée");
+        statut.setDateStatut(Instant.now());
+        statutLivraisonRepository.save(statut);
+    }
+
+    public List<LivraisonProjection> getLivraisonDetails() {
+        // Forcer le rafraîchissement en vidant le cache Hibernate si nécessaire
+        return livraisonRepository.getLivraisonDetails();
+    }
+
+    public Optional<Livraison> findLivraisonById(Long livraisonId) {
+        return livraisonRepository.findById(livraisonId);
+    }
+
+    public Long getCommandeIdByLivraisonId(Long livraisonId) {
+        Optional<Livraison> livraison = livraisonRepository.findById(livraisonId);
+        return livraison.map(l -> l.getCommande().getId()).orElse(null);
+    }
+
+    public StatutLivraison saveStatutLivraison(StatutLivraison statutLivraison) {
+        return statutLivraisonRepository.save(statutLivraison);
+    }
+
+    public void enregistrerPaiement(Long commandeId, Double montant, String methode, LocalDate datePaiement) {
+        // 1. Créer un nouveau paiement
+        Paiement paiement = new Paiement();
+        paiement.setCommande(commandeRepository.findById(commandeId).orElse(null));
+        paiement.setMontant(BigDecimal.valueOf(montant));
+        paiement.setMethode(methode);
+        paiement.setDatePaiement(datePaiement);
         
-        // Créer un historique si le statut a changé
-        if (!ancienStatut.equals(nouveauStatut)) {
-            createStatutHistory(livraison, nouveauStatut, commentaire != null ? commentaire : "Statut mis à jour");
+        // 2. Sauvegarder le paiement
+        paiementRepository.save(paiement);
+        
+        // 3. Créer automatiquement une confirmation de réception
+        Livraison livraison = livraisonRepository.findByCommandeId(commandeId).orElse(null);
+        if (livraison != null) {
+            ConfirmationReception confirmation = new ConfirmationReception();
+            confirmation.setLivraison(livraison);
+            confirmation.setSignature("Signature automatique - Paiement confirmé");
+            confirmation.setPhotoReception("Photo automatique - Réception confirmée");
+            
+            confirmationReceptionRepository.save(confirmation);
+            
+            System.out.println("Confirmation de réception créée automatiquement pour la livraison ID: " + livraison.getId());
         }
+        
+        // 4. Logger les informations
+        System.out.println("Paiement enregistré - Commande: " + commandeId + 
+                          ", Montant: " + montant + 
+                          ", Méthode: " + methode + 
+                          ", Date: " + datePaiement);
     }
+
+    public void afficherEtMettreAJourStatut() {
+        List<LivraisonProjection> livraisons = getLivraisonDetails();
     
-    // ==================== MÉTHODES UTILITAIRES ====================
+        for (LivraisonProjection livraison : livraisons) {
+            // Mise à jour du statut
+            Optional<Livraison> livraisonEntity = livraisonRepository.findById(livraison.getLivraisonId());
+            if (livraisonEntity.isPresent()) {
+                StatutLivraison statut = new StatutLivraison();
+                statut.setLivraison(livraisonEntity.get());
     
-    /**
-     * Crée un historique de statut
-     */
-    private void createStatutHistory(Livraison livraison, StatutLivraisonEnum statut, String commentaire) {
-        StatutLivraison statutHistory = new StatutLivraison();
-        statutHistory.setLivraison(livraison);
-        statutHistory.setStatut(statut.name());
-        statutHistory.setDateStatut(LocalDateTime.now());
-        statutLivraisonRepository.save(statutHistory);
-    }
-    
-    /**
-     * Met à jour les produits d'une livraison
-     */
-    private void updateProduitsLivraison(Livraison livraison, List<UpdateLivraisonDTO.ProduitLivraisonUpdateDTO> produitsDTO) {        
-        for (UpdateLivraisonDTO.ProduitLivraisonUpdateDTO produitDTO : produitsDTO) {
-            if (produitDTO.getId() != null) {
-                // Mise à jour d'un produit existant
-                LivraisonProduit existing = livraisonProduitRepository.findById(produitDTO.getId())
-                        .orElseThrow(() -> new RuntimeException("Produit de livraison non trouvé"));
-                
-                existing.setQuantiteALivrer(produitDTO.getQuantiteALivrer());
-                if (produitDTO.getQuantiteLivree() != null) {
-                    existing.setQuantiteLivree(produitDTO.getQuantiteLivree());
+                if ("En cours".equalsIgnoreCase(livraison.getStatutLivraison())) {
+                    statut.setStatut("Livree");
+                } else {
+                    statut.setStatut("En cours");
                 }
-                livraisonProduitRepository.save(existing);
-            } else {
-                // Nouveau produit
-                Produit produit = produitRepository.findById(produitDTO.getProduitId())
-                        .orElseThrow(() -> new RuntimeException("Produit non trouvé"));
-                
-                LivraisonProduit nouveauProduit = new LivraisonProduit();
-                nouveauProduit.setLivraison(livraison);
-                nouveauProduit.setProduit(produit);
-                nouveauProduit.setQuantiteALivrer(produitDTO.getQuantiteALivrer());
-                nouveauProduit.setQuantiteLivree(produitDTO.getQuantiteLivree() != null ? produitDTO.getQuantiteLivree() : 0);
-                
-                livraisonProduitRepository.save(nouveauProduit);
+    
+                statut.setDateStatut(Instant.now());
+                statutLivraisonRepository.save(statut);
             }
         }
+    }
+
+    public void annulerCommandeEtRetourLivraison(Long commandeId) {
+        // 1. Mettre à jour le statut de la commande
+        Commande commande = commandeRepository.findById(commandeId).orElse(null);
+        if (commande != null) {
+            commande.setStatut("Annulée");
+            commandeRepository.save(commande);
+        }
+
+        // 2. Récupérer les lignes de commande pour créer les retours
+        List<LigneCommande> lignes = ligneCommandeRepository.findByCommandeId(commandeId);
+        
+        // 3. Créer un retour pour chaque produit
+        Livraison livraison = livraisonRepository.findByCommandeId(commandeId).orElse(null);
+        if (livraison != null) {
+            for (LigneCommande ligne : lignes) {
+                RetourLivraison retour = new RetourLivraison();
+                retour.setLivraison(livraison);
+                retour.setProduit(ligne.getProduit());
+                retour.setQuantiteRetour(ligne.getQuantite());
+                retour.setRaison("Commande annulée par le client");
+                
+                retourLivraisonRepository.save(retour);
+            }
+        }
+    }
+
+    public void debugStatutsLivraison() {
+        System.out.println("=== DÉBOGAGE STATUTS EN BASE ===");
+        
+        // Vérifier tous les statuts pour chaque livraison
+        List<Livraison> livraisons = livraisonRepository.findAll();
+        for (Livraison livraison : livraisons) {
+            System.out.println("Livraison ID: " + livraison.getId());
+            
+            // Récupérer tous les statuts pour cette livraison
+            List<StatutLivraison> statuts = statutLivraisonRepository.findAll().stream()
+                .filter(s -> s.getLivraison().getId().equals(livraison.getId()))
+                .sorted((s1, s2) -> s2.getDateStatut().compareTo(s1.getDateStatut()))
+                .toList();
+            
+            for (StatutLivraison statut : statuts) {
+                System.out.println("  - Statut ID: " + statut.getId() + 
+                                  " | Statut: '" + statut.getStatut() + "'" +
+                                  " | Date: " + statut.getDateStatut());
+            }
+            System.out.println();
+        }
+        System.out.println("=== FIN DÉBOGAGE STATUTS ===");
     }
 }

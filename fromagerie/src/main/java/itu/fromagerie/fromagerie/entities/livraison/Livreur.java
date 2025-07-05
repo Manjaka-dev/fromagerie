@@ -25,5 +25,6 @@ public class Livreur {
     private String telephone;
     
     @OneToMany(mappedBy = "livreur", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<Livraison> livraisons;
 }

@@ -28,5 +28,6 @@ public class Client {
     private String adresse;
     
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<Commande> commandes;
 }
