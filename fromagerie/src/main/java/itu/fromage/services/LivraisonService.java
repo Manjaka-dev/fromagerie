@@ -163,23 +163,25 @@ public class LivraisonService {
         commande.setStatut("Annulée");
         commandeRepository.save(commande);
 
-        // mis a jour quantite lot produit
-        List<Integer> listeIDProduit = livraisonRepository.listIDProduit(commandeId);
-        for (Integer id : listeIDProduit) {
-            Integer quantiteActuelle = produitService.getQuantiteProduit(id);
-            Integer quantiteCommande = ligneCommandeRepository.getQuantiteCommande(id);
+        // 2. Récupérer toutes les lignes de commande pour cette commande spécifique
+        var lignes = ligneCommandeRepository.findByCommandeId(commandeId);
+        
+        // 3. Pour chaque ligne de commande, restaurer la quantité du produit
+        for (var ligne : lignes) {
+            Integer produitId = ligne.getProduit().getId();
+            Integer quantiteActuelle = produitService.getQuantiteProduit(produitId);
+            Integer quantiteCommande = ligne.getQuantite(); // Quantité spécifique à cette commande
             Integer nouveauQuantite = quantiteActuelle + quantiteCommande;
 
-            System.out.println("ITO le amzao :" + quantiteActuelle);
-            System.out.println("ITO le commande :" + quantiteCommande);
-            System.out.println("ITO le update :" + nouveauQuantite);
+            System.out.println("Produit ID: " + produitId);
+            System.out.println("Quantité actuelle: " + quantiteActuelle);
+            System.out.println("Quantité commandée (à restaurer): " + quantiteCommande);
+            System.out.println("Nouvelle quantité: " + nouveauQuantite);
 
-            produitService.updateLotProduit(id, nouveauQuantite);
-
+            produitService.updateLotProduit(produitId, nouveauQuantite);
         }
 
-        // 2. Pour chaque produit de la commande, insérer dans retour_livraison (livraison peut être null)
-        var lignes = ligneCommandeRepository.findByCommandeId(commandeId);
+        // 4. Pour chaque produit de la commande, insérer dans retour_livraison (livraison peut être null)
         for (var ligne : lignes) {
             RetourLivraison retour = new RetourLivraison();
             retour.setLivraison(null); // Pas de livraison associée
