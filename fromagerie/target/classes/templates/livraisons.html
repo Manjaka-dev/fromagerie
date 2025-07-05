@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
+    <title>Liste des livraisons</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .message {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .status-livree {
+            background-color: #d4edda;
+            color: #155724;
+            font-weight: bold;
+        }
+        
+        .status-encours {
+            background-color: #fff3cd;
+            color: #856404;
+            font-weight: bold;
+        }
+        
+        .status-planifiee {
+            background-color: #cce5ff;
+            color: #004085;
+            font-weight: bold;
+        }
+        
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-disabled {
+            background-color: #95a5a6;
+            color: #ecf0f1;
+            cursor: not-allowed;
+        }
+        
+        .btn-disabled:hover {
+            background-color: #95a5a6;
+        }
+        
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+<h1>🚚 Liste des Livraisons</h1>
+
+<!-- Bouton de rafraîchissement -->
+<div style="text-align: center; margin-bottom: 20px;">
+    <button onclick="forceRefresh()" style="background: #27ae60; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
+        🔄 Rafraîchir la page
+    </button>
+</div>
+
+<!-- Affichage des messages de succès ou d'erreur -->
+<div th:if="${message}" th:text="${message}" class="message success"></div>
+<div th:if="${error}" th:text="${error}" class="message error"></div>
+
+<table>
+    <thead>
+        <tr>
+            <th>ID Livraison</th>
+            <th>Statut</th>
+            <th>Zone</th>
+            <th>Montant Total</th>
+            <th>Livreur</th>
+            <th>Client</th>
+            <th>Téléphone client</th>
+            <th>Produits Commandés</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    <tr th:each="liv : ${livraisons}">
+        <td th:text="${liv.livraisonId}"></td>
+        <td>
+            <span th:class="${liv.statutLivraison == 'Livrée' || liv.statutLivraison == 'Livre' ? 'status-livree' : 
+                           liv.statutLivraison == 'En cours' || liv.statutLivraison == 'en cours' ? 'status-encours' : 
+                           'status-planifiee'}" 
+                  th:text="${liv.statutLivraison}"></span>
+        </td>
+        <td th:text="${liv.zone}"></td>
+        <td th:text="${liv.montantTotal != null ? liv.montantTotal + ' Ar' : '0 Ar'}"></td>
+        <td th:text="${liv.livreurNom != null ? liv.livreurNom : 'Non assigné'}"></td>
+        <td th:text="${liv.clientNom}"></td>
+        <td th:text="${liv.clientTelephone}"></td>
+        <td th:text="${liv.produitsCommandes != null ? liv.produitsCommandes : 'Aucun produit'}"></td>
+        <td>
+            <form th:action="@{/add-statut}" method="post" class="status-form">
+                <input type="hidden" name="livraisonId" th:value="${liv.livraisonId}" />
+                <button type="submit" 
+                        th:class="${liv.statutLivraison == 'Livrée' || liv.statutLivraison == 'Livre' ? 'btn btn-disabled' : 'btn btn-primary'}"
+                        th:disabled="${liv.statutLivraison == 'Livrée' || liv.statutLivraison == 'Livre'}"
+                        th:text="${liv.statutLivraison == 'Livrée' || liv.statutLivraison == 'Livre' ? 'Terminée' : 
+                                liv.statutLivraison == 'En cours' || liv.statutLivraison == 'en cours' ? 'Confirmer Livraison' : 
+                                'Démarrer Livraison'}"
+                        onclick="handleStatusChange(this)">
+                </button>
+            </form>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<div style="margin-top: 20px; text-align: center;">
+    <a href="/" style="color: #3498db; text-decoration: none;">← Retour au menu principal</a>
+</div>
+
+<script>
+    // Fonction pour forcer le rafraîchissement avec cache-busting
+    function forceRefresh() {
+        const timestamp = new Date().getTime();
+        window.location.href = '/livraisons?refresh=' + timestamp;
+    }
+    
+    // Gestionnaire pour les changements de statut
+    function handleStatusChange(button) {
+        // Ajouter une classe de chargement
+        button.closest('form').classList.add('loading');
+        button.textContent = 'Mise à jour...';
+        button.disabled = true;
+        
+        // Soumettre le formulaire
+        const form = button.closest('form');
+        form.submit();
+    }
+    
+    // Rafraîchir automatiquement la page si un message de succès est présent
+    document.addEventListener('DOMContentLoaded', function() {
+        const successMessage = document.querySelector('.message.success');
+        if (successMessage) {
+            // Attendre 1.5 secondes puis rafraîchir
+            setTimeout(function() {
+                forceRefresh();
+            }, 1500);
+        }
+        
+        // Vérifier si on vient d'une redirection avec refresh
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('refresh')) {
+            // Nettoyer l'URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    });
+    
+    // Empêcher la mise en cache du navigateur
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+            forceRefresh();
+        }
+    });
+    
+    // Rafraîchir automatiquement toutes les 30 secondes pour s'assurer que les données sont à jour
+    setInterval(function() {
+        // Ne rafraîchir que si on n'est pas en train de soumettre un formulaire
+        if (!document.querySelector('.loading')) {
+            // Rafraîchir silencieusement en arrière-plan
+            fetch(window.location.href)
+                .then(response => response.text())
+                .then(html => {
+                    // Mettre à jour seulement si nécessaire
+                    const parser = new DOMParser();
+                    const newDoc = parser.parseFromString(html, 'text/html');
+                    const currentTable = document.querySelector('table tbody');
+                    const newTable = newDoc.querySelector('table tbody');
+                    
+                    if (currentTable.innerHTML !== newTable.innerHTML) {
+                        console.log('Données mises à jour automatiquement');
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.log('Erreur lors de la vérification des mises à jour:', error);
+                });
+        }
+    }, 30000);
+    
+    // Intercepter les soumissions de formulaire pour ajouter un timestamp
+    document.addEventListener('submit', function(e) {
+        if (e.target.classList.contains('status-form')) {
+            const timestamp = new Date().getTime();
+            const action = e.target.action;
+            e.target.action = action + (action.includes('?') ? '&' : '?') + 'timestamp=' + timestamp;
+        }
+    });
+</script>
+</body>
+</html>
