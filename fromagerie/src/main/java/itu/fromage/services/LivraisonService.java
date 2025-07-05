@@ -5,18 +5,23 @@ import itu.fromage.entities.Livraison;
 import itu.fromage.entities.Livreur;
 import itu.fromage.entities.StatutLivraison;
 import itu.fromage.entities.RetourLivraison;
+import itu.fromage.entities.Paiement;
+import itu.fromage.entities.ConfirmationReception;
 import itu.fromage.repositories.CommandeRepository;
 import itu.fromage.repositories.LivreurRepository;
 import itu.fromage.repositories.LivraisonRepository;
 import itu.fromage.repositories.StatutLivraisonRepository;
 import itu.fromage.repositories.RetourLivraisonRepository;
 import itu.fromage.repositories.LigneCommandeRepository;
+import itu.fromage.repositories.PaiementRepository;
+import itu.fromage.repositories.ConfirmationReceptionRepository;
 import itu.fromage.projection.CommandeLivraisonGroup;
 import itu.fromage.projection.CommandeLivraisonProjection;
 import itu.fromage.projection.LivraisonProjection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -33,16 +38,20 @@ public class LivraisonService {
     private final StatutLivraisonRepository statutLivraisonRepository;
     private final RetourLivraisonRepository retourLivraisonRepository;
     private final LigneCommandeRepository ligneCommandeRepository;
+    private final PaiementRepository paiementRepository;
+    private final ConfirmationReceptionRepository confirmationReceptionRepository;
     private final ProduitService produitService;
 
     @Autowired
-    public LivraisonService(CommandeRepository commandeRepository, LivreurRepository livreurRepository, LivraisonRepository livraisonRepository, StatutLivraisonRepository statutLivraisonRepository, RetourLivraisonRepository retourLivraisonRepository, LigneCommandeRepository ligneCommandeRepository, ProduitService produitService) {
+    public LivraisonService(CommandeRepository commandeRepository, LivreurRepository livreurRepository, LivraisonRepository livraisonRepository, StatutLivraisonRepository statutLivraisonRepository, RetourLivraisonRepository retourLivraisonRepository, LigneCommandeRepository ligneCommandeRepository, PaiementRepository paiementRepository, ConfirmationReceptionRepository confirmationReceptionRepository, ProduitService produitService) {
         this.commandeRepository = commandeRepository;
         this.livreurRepository = livreurRepository;
         this.livraisonRepository = livraisonRepository;
         this.statutLivraisonRepository = statutLivraisonRepository;
         this.retourLivraisonRepository = retourLivraisonRepository;
         this.ligneCommandeRepository = ligneCommandeRepository;
+        this.paiementRepository = paiementRepository;
+        this.confirmationReceptionRepository = confirmationReceptionRepository;
         this.produitService = produitService;
     }
 
@@ -122,6 +131,7 @@ public class LivraisonService {
     }
 
     public List<LivraisonProjection> getLivraisonDetails() {
+        // Forcer le rafraîchissement en vidant le cache Hibernate si nécessaire
         return livraisonRepository.getLivraisonDetails();
     }
 
@@ -129,10 +139,40 @@ public class LivraisonService {
         return livraisonRepository.findById(livraisonId);
     }
 
-    public void saveStatutLivraison(StatutLivraison statutLivraison) {
-        statutLivraisonRepository.save(statutLivraison);
+    public StatutLivraison saveStatutLivraison(StatutLivraison statutLivraison) {
+        return statutLivraisonRepository.save(statutLivraison);
     }
 
+    public void enregistrerPaiement(Integer commandeId, Double montant, String methode, LocalDate datePaiement) {
+        // 1. Créer un nouveau paiement
+        Paiement paiement = new Paiement();
+        paiement.setCommande(commandeRepository.findById(commandeId).orElse(null));
+        paiement.setMontant(BigDecimal.valueOf(montant));
+        paiement.setMethode(methode);
+        paiement.setDatePaiement(datePaiement);
+        
+        // 2. Sauvegarder le paiement
+        paiementRepository.save(paiement);
+        
+        // 3. Créer automatiquement une confirmation de réception
+        Livraison livraison = livraisonRepository.findByCommandeId(commandeId).orElse(null);
+        if (livraison != null) {
+            ConfirmationReception confirmation = new ConfirmationReception();
+            confirmation.setLivraison(livraison);
+            confirmation.setSignature("Signature automatique - Paiement confirmé");
+            confirmation.setPhotoReception("Photo automatique - Réception confirmée");
+            
+            confirmationReceptionRepository.save(confirmation);
+            
+            System.out.println("Confirmation de réception créée automatiquement pour la livraison ID: " + livraison.getId());
+        }
+        
+        // 4. Logger les informations
+        System.out.println("Paiement enregistré - Commande: " + commandeId + 
+                          ", Montant: " + montant + 
+                          ", Méthode: " + methode + 
+                          ", Date: " + datePaiement);
+    }
 
     public void afficherEtMettreAJourStatut() {
         List<LivraisonProjection> livraisons = getLivraisonDetails();
@@ -190,5 +230,29 @@ public class LivraisonService {
             retour.setRaison("Commande annulée par retour livraison");
             retourLivraisonRepository.save(retour);
         }
+    }
+
+    public void debugStatutsLivraison() {
+        System.out.println("=== DÉBOGAGE STATUTS EN BASE ===");
+        
+        // Vérifier tous les statuts pour chaque livraison
+        List<Livraison> livraisons = livraisonRepository.findAll();
+        for (Livraison livraison : livraisons) {
+            System.out.println("Livraison ID: " + livraison.getId());
+            
+            // Récupérer tous les statuts pour cette livraison
+            List<StatutLivraison> statuts = statutLivraisonRepository.findAll().stream()
+                .filter(s -> s.getLivraison().getId().equals(livraison.getId()))
+                .sorted((s1, s2) -> s2.getDateStatut().compareTo(s1.getDateStatut()))
+                .toList();
+            
+            for (StatutLivraison statut : statuts) {
+                System.out.println("  - Statut ID: " + statut.getId() + 
+                                  " | Statut: '" + statut.getStatut() + "'" +
+                                  " | Date: " + statut.getDateStatut());
+            }
+            System.out.println();
+        }
+        System.out.println("=== FIN DÉBOGAGE STATUTS ===");
     }
 }

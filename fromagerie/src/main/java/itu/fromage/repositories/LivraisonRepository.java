@@ -17,7 +17,7 @@ public interface LivraisonRepository extends JpaRepository<Livraison, Integer> {
     @Query(value = """
         SELECT
             l.id AS livraisonId,
-            sl.statut AS statutLivraison,
+            COALESCE(sl.statut, 'Planifiée') AS statutLivraison,
             l.zone AS zone,
             SUM(lc.quantite * p.prix_vente) AS montantTotal,
             liv.id AS livreurId,
@@ -31,13 +31,20 @@ public interface LivraisonRepository extends JpaRepository<Livraison, Integer> {
         LEFT JOIN ligne_commande lc ON lc.commande_id = c.id
         LEFT JOIN produit p ON p.id = lc.produit_id
         LEFT JOIN livreur liv ON liv.id = l.livreur_id
-        LEFT JOIN statut_livraison sl ON sl.id = (
-            SELECT sl2.id
-            FROM statut_livraison sl2
-            WHERE sl2.livraison_id = l.id
-            ORDER BY sl2.date_statut DESC
-            LIMIT 1
-        )
+        LEFT JOIN (
+            SELECT 
+                sl1.livraison_id,
+                sl1.statut
+            FROM statut_livraison sl1
+            INNER JOIN (
+                SELECT 
+                    livraison_id,
+                    MAX(date_statut) as max_date
+                FROM statut_livraison
+                GROUP BY livraison_id
+            ) sl2 ON sl1.livraison_id = sl2.livraison_id 
+                   AND sl1.date_statut = sl2.max_date
+        ) sl ON sl.livraison_id = l.id
         GROUP BY l.id, sl.statut, l.zone, liv.id, liv.nom, cl.nom, cl.telephone
         ORDER BY l.id DESC
     """, nativeQuery = true)

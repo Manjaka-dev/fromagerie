@@ -97,13 +97,14 @@ CREATE TABLE confirmation_reception (
     photo_reception TEXT
 );
 
-CREATE TABLE retour_livraison (
+CREATE TABLE paiement (
     id SERIAL PRIMARY KEY,
-    livraison_id INT REFERENCES livraison(id),
-    produit_id INT REFERENCES produit(id),
-    quantite_retour INT,
-    raison TEXT
+    commande_id INT REFERENCES commande(id),
+    date_paiement DATE,
+    montant DECIMAL(10,2),
+    methode VARCHAR(50)
 );
+
 
 CREATE TABLE promotion (
     id serial PRIMARY KEY ,

@@ -11,6 +11,7 @@ D:\ITU\BAOVOLA\fromagerie\fromagerie\src\main\java\itu\fromage\entities\StatutLi
 D:\ITU\BAOVOLA\fromagerie\fromagerie\src\main\java\itu\fromage\repositories\LotProduitRepository.java
 D:\ITU\BAOVOLA\fromagerie\fromagerie\src\main\java\itu\fromage\services\LigneCommandeService.java
 D:\ITU\BAOVOLA\fromagerie\fromagerie\src\main\java\itu\fromage\entities\MouvementStockProduit.java
+D:\ITU\BAOVOLA\fromagerie\fromagerie\src\main\java\itu\fromage\repositories\PaiementRepository.java
 D:\ITU\BAOVOLA\fromagerie\fromagerie\src\main\java\itu\fromage\entities\Client.java
 D:\ITU\BAOVOLA\fromagerie\fromagerie\src\main\java\itu\fromage\entities\Livraison.java
 D:\ITU\BAOVOLA\fromagerie\fromagerie\src\main\java\itu\fromage\entities\Produit.java
@@ -33,8 +34,11 @@ D:\ITU\BAOVOLA\fromagerie\fromagerie\src\main\java\itu\fromage\entities\RetourLi
 D:\ITU\BAOVOLA\fromagerie\fromagerie\src\main\java\itu\fromage\repositories\LivreurRepository.java
 D:\ITU\BAOVOLA\fromagerie\fromagerie\src\main\java\itu\fromage\projection\LivraisonProjection.java
 D:\ITU\BAOVOLA\fromagerie\fromagerie\src\main\java\itu\fromage\AppConfig.java
+D:\ITU\BAOVOLA\fromagerie\fromagerie\src\main\java\itu\fromage\entities\ConfirmationReception.java
 D:\ITU\BAOVOLA\fromagerie\fromagerie\src\main\java\itu\fromage\entities\LotProduit.java
 D:\ITU\BAOVOLA\fromagerie\fromagerie\src\main\java\itu\fromage\repositories\ProduitRepository.java
+D:\ITU\BAOVOLA\fromagerie\fromagerie\src\main\java\itu\fromage\entities\Paiement.java
 D:\ITU\BAOVOLA\fromagerie\fromagerie\src\main\java\itu\fromage\entities\StockProduitFini.java
 D:\ITU\BAOVOLA\fromagerie\fromagerie\src\main\java\itu\fromage\services\RetourLivraisonService.java
+D:\ITU\BAOVOLA\fromagerie\fromagerie\src\main\java\itu\fromage\repositories\ConfirmationReceptionRepository.java
 D:\ITU\BAOVOLA\fromagerie\fromagerie\src\main\java\itu\fromage\controllers\ProduitController.java

@@ -87,10 +87,30 @@ public class LivraisonController {
     @GetMapping("/livraisons")
     public ModelAndView showLivraisonDetails() {
         ModelAndView mv = new ModelAndView("livraisons");
+        
+        // Déboguer les statuts en base
+        livraisonService.debugStatutsLivraison();
+        
+        // Forcer la récupération des données fraîches
         List<LivraisonProjection> livraisons = livraisonService.getLivraisonDetails();
+        
+        System.out.println("=== DÉBOGAGE LIVRAISONS ===");
+        System.out.println("Nombre de livraisons trouvées: " + livraisons.size());
+        
+        for (LivraisonProjection liv : livraisons) {
+            System.out.println("Livraison ID: " + liv.getLivraisonId() + 
+                              " | Statut: '" + liv.getStatutLivraison() + "'" +
+                              " | Zone: " + liv.getZone() +
+                              " | Client: " + liv.getClientNom());
+        }
+        System.out.println("=== FIN DÉBOGAGE ===");
+        
         if (livraisons.isEmpty()) {
             System.out.println("Aucune livraison trouvée !");
         }
+        
+        // Ajouter un timestamp pour éviter le cache
+        mv.addObject("timestamp", System.currentTimeMillis());
         mv.addObject("livraisons", livraisons);
         return mv;
     }
@@ -123,24 +143,116 @@ public class LivraisonController {
             return "redirect:/livraisons";
         }
 
-        // Création du nouveau statut
-        StatutLivraison nouveauStatut = new StatutLivraison();
-        nouveauStatut.setLivraison(livraisonOpt.get());
-
         String statutActuel = livraisonProjection.getStatutLivraison();
-        if ("En cours".equalsIgnoreCase(statutActuel)) {
-            nouveauStatut.setStatut("Livrée");
-        } else {
-            nouveauStatut.setStatut("En cours");
+        System.out.println("Statut actuel: " + statutActuel);
+        
+        // Si le statut actuel est "En cours" et qu'on veut passer à "Livrée", 
+        // rediriger vers le formulaire de confirmation de paiement
+        if ("En cours".equalsIgnoreCase(statutActuel) || "en cours".equalsIgnoreCase(statutActuel)) {
+            return "redirect:/confirmation-paiement/" + livraisonId;
+        }
+        
+        // Si le statut est déjà "Livrée", empêcher le changement
+        if ("Livrée".equalsIgnoreCase(statutActuel) || "Livre".equalsIgnoreCase(statutActuel)) {
+            redirectAttributes.addFlashAttribute("error", "Cette livraison est déjà terminée et ne peut plus être modifiée.");
+            return "redirect:/livraisons";
         }
 
+        // Pour les autres cas (Planifiée/Planifié -> En cours)
+        StatutLivraison nouveauStatut = new StatutLivraison();
+        nouveauStatut.setLivraison(livraisonOpt.get());
+        nouveauStatut.setStatut("En cours");
         nouveauStatut.setDateStatut(Instant.now());
-        livraisonService.saveStatutLivraison(nouveauStatut);
+        
+        System.out.println("=== SAUVEGARDE STATUT ===");
+        System.out.println("Livraison ID: " + livraisonOpt.get().getId());
+        System.out.println("Nouveau statut: " + nouveauStatut.getStatut());
+        System.out.println("Date: " + nouveauStatut.getDateStatut());
+        
+        StatutLivraison statutSauvegarde = livraisonService.saveStatutLivraison(nouveauStatut);
+        System.out.println("Statut sauvegardé avec ID: " + statutSauvegarde.getId());
+        System.out.println("=== FIN SAUVEGARDE ===");
 
-        redirectAttributes.addFlashAttribute("message", "Nouveau statut ajouté avec succès !");
-        return "redirect:/livraisons";
+        // Forcer le rafraîchissement des données
+        livraisonService.debugStatutsLivraison();
+        
+        redirectAttributes.addFlashAttribute("message", "Statut mis à jour : En cours !");
+        return "redirect:/livraisons?refresh=" + System.currentTimeMillis();
     }
 
+    @GetMapping("/confirmation-paiement/{livraisonId}")
+    public ModelAndView showConfirmationPaiement(@PathVariable("livraisonId") Integer livraisonId) {
+        ModelAndView mv = new ModelAndView("confirmation-paiement");
+        
+        LivraisonProjection livraisonProjection = livraisonService.getLivraisonDetails()
+                .stream()
+                .filter(l -> l.getLivraisonId().equals(livraisonId))
+                .findFirst()
+                .orElse(null);
+
+        if (livraisonProjection == null) {
+            mv.setViewName("redirect:/livraisons");
+            return mv;
+        }
+
+        mv.addObject("livraison", livraisonProjection);
+        mv.addObject("livraisonId", livraisonId);
+        return mv;
+    }
+
+    @PostMapping("/confirmer-livraison-paiement")
+    public String confirmerLivraisonEtPaiement(
+            @RequestParam("livraisonId") Integer livraisonId,
+            @RequestParam("montantPaiement") Double montantPaiement,
+            @RequestParam("methodePaiement") String methodePaiement,
+            @RequestParam("datePaiement") String datePaiement,
+            RedirectAttributes redirectAttributes) {
+        
+        try {
+            System.out.println("=== DÉBUT CONFIRMATION LIVRAISON ===");
+            System.out.println("Livraison ID: " + livraisonId);
+            System.out.println("Montant: " + montantPaiement);
+            System.out.println("Méthode: " + methodePaiement);
+            System.out.println("Date: " + datePaiement);
+            
+            // 1. Mettre à jour le statut de la livraison à "Livrée"
+            Optional<Livraison> livraisonOpt = livraisonService.findLivraisonById(livraisonId);
+            if (livraisonOpt.isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "Livraison non trouvée.");
+                return "redirect:/livraisons";
+            }
+
+            Livraison livraison = livraisonOpt.get();
+            System.out.println("Livraison trouvée: " + livraison.getId());
+
+            StatutLivraison nouveauStatut = new StatutLivraison();
+            nouveauStatut.setLivraison(livraison);
+            nouveauStatut.setStatut("Livrée");
+            nouveauStatut.setDateStatut(Instant.now());
+            
+            StatutLivraison statutSauvegarde = livraisonService.saveStatutLivraison(nouveauStatut);
+            System.out.println("Statut sauvegardé avec ID: " + statutSauvegarde.getId());
+            System.out.println("Statut: " + statutSauvegarde.getStatut());
+
+            // 2. Enregistrer le paiement
+            livraisonService.enregistrerPaiement(livraison.getCommande().getId(), 
+                                               montantPaiement, 
+                                               methodePaiement, 
+                                               LocalDate.parse(datePaiement));
+
+            // Forcer le rafraîchissement des données
+            livraisonService.debugStatutsLivraison();
+
+            System.out.println("=== FIN CONFIRMATION LIVRAISON ===");
+            redirectAttributes.addFlashAttribute("message", "Livraison confirmée, paiement enregistré et confirmation de réception créée avec succès !");
+        } catch (Exception e) {
+            System.out.println("ERREUR lors de la confirmation: " + e.getMessage());
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "Erreur lors de la confirmation : " + e.getMessage());
+        }
+        
+        return "redirect:/livraisons?refresh=" + System.currentTimeMillis();
+    }
 
     @PostMapping("/retour-livraison")
     public String retourLivraison(@RequestParam("commandeId") Integer commandeId, RedirectAttributes redirectAttributes) {

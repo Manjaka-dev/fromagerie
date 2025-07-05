@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmation de Paiement - Livraison</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .livraison-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .livraison-info h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            color: #2c3e50;
+            font-size: 1.1em;
+        }
+        
+        .form-section {
+            margin-bottom: 30px;
+        }
+        
+        .form-section h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+            transform: translateY(-2px);
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧀 Confirmation de Livraison</h1>
+            <p>Finalisez la livraison et enregistrez le paiement</p>
+        </div>
+        
+        <div class="content">
+            <div class="warning">
+                <strong>⚠️ Attention :</strong> Une fois cette livraison confirmée, elle ne pourra plus être modifiée.
+            </div>
+            
+            <div class="livraison-info">
+                <h3>📦 Informations de la Livraison</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">ID Livraison</span>
+                        <span class="info-value" th:text="${livraison.livraisonId}">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Client</span>
+                        <span class="info-value" th:text="${livraison.clientNom}">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Zone</span>
+                        <span class="info-value" th:text="${livraison.zone}">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Livreur</span>
+                        <span class="info-value" th:text="${livraison.livreurNom}">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Produits</span>
+                        <span class="info-value" th:text="${livraison.produitsCommandes}">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Montant Total</span>
+                        <span class="info-value" th:text="${'€' + livraison.montantTotal}">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <form th:action="@{/confirmer-livraison-paiement}" method="post">
+                <input type="hidden" name="livraisonId" th:value="${livraisonId}">
+                
+                <div class="form-section">
+                    <h3>💳 Informations de Paiement</h3>
+                    
+                    <div class="form-group">
+                        <label for="montantPaiement">Montant du Paiement (€)</label>
+                        <input type="number" 
+                               id="montantPaiement" 
+                               name="montantPaiement" 
+                               step="0.01" 
+                               th:value="${livraison.montantTotal}"
+                               required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="methodePaiement">Méthode de Paiement</label>
+                        <select id="methodePaiement" name="methodePaiement" required>
+                            <option value="">Sélectionnez une méthode</option>
+                            <option value="Espèces">Espèces</option>
+                            <option value="Carte bancaire">Carte bancaire</option>
+                            <option value="Chèque">Chèque</option>
+                            <option value="Virement bancaire">Virement bancaire</option>
+                            <option value="PayPal">PayPal</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="datePaiement">Date de Paiement</label>
+                        <input type="date" 
+                               id="datePaiement" 
+                               name="datePaiement" 
+                               th:value="${#dates.format(#dates.createNow(), 'yyyy-MM-dd')}"
+                               required>
+                    </div>
+                </div>
+                
+                <div class="btn-group">
+                    <a href="/livraisons" class="btn btn-secondary">❌ Annuler</a>
+                    <button type="submit" class="btn btn-primary">✅ Confirmer la Livraison</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // Validation côté client
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const montant = parseFloat(document.getElementById('montantPaiement').value);
+            const methode = document.getElementById('methodePaiement').value;
+            
+            if (!methode) {
+                e.preventDefault();
+                alert('Veuillez sélectionner une méthode de paiement.');
+                return;
+            }
+            
+            if (montant <= 0) {
+                e.preventDefault();
+                alert('Le montant doit être supérieur à 0.');
+                return;
+            }
+            
+            if (!confirm('Êtes-vous sûr de vouloir confirmer cette livraison ? Cette action est irréversible.')) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html> 
