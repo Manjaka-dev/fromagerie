@@ -14,6 +14,10 @@ public interface LivraisonProduitRepository extends JpaRepository<LivraisonProdu
     List<LivraisonProduit> findByLivraison(Livraison livraison);
     List<LivraisonProduit> findByProduit(Produit produit);
     
+    // Méthode pour récupérer par ID de livraison
+    @Query("SELECT lp FROM LivraisonProduit lp WHERE lp.livraison.id = :livraisonId")
+    List<LivraisonProduit> findByLivraisonId(Long livraisonId);
+    
     @Query("SELECT lp FROM LivraisonProduit lp WHERE lp.livraison = :livraison")
     List<LivraisonProduit> findProduitsALivrerByLivraison(Livraison livraison);
     

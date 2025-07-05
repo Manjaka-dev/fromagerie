@@ -45,4 +45,5 @@ public interface LivraisonRepository extends JpaRepository<Livraison, Long> {
         ORDER BY l.dateLivraison ASC
         """)
     List<Livraison> findByStatutWithDetails(StatutLivraisonEnum statut);
+    
 }
