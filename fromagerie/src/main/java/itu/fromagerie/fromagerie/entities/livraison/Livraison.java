@@ -42,4 +42,16 @@ public class Livraison {
     
     @OneToMany(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<RetourLivraison> retours;
+    
+    public String getStatut() {
+        if (statuts != null && !statuts.isEmpty()) {
+            // Return the most recent status
+            return statuts.stream()
+                    .sorted((s1, s2) -> s2.getDateStatut().compareTo(s1.getDateStatut()))
+                    .findFirst()
+                    .map(StatutLivraison::getStatut)
+                    .orElse("En attente");
+        }
+        return "En attente";
+    }
 }
