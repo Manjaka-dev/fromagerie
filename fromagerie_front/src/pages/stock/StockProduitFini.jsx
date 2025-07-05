@@ -17,9 +17,10 @@ const StockProduitsFinis = () => {
     const fetchData = async () => {
       try {
         const simulatedLots = [
-          { id: 1, produit_id: 1, numero_lot: 'LOT-2023-001', date_fabrication: '2023-10-15', date_peremption: '2023-12-15' },
-          { id: 2, produit_id: 2, numero_lot: 'LOT-2023-002', date_fabrication: '2023-09-20', date_peremption: '2024-03-20' },
-          { id: 3, produit_id: 1, numero_lot: 'LOT-2023-003', date_fabrication: '2023-11-05', date_peremption: '2024-02-05' },
+          { id: 1, produit_id: 1, numero_lot: 'LOT-2023-001', date_fabrication: '2023-10-15', date_peremption: '2023-12-15', poids : 1.5 },
+          { id: 2, produit_id: 2, numero_lot: 'LOT-2023-002', date_fabrication: '2023-09-20', date_peremption: '2024-03-20', poids : 2.0 },
+          { id: 3, produit_id: 1, numero_lot: 'LOT-2023-003', date_fabrication: '2023-11-05', date_peremption: '2024-02-05', poids : 1.8 },
+          
         ];
 
         const simulatedStocks = [
@@ -212,7 +213,7 @@ const StockProduitsFinis = () => {
 
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+          <thead className="bg-gray-100">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Numéro de Lot
@@ -260,10 +261,13 @@ const StockProduitsFinis = () => {
                 </div>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Entrées/Sorties
+                Type Mouvement
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Variation Stock
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Poids
               </th>
             </tr>
           </thead>
@@ -294,6 +298,11 @@ const StockProduitsFinis = () => {
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   <span className={`${getVariationClass(lot.variationQuantite)} font-medium`}>
                     {lot.variationQuantite}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <span className={`${getVariationClass(lot.poids)} font-medium`}>
+                    {lot.poids}
                   </span>
                 </td>
               </tr>
