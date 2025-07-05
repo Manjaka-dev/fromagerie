@@ -1,5 +1,6 @@
 package itu.fromage.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,6 +13,7 @@ import java.time.LocalDate;
 @Table(name = "livraison", uniqueConstraints = {
     @UniqueConstraint(columnNames = "commande_id")
 })
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Livraison {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,10 +22,12 @@ public class Livraison {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "commande_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Commande commande; // Commande's id must also be Integer
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "livreur_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Livreur livreur;
 
     @Column(name = "date_livraison")

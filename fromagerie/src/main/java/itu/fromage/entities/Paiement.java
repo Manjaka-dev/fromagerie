@@ -1,5 +1,6 @@
 package itu.fromage.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,6 +12,7 @@ import java.time.LocalDate;
 @Setter
 @Entity
 @Table(name = "paiement")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Paiement {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,6 +21,7 @@ public class Paiement {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "commande_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Commande commande;
 
     @Column(name = "date_paiement")

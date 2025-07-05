@@ -1,5 +1,6 @@
 package itu.fromage.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,6 +9,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "categorie_produit")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class CategorieProduit {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

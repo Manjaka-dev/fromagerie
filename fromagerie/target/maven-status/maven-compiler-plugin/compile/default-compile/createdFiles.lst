@@ -10,9 +10,12 @@ itu\fromage\repositories\PaiementRepository.class
 itu\fromage\repositories\RetourLivraisonRepository.class
 itu\fromage\entities\Produit.class
 itu\fromage\repositories\LigneCommandeRepository.class
+itu\fromage\controllers\ClientController.class
+itu\fromage\controllers\LivreurController.class
 itu\fromage\AppConfig.class
 itu\fromage\HelloController$Result.class
 itu\fromage\projection\CommandeLivraisonProjection.class
+itu\fromage\controllers\WebController.class
 itu\fromage\services\RetourLivraisonService.class
 itu\fromage\HelloController.class
 itu\fromage\projection\CommandeListeProduit.class
@@ -25,6 +28,7 @@ itu\fromage\entities\StatutLivraison.class
 itu\fromage\entities\ConfirmationReception.class
 itu\fromage\repositories\LivraisonRepository.class
 itu\fromage\repositories\CategorieProduitRepository.class
+itu\fromage\config\CorsConfig.class
 itu\fromage\entities\StockProduitFini.class
 itu\fromage\services\LigneCommandeService.class
 itu\fromage\entities\Commande.class
@@ -32,7 +36,9 @@ itu\fromage\controllers\ProduitController.class
 itu\fromage\repositories\StatutLivraisonRepository.class
 itu\fromage\repositories\LivreurRepository.class
 itu\fromage\services\ClientService.class
+itu\fromage\controllers\PaiementController.class
 itu\fromage\repositories\ClientRepository.class
+itu\fromage\config\JacksonConfig.class
 itu\fromage\entities\Livreur.class
 itu\fromage\entities\Paiement.class
 itu\fromage\services\CommandeService.class
