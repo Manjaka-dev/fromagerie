@@ -1,6 +1,5 @@
 package itu.fromagerie.fromagerie.controller.production;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +17,6 @@ public class FicheProductionController {
 
     private final FicheProductionService ficheProductionService;
 
-    @Autowired
     public FicheProductionController(FicheProductionService ficheProductionService) {
         this.ficheProductionService = ficheProductionService;
     }

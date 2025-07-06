@@ -18,6 +18,7 @@ public class ConfirmationReception {
     
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "livraison_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Livraison livraison;
     
     @Column(columnDefinition = "TEXT")

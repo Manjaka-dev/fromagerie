@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -22,10 +23,12 @@ public class Livraison {
     
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "commande_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Commande commande;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "livreur_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Livreur livreur;
     
     @Column(name = "date_livraison")
@@ -39,14 +42,18 @@ public class Livraison {
     private StatutLivraisonEnum statutLivraison = StatutLivraisonEnum.PLANIFIEE;
     
     @OneToMany(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore  // Éviter les références circulaires
     private List<LivraisonProduit> produitsALivrer;
     
     @OneToMany(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore  // Éviter les références circulaires
     private List<StatutLivraison> historiquesStatuts;
     
     @OneToOne(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore  // Éviter les références circulaires
     private ConfirmationReception confirmationReception;
     
     @OneToMany(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore  // Éviter les références circulaires
     private List<RetourLivraison> retours;
 }

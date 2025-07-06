@@ -21,9 +21,10 @@ public class LigneCommande {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "commande_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Commande commande;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "produit_id")
     private Produit produit;
     

@@ -1,7 +1,6 @@
 package itu.fromagerie.fromagerie.service.production;
 
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import itu.fromagerie.fromagerie.entities.production.TransformationDechet;
 import itu.fromagerie.fromagerie.entities.stock.MatierePremiere;
@@ -17,7 +16,6 @@ public class TransformationDechetService {
 
     private final TransformationDechetRepository transformationDechetRepo;
 
-    @Autowired
     public TransformationDechetService(TransformationDechetRepository transformationDechetRepo) {
         this.transformationDechetRepo = transformationDechetRepo;
     }

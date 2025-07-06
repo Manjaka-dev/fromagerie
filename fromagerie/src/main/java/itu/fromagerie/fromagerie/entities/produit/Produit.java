@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -43,8 +44,10 @@ public class Produit {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "categorie_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private CategorieProduit categorie;
     
     @OneToMany(mappedBy = "produit", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore  // Éviter les références circulaires
     private List<LotProduit> lots;
 }

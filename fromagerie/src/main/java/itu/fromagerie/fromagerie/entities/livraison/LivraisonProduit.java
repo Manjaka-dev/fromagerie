@@ -19,6 +19,7 @@ public class LivraisonProduit {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "livraison_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Livraison livraison;
     
     @ManyToOne(fetch = FetchType.LAZY)
