@@ -835,11 +835,12 @@
   border-radius: 0.375rem;
   font-size: 0.875rem;
   background-color: #fff;
+  color: #1f2937;
   transition: border-color 0.2s;
 }
 .formInputDate{
     width: 100%;
-    color: #2d3748;
+    color: #1f2937;
   padding: 0.5rem 0.75rem;
   border: 1px solid #676f7c;
   border-radius: 0.375rem;
@@ -854,14 +855,753 @@
   box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
 }
 
+.formInput::placeholder {
+  color: #6b7280;
+}
+
+.formInputDate::placeholder {
+  color: #6b7280;
+}
+
 .formSelect {
   appearance: none;
   padding: 0.5rem 0.75rem;
-  color: #2d3748;
+  color: #1f2937;
   font-size: 12px;
   background-color: #fff;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: right 0.5rem center;
   background-size: 1.5em 1.5em;
+}
+
+/* Nouveaux styles pour les statuts */
+.status-confirmed {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.status-preparation {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.status-delivered {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+}
+
+.status-cancelled {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.status-default {
+  background-color: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+/* Styles pour les actions de statut */
+.statusActions {
+  margin-top: 10px;
+}
+
+.statusSelect {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: white;
+  font-size: 14px;
+  color: #374151;
+}
+
+.statusSelect:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* Styles pour les éléments de produit */
+.productItem {
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.productItem:last-child {
+  border-bottom: none;
+}
+
+/* Animation pour le loader */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Styles pour les badges de statut dans les modales */
+.badgeConfirmed {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.badgePreparation {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.badgeDelivered {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+}
+
+.badgeCancelled {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+/* Responsive pour les nouvelles sections */
+@media (max-width: 1200px) {
+  .statusCardsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+  
+  .ordersGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+}
+
+@media (max-width: 768px) {
+  .statusCardsGrid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .ordersGrid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .statusSelect {
+    font-size: 16px; /* Évite le zoom sur mobile */
+  }
+}
+
+/* Styles pour la sélection de produits */
+.productSelection {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px;
+  background-color: #f9fafb;
+}
+
+.productOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  transition: background-color 0.2s;
+}
+
+.productOption:hover {
+  background-color: #f3f4f6;
+}
+
+.productOption input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #3b82f6;
+}
+
+.productOption label {
+  flex: 1;
+  cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+}
+
+/* Styles pour les quantités */
+.quantityInput {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding: 8px;
+  background-color: #f9fafb;
+  border-radius: 6px;
+}
+
+.quantityInput label {
+  min-width: 120px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.quantityInput input {
+  width: 80px;
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  text-align: center;
+  background-color: white;
+  color: #1f2937;
+}
+
+.addProductButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 10px;
+  transition: background-color 0.2s;
+}
+
+.addProductButton:hover {
+  background-color: #2563eb;
+}
+
+.addProductButton:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Styles pour les produits sélectionnés */
+.selectedProducts {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px;
+  background-color: #f9fafb;
+}
+
+.selectedProductItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  margin-bottom: 8px;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.selectedProductItem span {
+  font-size: 14px;
+  color: #374151;
+}
+
+.selectedProductItem span:nth-child(1) {
+  font-weight: 500;
+  flex: 2;
+}
+
+.selectedProductItem span:nth-child(2) {
+  flex: 1;
+  text-align: center;
+}
+
+.selectedProductItem span:nth-child(3) {
+  flex: 1;
+  text-align: right;
+  font-weight: 500;
+  color: #059669;
+}
+
+.removeProductButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.removeProductButton:hover {
+  background-color: #dc2626;
+}
+
+/* Style pour le total de la commande */
+.orderTotal {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px;
+  margin-top: 10px;
+  background-color: #f0f9ff;
+  border: 1px solid #0ea5e9;
+  border-radius: 6px;
+  font-size: 16px;
+  color: #0c4a6e;
+}
+
+/* Amélioration des styles existants */
+.formInput {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: white;
+  color: #1f2937;
+  transition: border-color 0.2s;
+}
+
+.formInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.formSelect {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: white;
+  transition: border-color 0.2s;
+}
+
+.formSelect:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.formInputDate {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: white;
+  color: #1f2937;
+  transition: border-color 0.2s;
+}
+
+.formInputDate:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Style pour le bouton désactivé */
+.actionButtonNewCommande:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.actionButtonNewCommande:disabled:hover {
+  background-color: #9ca3af;
+}
+
+/* Section d'ajout de commande */
+.addOrderSection {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+/* Section des filtres */
+.filtersSection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 150px;
+}
+
+.filterGroup label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.filterGroup input,
+.filterGroup select {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  color: #1f2937;
+  transition: all 0.2s ease;
+}
+
+.filterGroup input:focus,
+.filterGroup select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.clearFiltersBtn {
+  padding: 10px 20px;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  align-self: end;
+  margin-top: 20px;
+}
+
+.clearFiltersBtn:hover {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+.addOrderButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 32px;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.addOrderButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+}
+
+.addIcon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Liste des commandes */
+.commandesList {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.listTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6b7280;
+}
+
+.emptyState p {
+  font-size: 18px;
+  margin: 16px 0 24px 0;
+}
+
+/* Grille des commandes */
+.commandesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 24px;
+}
+
+/* Carte de commande */
+.commandeCard {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.commandeCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* En-tête de la commande */
+.commandeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.clientInfo {
+  flex: 1;
+}
+
+.clientName {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 8px 0;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.commandeActions {
+  display: flex;
+  gap: 8px;
+}
+
+.cancelButton {
+  padding: 6px 12px;
+  background-color: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancelButton:hover:not(:disabled) {
+  background-color: #d97706;
+}
+
+.cancelButton:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.deleteButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.deleteButton:hover {
+  background-color: #dc2626;
+}
+
+/* Détails de la commande */
+.commandeDetails {
+  margin-bottom: 16px;
+}
+
+.detailRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 8px 0;
+}
+
+.detailIcon {
+  width: 16px;
+  height: 16px;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.detailLabel {
+  font-weight: 500;
+  color: #374151;
+  min-width: 80px;
+}
+
+.detailValue {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+/* Section des produits */
+.produitsSection {
+  border-top: 1px solid #f3f4f6;
+  padding-top: 16px;
+}
+
+.produitsTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 12px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.produitsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.produitItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #f9fafb;
+  border-radius: 6px;
+  border-left: 3px solid #3b82f6;
+}
+
+.produitName {
+  font-weight: 500;
+  color: #1f2937;
+  flex: 2;
+}
+
+.produitQuantity {
+  font-size: 12px;
+  color: #6b7280;
+  flex: 1;
+  text-align: center;
+}
+
+.produitPrice {
+  font-weight: 600;
+  color: #059669;
+  flex: 1;
+  text-align: right;
+}
+
+.noProduits {
+  text-align: center;
+  color: #9ca3af;
+  font-style: italic;
+  padding: 20px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .commandesGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .commandeHeader {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .commandeActions {
+    align-self: flex-end;
+  }
+  
+  .produitItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .produitQuantity,
+  .produitPrice {
+    text-align: left;
+  }
+}
+
+/* Styles pour le modal de livraison */
+.commandeInfo {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.commandeInfo p {
+  margin: 5px 0;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.commandeInfo strong {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+/* Responsive pour les filtres */
+@media (max-width: 768px) {
+  .filtersSection {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .filterGroup {
+    width: 100%;
+    max-width: 200px;
+  }
+  
+  .clearFiltersBtn {
+    align-self: center;
+    margin-top: 10px;
+  }
 }

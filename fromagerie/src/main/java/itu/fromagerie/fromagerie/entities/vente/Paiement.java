@@ -21,6 +21,7 @@ public class Paiement {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "commande_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Commande commande;
     
     @Column(name = "date_paiement")

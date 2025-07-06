@@ -4,6 +4,8 @@ import itu.fromagerie.fromagerie.entities.produit.LotProduit;
 import itu.fromagerie.fromagerie.entities.produit.Produit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -19,4 +21,14 @@ public interface LotProduitRepository extends JpaRepository<LotProduit, Long> {
     
     @Query("SELECT l FROM LotProduit l WHERE l.datePeremption BETWEEN :dateDebut AND :dateFin")
     List<LotProduit> findLotsExpirantEntre(LocalDate dateDebut, LocalDate dateFin);
+    
+    @Query("SELECT COALESCE(SUM(l.quantite), 0) FROM LotProduit l WHERE l.produit.id = :produitId")
+    Integer getQuantiteProduit(@Param("produitId") int produitId);
+
+    @Query("SELECT l FROM LotProduit l WHERE l.dateFabrication BETWEEN :dateDebut AND :dateFin")
+    List<LotProduit> findLotsByPeriode(LocalDate dateDebut, LocalDate dateFin);
+    
+    @Modifying
+    @Query("UPDATE LotProduit l SET l.quantite = :quantite WHERE l.produit.id = :produitId")
+    void updateLotProduitBy(@Param("produitId") int produitId, @Param("quantite") int quantite);
 }
