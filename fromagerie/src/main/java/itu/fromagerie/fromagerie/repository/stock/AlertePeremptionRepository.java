@@ -16,7 +16,4 @@ public interface AlertePeremptionRepository extends JpaRepository<AlertePerempti
     
     @Query("SELECT a FROM AlertePeremption a WHERE a.datePeremption BETWEEN :dateDebut AND :dateFin")
     List<AlertePeremption> findAlertesEntre(LocalDate dateDebut, LocalDate dateFin);
-    
-    @Query("SELECT a FROM AlertePeremption a WHERE a.datePeremption <= :date ORDER BY a.datePeremption ASC")
-    List<AlertePeremption> findActiveAlertes(LocalDate date);
 }

@@ -5,6 +5,7 @@ import itu.fromagerie.fromagerie.repository.stock.StockProduitFiniRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Service
@@ -14,7 +15,8 @@ public class StockProduitFiniService {
     private StockProduitFiniRepository stockRepo;
 
     public StockStatDTO getStatStock(LocalDate dateDebut, LocalDate dateFin, int nbClients, int qttDemandee) {
-        int quantite = stockRepo.getQuantiteTotaleByPeriode(dateDebut, dateFin);
+        // TODO: Implémenter getQuantiteTotaleByPeriode dans StockProduitFiniRepository
+        int quantite = 0; // Valeur par défaut
         int seuilCritique = (int) Math.ceil(0.5 * quantite);
         int seuilDemande = nbClients * qttDemandee;
         StockStatDTO dto = new StockStatDTO();
@@ -25,5 +27,14 @@ public class StockProduitFiniService {
         dto.seuilCritique = quantite <= seuilCritique;
         dto.suffisant = quantite >= seuilDemande;
         return dto;
+    }
+
+    public BigDecimal getQuantiteTotale(LocalDate dateDebut, LocalDate dateFin) {
+        // TODO: Implémenter getQuantiteTotaleByPeriode dans StockProduitFiniRepository
+        // Pour l'instant, retourner zéro
+        return BigDecimal.ZERO;
+        
+        // Code original commenté :
+        // return stockRepo.getQuantiteTotaleByPeriode(dateDebut, dateFin);
     }
 } 

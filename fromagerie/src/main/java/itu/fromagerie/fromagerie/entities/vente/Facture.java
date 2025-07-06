@@ -21,6 +21,7 @@ public class Facture {
     
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "commande_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Commande commande;
     
     @Column(name = "montant_total", precision = 10, scale = 2)

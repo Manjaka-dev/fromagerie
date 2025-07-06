@@ -44,6 +44,7 @@ public class Produit {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "categorie_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private CategorieProduit categorie;
     
     @OneToMany(mappedBy = "produit", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

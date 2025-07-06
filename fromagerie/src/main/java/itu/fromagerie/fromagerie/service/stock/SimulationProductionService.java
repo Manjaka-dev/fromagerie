@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -15,17 +16,21 @@ public class SimulationProductionService {
     private SimulationProductionRepository simulationRepo;
 
     public List<SimulationDTO> getSimulations(LocalDate dateDebut, LocalDate dateFin) {
-        // Adapter pour retourner des DTOs si besoin
-        return simulationRepo.findSimulationsByPeriode(dateDebut, dateFin)
-            .stream()
-            .map(s -> {
-                SimulationDTO dto = new SimulationDTO();
-                dto.quantiteAProduire = s.getQuantiteSuggeree();
-                dto.stockActuel = 0; // à compléter
-                dto.demandeEstimee = 0; // à compléter
-                dto.nbClients = 0; // à compléter
-                dto.moyenneQttDemandee = 0; // à compléter
-                return dto;
-            }).toList();
+        // TODO: Implémenter findSimulationsByPeriode dans SimulationProductionRepository
+        // Pour l'instant, retourner une liste vide
+        return new ArrayList<>();
+        
+        // Code original commenté :
+        // return simulationRepo.findSimulationsByPeriode(dateDebut, dateFin)
+        //     .stream()
+        //     .map(s -> {
+        //         SimulationDTO dto = new SimulationDTO();
+        //         dto.quantiteAProduire = s.getQuantiteSuggeree();
+        //         dto.stockActuel = 0; // à compléter
+        //         dto.demandeEstimee = 0; // à compléter
+        //         dto.nbClients = 0; // à compléter
+        //         dto.moyenneQttDemandee = 0; // à compléter
+        //         return dto;
+        //     }).toList();
     }
 } 

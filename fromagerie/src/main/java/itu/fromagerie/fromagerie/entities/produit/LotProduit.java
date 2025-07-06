@@ -20,6 +20,7 @@ public class LotProduit {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "produit_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Produit produit;
     
     @Column(name = "numero_lot", length = 50)

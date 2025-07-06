@@ -5,6 +5,7 @@ import itu.fromagerie.fromagerie.entities.vente.Commande;
 import itu.fromagerie.fromagerie.entities.produit.Produit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -16,4 +17,7 @@ public interface LigneCommandeRepository extends JpaRepository<LigneCommande, Lo
     
     @Query("SELECT SUM(l.quantite) FROM LigneCommande l WHERE l.produit = :produit")
     Integer getTotalQuantiteByProduit(Produit produit);
+    
+    @Query("SELECT l FROM LigneCommande l WHERE l.commande.id = :commandeId")
+    List<LigneCommande> findByCommandeId(@Param("commandeId") Long commandeId);
 }
