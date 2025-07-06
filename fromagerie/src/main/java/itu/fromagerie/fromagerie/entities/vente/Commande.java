@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -30,17 +31,15 @@ public class Commande {
     @Column(length = 30)
     private String statut; // en_attente, confirmée, annulée, livrée
     
-    @Column(name = "montant_total", precision = 10, scale = 2)
-    private BigDecimal montantTotal;
-    
-    @OneToMany(mappedBy = "commande", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "commande", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore  // Éviter les références circulaires
     private List<LigneCommande> lignesCommande;
     
     @OneToOne(mappedBy = "commande", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @com.fasterxml.jackson.annotation.JsonIgnore
+    @JsonIgnore  // Éviter les références circulaires
     private Facture facture;
     
     @OneToMany(mappedBy = "commande", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @com.fasterxml.jackson.annotation.JsonIgnore
+    @JsonIgnore  // Éviter les références circulaires
     private List<Paiement> paiements;
 }

@@ -13,6 +13,26 @@ import java.util.Optional;
 public interface LivraisonRepository extends JpaRepository<Livraison, Long> {
     Optional<Livraison> findByCommandeId(Long commandeId);
 
+    Optional<Livraison> findByCommande(Commande commande);
+    List<Livraison> findByLivreur(Livreur livreur);
+    List<Livraison> findByZone(String zone);
+    List<Livraison> findByDateLivraisonBetween(LocalDate dateDebut, LocalDate dateFin);
+    List<Livraison> findByStatutLivraison(StatutLivraisonEnum statut);
+    
+    @Query("SELECT l FROM Livraison l WHERE l.dateLivraison = :date")
+    List<Livraison> findByDateLivraison(LocalDate date);
+    // Requête complète pour les informations de livraison
+    @Query("""
+        SELECT l FROM Livraison l 
+        JOIN FETCH l.commande c 
+        JOIN FETCH c.client cl 
+        JOIN FETCH l.livreur lr 
+        LEFT JOIN FETCH l.produitsALivrer pa 
+        LEFT JOIN FETCH pa.produit p 
+        WHERE l.dateLivraison BETWEEN :dateDebut AND :dateFin
+        ORDER BY l.dateLivraison DESC
+        """)
+    List<Livraison> findLivraisonsCompletes(LocalDate dateDebut, LocalDate dateFin);
     
     @Query(value = """
         SELECT

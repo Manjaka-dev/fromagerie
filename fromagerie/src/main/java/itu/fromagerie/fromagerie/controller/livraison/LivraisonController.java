@@ -284,7 +284,6 @@ public class LivraisonController {
             return ResponseEntity.badRequest().body(response);
         }
     }
-
     @PostMapping("/retour-livraison")
     public ResponseEntity<Map<String, Object>> retourLivraison(@RequestBody Map<String, Object> request) {
         try {
@@ -350,5 +349,28 @@ public class LivraisonController {
                 document.close();
             }
         }
+    
+    // ==================== RECHERCHES PAR LIVREUR/ZONE ====================
+    
+    /**
+     * GET /api/livraisons/livreur/{livreurId} - Récupère les livraisons d'un livreur
+     */
+    @GetMapping("/livreur/{livreurId}")
+    public ResponseEntity<List<LivraisonInfoDTO>> getLivraisonsByLivreur(@PathVariable Long livreurId) {
+        try {
+            List<LivraisonInfoDTO> livraisons = livraisonService.getLivraisonsByLivreur(livreurId);
+            return ResponseEntity.ok(livraisons);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+    
+    /**
+     * GET /api/livraisons/zone/{zone} - Récupère les livraisons d'une zone
+     */
+    @GetMapping("/zone/{zone}")
+    public ResponseEntity<List<LivraisonInfoDTO>> getLivraisonsByZone(@PathVariable String zone) {
+        List<LivraisonInfoDTO> livraisons = livraisonService.getLivraisonsByZone(zone);
+        return ResponseEntity.ok(livraisons);
     }
 }
