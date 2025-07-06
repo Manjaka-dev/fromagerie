@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../assets/styles/production.css';
 import SidebarMenu from "../components/SidebarMenu";
 import {
@@ -23,10 +23,16 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
+import { productionAPI, formatDate } from '../services/api';
 
 const Production = () => {
-
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // États pour les données de production
+  const [productions, setProductions] = useState([]);
+  const [fiches, setFiches] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [product, setProduct] = useState({
     category: '',
@@ -39,32 +45,79 @@ const Production = () => {
     expirationDate: ''
   });
 
-  const recentProductions = [
-    {
-      category: 'Nom Catégorie',
-      name: 'Nom du produit',
-      weight: 'Poids',
-      costPrice: '5 000 A+',
-      ingredients: 'sal, Yocurt, ...',
-      sellingPrice: '28 000 A+'
-    },
-    {
-      category: 'Nom Catégorie',
-      name: 'Nom du produit',
-      weight: 'Poids',
-      costPrice: '5 000 A+',
-      ingredients: 'sal, Yocurt, ...',
-      sellingPrice: '28 000 A+'
-    },
-    {
-      category: 'Nom Catégorie',
-      name: 'Nom du produit',
-      weight: 'Poids',
-      costPrice: '5 000 A+',
-      ingredients: 'sal, Yocurt, ...',
-      sellingPrice: '28 000 A+'
+  // Charger les données au montage
+  useEffect(() => {
+    loadProductionData();
+  }, []);
+
+  const loadProductionData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Charger les productions récentes depuis l'API
+      const today = new Date().toISOString().split('T')[0];
+      const productionsData = await productionAPI.getProductionsByDate(today);
+      setProductions(productionsData || []);
+
+      // Charger les fiches de production depuis l'API
+      // Pour l'instant, on charge toutes les fiches ou celles d'un produit spécifique
+      const fichesData = await productionAPI.getFichesByProduit(1); // Par exemple, produit ID 1
+      setFiches(fichesData || []);
+
+    } catch (err) {
+      console.error('Erreur lors du chargement des données de production:', err);
+      setError('Impossible de charger les données de production. Veuillez vérifier que le backend est démarré.');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  // Fonction pour créer une nouvelle fiche de production
+  const handleSave = async () => {
+    try {
+      const ficheData = {
+        produit: product.name,
+        categorie: product.category,
+        poids: product.weight,
+        prixRevient: product.costPrice,
+        prixVente: product.sellingPrice,
+        ingredients: product.ingredients,
+        allergenes: product.allergens,
+        dateExpiration: product.expirationDate,
+        dateCreation: new Date().toISOString().split('T')[0]
+      };
+
+      try {
+        await productionAPI.createFicheProduction(ficheData);
+        await loadProductionData(); // Recharger les données
+      } catch (err) {
+        console.error('Erreur lors de la création de la fiche de production:', err);
+        setError('Impossible de créer la fiche de production. Veuillez vérifier que le backend est démarré.');
+        return;
+      }
+
+      // Ajouter à la liste des productions récentes
+      const nouvelleProduction = {
+        id: Date.now(),
+        category: product.category,
+        name: product.name,
+        weight: product.weight,
+        costPrice: product.costPrice,
+        sellingPrice: product.sellingPrice,
+        date: new Date().toISOString().split('T')[0],
+        status: 'En cours',
+        batchNumber: `BATCH${Date.now()}`
+      };
+      setProductions([nouvelleProduction, ...productions]);
+
+      // Réinitialiser le formulaire
+      handleCancel();
+
+    } catch (err) {
+      console.error('Erreur lors de la création de la fiche de production:', err);
+      setError('Erreur lors de la création de la fiche de production');
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -72,11 +125,6 @@ const Production = () => {
       ...prev,
       [name]: value
     }));
-  };
-
-  const handleSave = () => {
-    console.log('Produit sauvegardé:', product);
-    alert('Produit sauvegardé avec succès!');
   };
 
   const handleCancel = () => {

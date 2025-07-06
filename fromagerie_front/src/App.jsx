@@ -9,10 +9,12 @@ import Livraison from "./pages/Livraisons";
 import Production from "./pages/Production";
 import Comptabilite from "./pages/Comptabilite"; // Import the Comptabilite component
 import Stock from "./pages/Stock"; // Import the Stock component
+import NotificationManager from "./components/NotificationManager";
 
 function App() {
   return (
     <BrowserRouter>
+      <NotificationManager />
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />

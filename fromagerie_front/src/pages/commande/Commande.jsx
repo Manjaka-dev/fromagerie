@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import {
   ShoppingCart,
@@ -20,15 +20,164 @@ import {
   Calculator,
   Factory,
   Settings,
-  CheckCircle, Plus, Wallet, ListChecks, ArrowDown
+  CheckCircle, Plus, Wallet, ListChecks, ArrowDown, Loader, Trash2
 } from 'lucide-react';
 
 import styles from './../../assets/styles/commande/Commande.module.css';
 import SidebarMenu from "../../components/SidebarMenu";
 import { FaTag } from 'react-icons/fa';
+import { commandeAPI, clientAPI, produitAPI, livreurAPI, livraisonAPI } from '../../services/api';
+
 const CommandesPage = () => {
-  const [showFilters, setShowFilters] = useState(false);
   const [searchClient, setSearchClient] = useState('');
+  
+  // États pour les données du backend
+  const [commandes, setCommandes] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [produits, setProduits] = useState([]);
+  const [livreurs, setLivreurs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // États pour les filtres
+  const [filters, setFilters] = useState({
+    dateDebut: '',
+    dateFin: '',
+    statut: 'tous',
+    client: 'tous'
+  });
+
+  // États pour les modales
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [showLivraisonModal, setShowLivraisonModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  
+  // Nouveau format pour les commandes
+  const [newOrder, setNewOrder] = useState({
+    clientId: '',
+    date: new Date().toISOString().split('T')[0],
+    statut: 'en attente',
+    produits: [] // Liste des produits sélectionnés
+  });
+
+  // État pour le formulaire de livraison
+  const [livraisonForm, setLivraisonForm] = useState({
+    livreurId: '',
+    zone: '',
+    dateLivraison: ''
+  });
+
+  // État pour la sélection de produits
+  const [selectedProduits, setSelectedProduits] = useState([]);
+
+  // Charger les données au montage du composant
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Charger les commandes depuis l'API
+      const commandesResponse = await commandeAPI.getAllCommandes();
+      setCommandes(commandesResponse.commandes || []);
+
+      // Charger les clients depuis l'API
+      const clientsResponse = await clientAPI.getAllClients();
+      setClients(clientsResponse || []);
+
+      // Charger les produits depuis l'API
+      const produitsResponse = await produitAPI.getAllProduits();
+      setProduits(produitsResponse.produits || []);
+
+      // Charger les livreurs depuis l'API
+      const livreursResponse = await livreurAPI.getAllLivreurs();
+      setLivreurs(livreursResponse || []);
+
+    } catch (err) {
+      console.error('Erreur lors du chargement des données:', err);
+      setError('Impossible de charger les données. Veuillez vérifier que le backend est démarré.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
+  // Fonction pour filtrer les commandes
+  const filteredCommandes = commandes.filter(commande => {
+    const matchSearch = commande.clientNom?.toLowerCase().includes(searchClient.toLowerCase()) || false;
+    const matchDateDebut = !filters.dateDebut || commande.date >= filters.dateDebut;
+    const matchDateFin = !filters.dateFin || commande.date <= filters.dateFin;
+    const matchStatut = filters.statut === 'tous' || commande.statut === filters.statut;
+    const matchClient = filters.client === 'tous' || commande.clientId.toString() === filters.client;
+
+    return matchSearch && matchDateDebut && matchDateFin && matchStatut && matchClient;
+  });
+
+  // Fonction pour créer une nouvelle commande
+  const handleCreateCommande = async () => {
+    try {
+      const commandeData = {
+        ...newOrder,
+        produits: selectedProduits
+      };
+
+      try {
+        await commandeAPI.createCommande(commandeData);
+        await loadData(); // Recharger les données
+        
+        // Réinitialiser le formulaire
+        setNewOrder({
+          clientId: '',
+          date: new Date().toISOString().split('T')[0],
+          statut: 'en attente',
+          produits: []
+        });
+        setSelectedProduits([]);
+        setShowAddModal(false);
+      } catch (err) {
+        throw err; // Propager l'erreur pour la gestion globale
+      }
+    } catch (err) {
+      console.error('Erreur lors de la création de la commande:', err);
+      setError('Erreur lors de la création de la commande');
+    }
+  };
+
+  // Fonction pour créer une livraison
+  const handleCreateLivraison = async () => {
+    try {
+      const livraisonData = {
+        commandeId: selectedOrder.id,
+        livreurId: livraisonForm.livreurId,
+        zone: livraisonForm.zone,
+        dateLivraison: livraisonForm.dateLivraison,
+        statut: 'planifiée'
+      };
+
+      try {
+        await livraisonAPI.createLivraison(livraisonData);
+        
+        // Réinitialiser le formulaire
+        setLivraisonForm({
+          livreurId: '',
+          zone: '',
+          dateLivraison: ''
+        });
+        setShowLivraisonModal(false);
+        setSelectedOrder(null);
+      } catch (err) {
+        throw err; // Propager l'erreur pour la gestion globale
+      }
+    } catch (err) {
+      console.error('Erreur lors de la création de la livraison:', err);
+    }
+  };
+
+  const [showFilters, setShowFilters] = useState(false);
   const [searchDate, setSearchDate] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
 
@@ -150,42 +299,6 @@ const CommandesPage = () => {
       ]
     }
   ];
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newOrder, setNewOrder] = useState({
-    client: '',
-    contact: '',
-    details: '',
-    amount: '',
-    status: 'normale',
-    date: new Date().toISOString().split('T')[0]
-  });
-
-  const handleAddOrder = () => {
-    console.log('Nouvelle commande:', newOrder);
-
-    setShowAddModal(false);
-    setNewOrder({
-      client: '',
-      contact: '',
-      details: '',
-      amount: '',
-      status: 'normale',
-      date: new Date().toISOString().split('T')[0]
-    });
-  };
-
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [showOrderModal, setShowOrderModal] = useState(false);
-
-  const handleOrderClick = (order) => {
-    setSelectedOrder(order);
-    setShowOrderModal(true);
-  };
-
-  const closeModal = () => {
-    setShowOrderModal(false);
-    setSelectedOrder(null);
-  };
 
   return (
     <div className="dashboard-container">
