@@ -1,6 +1,5 @@
 package itu.fromagerie.fromagerie.controller.comptabilite;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +17,6 @@ public class DepenseController {
 
     private final DepenseService depenseService;
 
-    @Autowired
     public DepenseController(DepenseService depenseService) {
         this.depenseService = depenseService;
     }

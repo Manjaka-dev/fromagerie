@@ -34,9 +34,6 @@ public class StockMatiereService {
     private AlertePeremptionRepository alertePeremptionRepository;
     
     @Autowired
-    private SimulationProductionRepository simulationProductionRepository;
-    
-    @Autowired
     private ProduitRepository produitRepository;
 
     // ==================== GESTION MATIERES PREMIERES ====================
