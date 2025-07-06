@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-FromagerieApplication<fromagerie>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "itu.fromagerie.fromagerie.FromagerieApplication",
+            "projectName": "fromagerie",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}
