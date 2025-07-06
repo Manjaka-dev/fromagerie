@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import '../assets/styles/Stock.css';
 import { NavLink } from 'react-router-dom';
 import SidebarMenu from "../components/SidebarMenu";
@@ -19,198 +19,67 @@ import {
     Trash2,
     Download, Edit
 } from 'lucide-react';
+import { stockAPI, formatDate } from '../services/api';
 
 const Stock = () => {
-
     const [activeTab, setActiveTab] = useState('stock');
     const [searchQuery, setSearchQuery] = useState('');
-
     const [activeStockType, setActiveStockType] = useState('matieres');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState('all');
+    
+    // États pour les données du backend
+    const [matieresPremieres, setMatieresPremieres] = useState([]);
+    const [produitsFinis, setProduitsFinis] = useState([]);
+    const [mouvementsStock, setMouvementsStock] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // Données simulées
-const matieresPremieres = [
-    {
-        id: 1,
-        nom: "Lait entier",
-        unite: "Litres",
-        quantite: 450.5,
-        duree_conservation: 7,
-        seuil_alerte: 100,
-        status: "normal",
-        dernierMouvement: "2024-07-05"
-    },
-    {
-        id: 2,
-        nom: "Présure",
-        unite: "ml",
-        quantite: 85.2,
-        duree_conservation: 365,
-        seuil_alerte: 50,
-        status: "critique",
-        dernierMouvement: "2024-07-04"
-    },
-    {
-        id: 3,
-        nom: "Sel de mer",
-        unite: "kg",
-        quantite: 25.8,
-        duree_conservation: 730,
-        seuil_alerte: 10,
-        status: "alerte",
-        dernierMouvement: "2024-07-03"
-    },
-    {
-        id: 4,
-        nom: "Ferments lactiques",
-        unite: "sachets",
-        quantite: 156,
-        duree_conservation: 180,
-        seuil_alerte: 30,
-        status: "normal",
-        dernierMouvement: "2024-07-05"
-    }
-];
+    // Charger les données au montage
+    useEffect(() => {
+        loadStockData();
+    }, []);
 
-    const mouvements = [
-        {
-            id: 1,
-            matiere: "Lait entier",
-            type: "ENTREE",
-            quantite: 200,
-            date: "2024-07-05 08:30",
-            commentaire: "Livraison fermier local"
-        },
-        {
-            id: 2,
-            matiere: "Présure",
-            type: "SORTIE",
-            quantite: 15,
-            date: "2024-07-04 14:15",
-            commentaire: "Production Gouda batch #124"
-        },
-        {
-            id: 3,
-            matiere: "Sel de mer",
-            type: "SORTIE",
-            quantite: 5.2,
-            date: "2024-07-03 16:45",
-            commentaire: "Salaison fromages"
+    const loadStockData = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            // Charger les matières premières depuis l'API
+            const matieres = await stockAPI.getAllMatieresPremiere();
+            setMatieresPremieres(matieres || []);
+
+            // Pour les produits finis, utiliser l'API produits
+            const produits = await produitAPI.getAllProduits();
+            // Adapter les données des produits pour l'affichage stock
+            const produitsFinis = produits.produits?.map(produit => ({
+                id: produit.id,
+                nom: produit.nom,
+                unite: produit.unite || 'Unités',
+                quantiteActuelle: produit.quantiteDisponible || 0,
+                seuilAlerte: 10,
+                seuilCritique: 5,
+                prixUnitaire: produit.prix || 0,
+                status: produit.quantiteDisponible > 10 ? 'normal' : 
+                       produit.quantiteDisponible > 5 ? 'alerte' : 'critique'
+            })) || [];
+            setProduitsFinis(produitsFinis);
+
+            // Charger les mouvements de stock récents
+            const dateDebut = new Date();
+            dateDebut.setDate(dateDebut.getDate() - 30);
+            const mouvements = await stockAPI.getMouvementsStock(
+                dateDebut.toISOString().split('T')[0],
+                new Date().toISOString().split('T')[0]
+            );
+            setMouvementsStock(mouvements || []);
+
+        } catch (err) {
+            console.error('Erreur lors du chargement des données de stock:', err);
+            setError('Impossible de charger les données de stock. Veuillez vérifier que le backend est démarré.');
+        } finally {
+            setLoading(false);
         }
-    ];
-
-    const produitsFinis = [
-        {
-            id: 1,
-            nom: "Gouda Jeune",
-            lot: "LOT-2024-001",
-            quantite: 45,
-            date_production: "2024-06-15",
-            date_affinage: "2024-07-15",
-            statut: "en_affinage",
-            commentaire: "En affinage pour 30 jours",
-            type_mouvement : "ENTREE", 
-            duree_affinage: 30,
-            poids_unitaire: 2.5
-        },
-        {
-            id: 2,
-            nom: "Gouda Affiné 6 mois",
-            lot: "LOT-2024-002",
-            quantite: 28,
-            date_production: "2024-01-10",
-            date_affinage: "2024-07-10",
-            statut: "pret_vente",
-            commentaire: "Prêt à la vente",
-            type_mouvement: "SORTIE",
-            duree_affinage: 180,
-            poids_unitaire: 2.3
-        },
-        {
-            id: 3,
-            nom: "Gouda Extra-Vieux",
-            lot: "LOT-2023-045",
-            quantite: 12,
-            date_production: "2023-07-05",
-            date_affinage: "2024-07-05",
-            statut: "premium",
-            commentaire : "Affiné pendant 1 an",
-            type_mouvement: "AJUSTEMENT",
-            duree_affinage: 365,
-            poids_unitaire: 2.0
-        },
-        {
-            id: 4,
-            nom: "Gouda Fumé",
-            lot: "LOT-2024-003",
-            quantite: 8,
-            date_production: "2024-05-20",
-            date_affinage: "2024-07-20",
-            statut: "critique",
-            commentaire: "En attente de fumage",
-            type_mouvement: "ENTREE",
-            duree_affinage: 60,
-            poids_unitaire: 2.2
-        }
-    ];
-
-    const mouvementsProduits = [
-        {
-            id: 1,
-            produit: "Gouda Jeune",
-            lot: "LOT-2024-001",
-            type: "ENTREE",
-            quantite: 50,
-            date: "2024-06-15 14:30",
-            commentaire: "Mise en cave d'affinage"
-        },
-        {
-            id: 2,
-            produit: "Gouda Affiné 6 mois",
-            lot: "LOT-2024-002",
-            type: "SORTIE",
-            quantite: 15,
-            date: "2024-07-04 10:20",
-            commentaire: "Vente marché local"
-        },
-        {
-            id: 3,
-            produit: "Gouda Extra-Vieux",
-            lot: "LOT-2023-045",
-            type: "AJUSTEMENT",
-            quantite: -2,
-            date: "2024-07-03 16:00",
-            commentaire: "Perte affinage naturelle"
-        }
-    ];
-
-    const simulationsProduction = [
-        {
-            id: 1,
-            produit: "Gouda Jeune",
-            quantite_suggeree: 60,
-            date_simulation: "2024-07-05",
-            justification: "Demande élevée prévue",
-            priorite: "haute"
-        },
-        {
-            id: 2,
-            produit: "Gouda Fumé",
-            quantite_suggeree: 25,
-            date_simulation: "2024-07-05",
-            justification: "Stock critique",
-            priorite: "critique"
-        },
-        {
-            id: 3,
-            produit: "Gouda Affiné 6 mois",
-            quantite_suggeree: 35,
-            date_simulation: "2024-07-04",
-            justification: "Réapprovisionnement normal",
-            priorite: "normale"
-        }
-    ];
+    };
 
     const alertes = [
         {

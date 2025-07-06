@@ -57,6 +57,7 @@ const CommandesPage = () => {
   const [newOrder, setNewOrder] = useState({
     clientId: '',
     date: new Date().toISOString().split('T')[0],
+    statut: 'en attente',
     produits: [] // Liste des produits sélectionnés
   });
 
@@ -79,134 +80,224 @@ const CommandesPage = () => {
     setLoading(true);
     setError(null);
     try {
-      // Charger les commandes
+      // Charger les commandes depuis l'API
       const commandesResponse = await commandeAPI.getAllCommandes();
       setCommandes(commandesResponse.commandes || []);
 
-      // Charger les clients
+      // Charger les clients depuis l'API
       const clientsResponse = await clientAPI.getAllClients();
       setClients(clientsResponse || []);
 
-      // Charger les produits
+      // Charger les produits depuis l'API
       const produitsResponse = await produitAPI.getAllProduits();
       setProduits(produitsResponse.produits || []);
 
-      // Charger les livreurs
+      // Charger les livreurs depuis l'API
       const livreursResponse = await livreurAPI.getAllLivreurs();
-      setLivreurs(livreursResponse.livreurs || []);
+      setLivreurs(livreursResponse || []);
+
     } catch (err) {
       console.error('Erreur lors du chargement des données:', err);
-      setError('Erreur lors du chargement des données');
+      setError('Impossible de charger les données. Veuillez vérifier que le backend est démarré.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Fonction pour obtenir le nom du client
-  const getClientName = (clientId) => {
-    if (!clientId) return 'Client inconnu';
-    const client = clients.find(c => c.id === clientId);
-    return client ? client.nom : 'Client inconnu';
-  };
 
-  // Fonction pour formater le montant
-  const formatAmount = (amount) => {
-    // Gérer les BigDecimal du backend
-    let numericAmount = amount;
-    if (typeof amount === 'object' && amount !== null) {
-      // Si c'est un objet BigDecimal du backend
-      numericAmount = parseFloat(amount.toString()) || 0;
-    } else {
-      numericAmount = parseFloat(amount) || 0;
-    }
-    
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'MGA',
-      minimumFractionDigits: 0
-    }).format(numericAmount).replace('MGA', 'Ar');
-  };
-
-  // Fonction pour formater la date
-  const formatDate = (dateString) => {
-    if (!dateString) return 'Date non définie';
-    return new Date(dateString).toLocaleDateString('fr-FR');
-  };
-
-  // Fonction pour effacer tous les filtres
-  const clearFilters = () => {
-    setFilters({
-      dateDebut: '',
-      dateFin: '',
-      statut: 'tous',
-      client: 'tous'
-    });
-    setSearchClient('');
-  };
-
-  // Fonction pour vérifier si une date est dans la plage
-  const isDateInRange = (dateString, dateDebut, dateFin) => {
-    if (!dateString) return true;
-    
-    const date = new Date(dateString);
-    const start = dateDebut ? new Date(dateDebut) : null;
-    const end = dateFin ? new Date(dateFin) : null;
-    
-    if (start && date < start) return false;
-    if (end && date > end) return false;
-    
-    return true;
-  };
-
-  // Filtrer les commandes selon la recherche et les filtres
+  // Fonction pour filtrer les commandes
   const filteredCommandes = commandes.filter(commande => {
-    // Filtre par recherche textuelle
-    const matchesSearch = 
-      getClientName(commande.clientId)?.toLowerCase().includes(searchClient.toLowerCase());
-    
-    // Filtre par statut
-    const matchesStatus = filters.statut === 'tous' || 
-      commande.statut?.toLowerCase().includes(filters.statut.toLowerCase());
-    
-    // Filtre par client
-    const matchesClient = filters.client === 'tous' || 
-      commande.clientId?.toString() === filters.client;
-    
-    // Filtre par date
-    const matchesDate = isDateInRange(commande.dateCommande, filters.dateDebut, filters.dateFin);
-    
-    return matchesSearch && matchesStatus && matchesClient && matchesDate;
+    const matchSearch = commande.clientNom?.toLowerCase().includes(searchClient.toLowerCase()) || false;
+    const matchDateDebut = !filters.dateDebut || commande.date >= filters.dateDebut;
+    const matchDateFin = !filters.dateFin || commande.date <= filters.dateFin;
+    const matchStatut = filters.statut === 'tous' || commande.statut === filters.statut;
+    const matchClient = filters.client === 'tous' || commande.clientId.toString() === filters.client;
+
+    return matchSearch && matchDateDebut && matchDateFin && matchStatut && matchClient;
   });
 
+  // Fonction pour créer une nouvelle commande
+  const handleCreateCommande = async () => {
+    try {
+      const commandeData = {
+        ...newOrder,
+        produits: selectedProduits
+      };
 
-
-  // Fonction pour ajouter un produit à la commande
-  const addProduitToOrder = () => {
-    if (selectedProduits.length === 0) {
-      alert('Veuillez sélectionner au moins un produit');
-      return;
+      try {
+        await commandeAPI.createCommande(commandeData);
+        await loadData(); // Recharger les données
+        
+        // Réinitialiser le formulaire
+        setNewOrder({
+          clientId: '',
+          date: new Date().toISOString().split('T')[0],
+          statut: 'en attente',
+          produits: []
+        });
+        setSelectedProduits([]);
+        setShowAddModal(false);
+      } catch (err) {
+        throw err; // Propager l'erreur pour la gestion globale
+      }
+    } catch (err) {
+      console.error('Erreur lors de la création de la commande:', err);
+      setError('Erreur lors de la création de la commande');
     }
-
-    const produitsToAdd = selectedProduits.map(produit => ({
-      produitId: produit.id,
-      quantite: produit.quantite || 1
-    }));
-
-    setNewOrder(prev => ({
-      ...prev,
-      produits: [...prev.produits, ...produitsToAdd]
-    }));
-
-    setSelectedProduits([]);
   };
 
-  // Fonction pour supprimer un produit de la commande
-  const removeProduitFromOrder = (index) => {
-    setNewOrder(prev => ({
-      ...prev,
-      produits: prev.produits.filter((_, i) => i !== index)
-    }));
+  // Fonction pour créer une livraison
+  const handleCreateLivraison = async () => {
+    try {
+      const livraisonData = {
+        commandeId: selectedOrder.id,
+        livreurId: livraisonForm.livreurId,
+        zone: livraisonForm.zone,
+        dateLivraison: livraisonForm.dateLivraison,
+        statut: 'planifiée'
+      };
+
+      try {
+        await livraisonAPI.createLivraison(livraisonData);
+        
+        // Réinitialiser le formulaire
+        setLivraisonForm({
+          livreurId: '',
+          zone: '',
+          dateLivraison: ''
+        });
+        setShowLivraisonModal(false);
+        setSelectedOrder(null);
+      } catch (err) {
+        throw err; // Propager l'erreur pour la gestion globale
+      }
+    } catch (err) {
+      console.error('Erreur lors de la création de la livraison:', err);
+    }
   };
+
+  const [showFilters, setShowFilters] = useState(false);
+  const [searchDate, setSearchDate] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
+
+  const statusCards = [
+    {
+      title: 'CA en cours',
+      amount: '$4,156.45',
+      icon: Clock,
+      className: 'statusCardOrange'
+    },
+    {
+      title: 'En attente',
+      amount: '$4,156.45',
+      icon: Truck,
+      className: 'statusCardRed'
+    },
+    {
+      title: 'En préparation',
+      amount: '$3,146.45',
+      icon: Package,
+      className: 'statusCardBlue'
+    },
+    {
+      title: 'Livrés ce mois',
+      amount: '$1,146.45',
+      icon: CheckCircle,
+      className: 'statusCardGreen'
+    }
+  ];
+
+
+  const orderSections = [
+    {
+      title: 'Confirmé',
+      count: 2,
+      orders: [
+        {
+          client: 'Fromagerie Martin',
+          status: 'haute',
+          amount: '200 000 Ar',
+          contact: 'Contact: M.Martin',
+          details: 'Gouda offre - 50 kg',
+          date: '2025-06-05'
+        },
+        {
+          client: 'Fromagerie Martin',
+          status: 'basse', // 'normale', 'haute', 'basse'
+          amount: '200 000 Ar',
+          contact: 'Contact: M.Martin',
+          details: 'Gouda offre - 50 kg',
+          date: '2025-06-05'
+        }
+      ]
+    },
+    {
+      title: 'Préparation',
+      count: 2,
+      orders: [
+        {
+          client: 'Fromagerie Martin',
+          status: 'normale', // 'normale', 'haute', 'basse'
+          amount: '200 000 Ar',
+          contact: 'Contact: M.Martin',
+          details: 'Gouda offre - 50 kg',
+          date: '2025-06-05'
+        },
+        {
+          client: 'Fromagerie Martin',
+          status: 'haute', // 'normale', 'haute', 'basse'
+          amount: '200 000 Ar',
+          contact: 'Contact: M.Martin',
+          details: 'Gouda offre - 50 kg',
+          date: '2025-06-05'
+        }
+      ]
+    },
+    {
+      title: 'Livré',
+      count: 2,
+      orders: [
+        {
+          client: 'Fromagerie Martin',
+          status: 'haute', // 'normale', 'haute', 'basse'
+          amount: '200 000 Ar',
+          contact: 'Contact: M.Martin',
+          details: 'Gouda offre - 50 kg',
+          date: '2025-06-05'
+        },
+        {
+          client: 'Fromagerie Martin',
+          status: 'haute', // 'normale', 'haute', 'basse'
+          amount: '200 000 Ar',
+          contact: 'Contact: M.Martin',
+          details: 'Gouda offre - 50 kg',
+          date: '2025-06-05'
+        }
+      ]
+    },
+    {
+      title: 'Devis',
+      count: 2,
+      orders: [
+        {
+          client: 'Fromagerie Martin',
+          status: 'basse', // 'normale', 'haute', 'basse'
+          amount: '200 000 Ar',
+          contact: 'Contact: M.Martin',
+          details: 'Gouda offre - 50 kg',
+          date: '2025-06-05'
+        },
+        {
+          client: 'Fromagerie Martin',
+          status: 'basse', // 'normale', 'haute', 'basse'
+          amount: '200 000 Ar',
+          contact: 'Contact: M.Martin',
+          details: 'Gouda offre - 50 kg',
+          date: '2025-06-05'
+        }
+      ]
+    }
+  ];
 
   // Fonction pour calculer le montant total de la commande
   const calculateOrderTotal = () => {

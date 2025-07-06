@@ -28,7 +28,7 @@ import {
   FileText
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
-import { livraisonAPI } from '../services/api';
+import { livraisonAPI, formatCurrency, formatDate } from '../services/api';
 
 const Livraison = () => {
   // États pour les données
@@ -53,6 +53,14 @@ const Livraison = () => {
     datePaiement: new Date().toISOString().split('T')[0]
   });
 
+  // États pour les statistiques
+  const [stats, setStats] = useState({
+    livraisonsDuJour: 0,
+    livreursActifs: 0,
+    distanceOptimisee: "0 km",
+    tempsEstime: "0h 00min"
+  });
+
   // Charger les données au montage
   useEffect(() => {
     loadLivraisons();
@@ -62,197 +70,145 @@ const Livraison = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await livraisonAPI.getAllLivraisons();
-      setLivraisons(response.livraisons || []);
+      const livraisonsData = await livraisonAPI.getAllLivraisons();
+      
+      // Adapter les données de l'API backend pour l'interface
+      const adaptedLivraisons = livraisonsData.map(livraison => ({
+        id: livraison.id,
+        commande: {
+          id: livraison.commandeId || livraison.id,
+          clientNom: livraison.clientNom,
+          total: livraison.montantTotal || 0
+        },
+        livreur: {
+          nom: livraison.livreurNom || 'Livreur non assigné',
+          telephone: livraison.livreurTelephone || ''
+        },
+        zone: livraison.zone || 'Zone non définie',
+        dateLivraison: livraison.dateLivraison || new Date().toISOString().split('T')[0],
+        statut: mapStatutFromBackend(livraison.statut),
+        adresse: livraison.adresse || 'Adresse du client',
+        produits: livraison.produits || []
+      }));
+
+      setLivraisons(adaptedLivraisons);
+      
+      // Calculer les statistiques
+      calculateStats(adaptedLivraisons);
+      
     } catch (err) {
       console.error('Erreur lors du chargement des livraisons:', err);
-      setError('Erreur lors du chargement des livraisons');
+      setError('Impossible de charger les livraisons. Veuillez vérifier que le backend est démarré.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Fonction pour formater le montant
-  const formatAmount = (amount) => {
-    let numericAmount = amount;
-    if (typeof amount === 'object' && amount !== null) {
-      numericAmount = parseFloat(amount.toString()) || 0;
-    } else {
-      numericAmount = parseFloat(amount) || 0;
-    }
+  // Fonction pour mapper les statuts du backend vers le frontend
+  const mapStatutFromBackend = (statutBackend) => {
+    if (!statutBackend) return 'inconnu';
     
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'MGA',
-      minimumFractionDigits: 0
-    }).format(numericAmount).replace('MGA', 'Ar');
+    const statutMap = {
+      'Planifiée': 'planifiée',
+      'En cours': 'en cours',
+      'Livrée': 'livré',
+      'Annulée': 'annulée',
+      'Échec de livraison': 'échec'
+    };
+    
+    return statutMap[statutBackend] || statutBackend.toLowerCase();
   };
 
-  // Fonction pour formater la date
-  const formatDate = (dateString) => {
-    if (!dateString) return 'Date non définie';
-    return new Date(dateString).toLocaleDateString('fr-FR');
-  };
-
-  // Fonction pour obtenir la couleur du statut
-  const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'planifiée':
-      case 'planifié':
-        return '#3b82f6'; // bleu
-      case 'en cours':
-        return '#f59e0b'; // orange
-      case 'livrée':
-      case 'livre':
-        return '#10b981'; // vert
-      default:
-        return '#6b7280'; // gris
+  // Fonction pour parser les produits depuis la chaîne de caractères
+  const parseProduits = (produitsString) => {
+    if (!produitsString) return [];
+    
+    try {
+      // Essayer de parser comme JSON d'abord
+      if (produitsString.startsWith('[') || produitsString.startsWith('{')) {
+        return JSON.parse(produitsString);
+      }
+      
+      // Sinon, traiter comme une chaîne de produits séparés par des virgules
+      return produitsString.split(',').map((produit, index) => ({
+        nom: produit.trim(),
+        quantite: 1 // Quantité par défaut
+      }));
+    } catch (error) {
+      console.error('Erreur lors du parsing des produits:', error);
+      return [{ nom: produitsString, quantite: 1 }];
     }
   };
 
-  // Fonction pour mettre à jour le statut
-  const handleUpdateStatut = async (livraison) => {
+  // Fonction pour calculer les statistiques
+  const calculateStats = (livraisons) => {
+    const today = new Date().toISOString().split('T')[0];
+    
+    const livraisonsDuJour = livraisons.filter(liv => 
+      liv.dateLivraison === today && liv.statut === 'livré'
+    ).length;
+    
+    const livreursActifs = new Set(
+      livraisons
+        .filter(liv => liv.statut === 'en cours' || liv.statut === 'planifiée')
+        .map(liv => liv.livreur.nom)
+    ).size;
+    
+    setStats({
+      livraisonsDuJour,
+      livreursActifs,
+      distanceOptimisee: `${Math.round(livraisons.length * 2.5)} km`,
+      tempsEstime: `${Math.floor(livraisons.length * 0.5)}h ${Math.round((livraisons.length * 0.5 % 1) * 60)}min`
+    });
+  };
+
+  // Fonction pour mettre à jour le statut d'une livraison
+  const updateStatutLivraison = async (id, nouveauStatut) => {
     try {
-      const response = await livraisonAPI.updateStatutLivraison(livraison.livraisonId);
+      // Utiliser l'endpoint backend pour mettre à jour le statut
+      const response = await livraisonAPI.updateStatutLivraison(id);
       
-      // Si le statut est "En cours" et qu'on veut passer à "Livrée", ouvrir le modal de paiement
       if (response.action === 'confirmation_paiement') {
-        setSelectedLivraison(livraison);
+        // Si une confirmation de paiement est nécessaire, ouvrir la modal
+        setSelectedLivraison(response.livraison);
         setPaiementForm({
-          montantPaiement: livraison.montantTotal || 0,
-          methodePaiement: 'espèces',
-          datePaiement: new Date().toISOString().split('T')[0]
+          ...paiementForm,
+          montantPaiement: response.livraison.montantTotal || 0
         });
         setShowPaiementModal(true);
       } else {
-        // Recharger les données
+        // Recharger les données après mise à jour
         await loadLivraisons();
-        alert('Statut mis à jour avec succès !');
       }
-    } catch (error) {
-      console.error('Erreur lors de la mise à jour du statut:', error);
-      alert('Erreur lors de la mise à jour du statut');
+    } catch (err) {
+      console.error('Erreur lors de la mise à jour du statut:', err);
+      setError('Impossible de mettre à jour le statut de la livraison.');
     }
   };
 
-  // Fonction pour confirmer la livraison et le paiement
-  const handleConfirmerLivraison = async () => {
+  // Fonction pour traiter le paiement
+  const handlePaiement = async () => {
     try {
-      if (!paiementForm.montantPaiement || !paiementForm.methodePaiement || !paiementForm.datePaiement) {
-        alert('Veuillez remplir tous les champs');
-        return;
-      }
-
-      await livraisonAPI.confirmerLivraisonEtPaiement(selectedLivraison.livraisonId, {
-        montantPaiement: parseFloat(paiementForm.montantPaiement),
-        methodePaiement: paiementForm.methodePaiement,
-        datePaiement: paiementForm.datePaiement
-      });
-
-      alert('Livraison confirmée et paiement enregistré avec succès !');
+      await livraisonAPI.confirmerLivraisonEtPaiement(selectedLivraison.livraisonId, paiementForm);
+      
+      // Fermer la modal et réinitialiser
       setShowPaiementModal(false);
+      setPaiementForm({
+        montantPaiement: '',
+        methodePaiement: 'espèces',
+        datePaiement: new Date().toISOString().split('T')[0]
+      });
       setSelectedLivraison(null);
+      
+      // Recharger les données
       await loadLivraisons();
-    } catch (error) {
-      console.error('Erreur lors de la confirmation:', error);
-      alert('Erreur lors de la confirmation');
+    } catch (err) {
+      console.error('Erreur lors du traitement du paiement:', err);
+      setError('Erreur lors de la confirmation du paiement.');
     }
   };
 
-  // Fonction pour effacer tous les filtres
-  const clearFilters = () => {
-    setFilters({
-      dateDebut: '',
-      dateFin: '',
-      statut: 'tous'
-    });
-    setSearchQuery('');
-  };
-
-  // Fonction pour vérifier si une date est dans la plage
-  const isDateInRange = (dateString, dateDebut, dateFin) => {
-    if (!dateString) return true;
-    
-    const date = new Date(dateString);
-    const start = dateDebut ? new Date(dateDebut) : null;
-    const end = dateFin ? new Date(dateFin) : null;
-    
-    if (start && date < start) return false;
-    if (end && date > end) return false;
-    
-    return true;
-  };
-
-  // Filtrer les livraisons selon la recherche et les filtres
-  const filteredLivraisons = livraisons.filter(livraison => {
-    // Filtre par recherche textuelle
-    const matchesSearch = 
-      livraison.clientNom?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      livraison.zone?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      livraison.livreurNom?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    // Filtre par statut
-    const matchesStatus = filters.statut === 'tous' || 
-      livraison.statutLivraison?.toLowerCase().includes(filters.statut.toLowerCase());
-    
-    // Filtre par date (on utilise la date de livraison si disponible)
-    const matchesDate = isDateInRange(livraison.dateLivraison, filters.dateDebut, filters.dateFin);
-    
-    return matchesSearch && matchesStatus && matchesDate;
-  });
-
-  // Calculer les statistiques
-  const stats = {
-    totalLivraisons: livraisons.length,
-    livraisonsPlanifiees: livraisons.filter(l => l.statutLivraison?.toLowerCase().includes('planifié')).length,
-    livraisonsEnCours: livraisons.filter(l => l.statutLivraison?.toLowerCase().includes('en cours')).length,
-    livraisonsLivrees: livraisons.filter(l => l.statutLivraison?.toLowerCase().includes('livré')).length
-  };
-
-  if (loading) {
-    return (
-      <div className="dashboard-container">
-        <div className="sidebar">
-          <div className="sidebar-header">
-            <h1 className="app-title">CheeseFlow</h1>
-            <p className="app-subtitle">Production</p>
-            <p className="app-subtitle">Gouda Artisanale</p>
-          </div>
-          <SidebarMenu />
-        </div>
-        <div className="main-content">
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-            <Loader className="animate-spin" size={48} />
-            <span style={{ marginLeft: '10px' }}>Chargement des livraisons...</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="dashboard-container">
-        <div className="sidebar">
-          <div className="sidebar-header">
-            <h1 className="app-title">CheeseFlow</h1>
-            <p className="app-subtitle">Production</p>
-            <p className="app-subtitle">Gouda Artisanale</p>
-          </div>
-          <SidebarMenu />
-        </div>
-        <div className="main-content">
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
-            <AlertTriangle size={48} color="red" />
-            <p style={{ marginTop: '10px', color: 'red' }}>{error}</p>
-            <button onClick={loadLivraisons} style={{ marginTop: '10px', padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '5px' }}>
-              Réessayer
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // -----------------RECHERCHE-------------------------------
 
   return (
     <div className="dashboard-container">
@@ -381,10 +337,55 @@ const Livraison = () => {
 
           {/* Liste des livraisons */}
           <div className="livraison-list">
-            {filteredLivraisons.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
-                <Truck size={48} />
+            {loading && (
+              <div className="loading-message">
+                <p>Chargement des livraisons...</p>
+              </div>
+            )}
+            
+            {error && (
+              <div className="error-message">
+                <p>Erreur : {error}</p>
+                <button onClick={loadLivraisons}>Réessayer</button>
+              </div>
+            )}
+            
+            {!loading && !error && livraisons.length === 0 && (
+              <div className="empty-message">
                 <p>Aucune livraison trouvée</p>
+              </div>
+            )}
+            
+            {!loading && !error && livraisons.map(livraison => (
+              <div key={livraison.id} className="livraison-card">
+                <div className="livraison-header">
+                  <h3>CheeseFlow</h3>
+                  <span className="client-name">{livraison.commande.clientNom}</span>
+                </div>
+                <div className="livraison-details">
+                  <p><strong>Montant :</strong> {formatCurrency(livraison.commande.total)}</p>
+                  <p><strong>Produits :</strong> {livraison.produits.map(p => `${p.nom} (${p.quantite})`).join(', ')}</p>
+                  <p><strong>Livreur :</strong> {livraison.livreur.nom}</p>
+                  <p><strong>Zone :</strong> {livraison.zone}</p>
+                  <p><strong>Statut :</strong> <span className={`statut-${livraison.statut.replace(' ', '-')}`}>{livraison.statut}</span></p>
+                  <p><strong>Prévu :</strong> {formatDate(livraison.dateLivraison)}</p>
+                </div>
+                <div className="livraison-actions">
+                  <button 
+                    className="track-btn"
+                    onClick={() => updateStatutLivraison(livraison.id, 'en cours')}
+                    disabled={livraison.statut === 'livré' || livraison.statut === 'en cours'}
+                  >
+                    {livraison.statut === 'planifiée' ? 'Démarrer' : 'Suivre'}
+                  </button>
+                  <button 
+                    className="contact-btn"
+                    onClick={() => updateStatutLivraison(livraison.id, 'livré')}
+                    disabled={livraison.statut === 'livré' || livraison.statut === 'planifiée'}
+                  >
+                    {livraison.statut === 'en cours' ? 'Terminer' : 'Contacter'}
+                  </button>
+                </div>
               </div>
             ) : (
               filteredLivraisons.map(livraison => (
