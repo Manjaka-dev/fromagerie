@@ -452,46 +452,6 @@ public class LivraisonController {
         }
     }
 
-    // ==================== DEBUG ENDPOINTS ====================
-    
-    /**
-     * GET /api/livraisons/debug/statuts - Debug des statuts
-     */
-    @GetMapping("/debug/statuts")
-    public ResponseEntity<Map<String, Object>> debugStatuts() {
-        try {
-            livraisonService.debugStatutsLivraison();
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "Debug des statuts exécuté - voir les logs");
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("error", "Erreur lors du debug: " + e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
-
-    /**
-     * POST /api/livraisons/debug/fix-sequence - Corriger la séquence PostgreSQL
-     */
-    @PostMapping("/debug/fix-sequence")
-    public ResponseEntity<Map<String, Object>> fixSequence() {
-        try {
-            livraisonService.fixStatutLivraisonSequence();
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "Séquence PostgreSQL corrigée avec succès");
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("error", "Erreur lors de la correction de la séquence: " + e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
-
     // ==================== RECHERCHES PAR LIVREUR/ZONE ====================
     
     /**
