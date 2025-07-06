@@ -2,6 +2,10 @@ package itu.fromagerie.fromagerie.controller.produit;
 
 import itu.fromagerie.fromagerie.entities.produit.Produit;
 import itu.fromagerie.fromagerie.entities.vente.Client;
+import itu.fromagerie.fromagerie.dto.produit.ProduitSearchDTO;
+import itu.fromagerie.fromagerie.dto.produit.CategorieProduitDTO;
+import itu.fromagerie.fromagerie.dto.produit.ProduitStatsDTO;
+import itu.fromagerie.fromagerie.dto.produit.AjustementStockDTO;
 import itu.fromagerie.fromagerie.service.client.ClientService;
 import itu.fromagerie.fromagerie.service.produit.ProduitService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,6 +110,85 @@ public class ProduitController {
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("error", "Erreur lors de la suppression du produit: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+    
+    // NOUVEAUX ENDPOINTS
+    
+    @GetMapping("/search")
+    public ResponseEntity<Map<String, Object>> searchProduitsByNom(@RequestParam String nom) {
+        try {
+            List<ProduitSearchDTO> produits = produitService.searchProduitsByNom(nom);
+            Map<String, Object> response = new HashMap<>();
+            response.put("produits", produits);
+            response.put("nombreResultats", produits.size());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Erreur lors de la recherche: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+    
+    @GetMapping("/categories")
+    public ResponseEntity<Map<String, Object>> getAllCategories() {
+        try {
+            List<CategorieProduitDTO> categories = produitService.getAllCategories();
+            Map<String, Object> response = new HashMap<>();
+            response.put("categories", categories);
+            response.put("nombreCategories", categories.size());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Erreur lors de la récupération des catégories: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+    
+    @GetMapping("/stats")
+    public ResponseEntity<Map<String, Object>> getProduitStats() {
+        try {
+            ProduitStatsDTO stats = produitService.getProduitStats();
+            Map<String, Object> response = new HashMap<>();
+            response.put("statistiques", stats);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Erreur lors de la récupération des statistiques: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+    
+    @GetMapping("/stock-faible")
+    public ResponseEntity<Map<String, Object>> getProduitsStockFaible() {
+        try {
+            List<ProduitSearchDTO> produits = produitService.getProduitsStockFaible();
+            Map<String, Object> response = new HashMap<>();
+            response.put("produits", produits);
+            response.put("nombreProduits", produits.size());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Erreur lors de la récupération des produits en stock faible: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+    
+    @PostMapping("/{id}/ajuster-stock")
+    public ResponseEntity<Map<String, Object>> ajusterStock(@PathVariable Long id, @RequestBody AjustementStockDTO ajustement) {
+        try {
+            produitService.ajusterStock(id, ajustement.getQuantite(), ajustement.getType());
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Stock ajusté avec succès");
+            response.put("produitId", id);
+            response.put("quantiteAjustee", ajustement.getQuantite());
+            response.put("typeAjustement", ajustement.getType());
+            response.put("raison", ajustement.getRaison());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Erreur lors de l'ajustement du stock: " + e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }
     }

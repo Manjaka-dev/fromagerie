@@ -4,6 +4,7 @@ import itu.fromagerie.fromagerie.entities.stock.MouvementStockMatiere;
 import itu.fromagerie.fromagerie.entities.stock.MatierePremiere;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -17,4 +18,19 @@ public interface MouvementStockMatiereRepository extends JpaRepository<Mouvement
     
     @Query("SELECT m FROM MouvementStockMatiere m WHERE m.matiere = :matiere ORDER BY m.dateMouvement DESC")
     List<MouvementStockMatiere> findByMatiereOrderByDateDesc(MatierePremiere matiere);
+    
+    // Méthodes pour le service
+    List<MouvementStockMatiere> findByMatiereId(Long matiereId);
+    
+    @Query("SELECT m FROM MouvementStockMatiere m WHERE m.matiere.id = :matiereId ORDER BY m.dateMouvement DESC")
+    List<MouvementStockMatiere> findByMatiereIdOrderByDateMouvementDesc(@Param("matiereId") Long matiereId);
+    
+    @Query("SELECT m FROM MouvementStockMatiere m WHERE m.matiere.id = :matiereId AND m.dateMouvement BETWEEN :dateDebut AND :dateFin")
+    List<MouvementStockMatiere> findByMatiereIdAndDateMouvementBetween(
+        @Param("matiereId") Long matiereId, 
+        @Param("dateDebut") LocalDateTime dateDebut, 
+        @Param("dateFin") LocalDateTime dateFin);
+    
+    @Query("SELECT m FROM MouvementStockMatiere m ORDER BY m.dateMouvement DESC")
+    List<MouvementStockMatiere> findAllByOrderByDateMouvementDesc();
 }
