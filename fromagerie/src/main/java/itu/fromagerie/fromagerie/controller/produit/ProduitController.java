@@ -2,6 +2,10 @@ package itu.fromagerie.fromagerie.controller.produit;
 
 import itu.fromagerie.fromagerie.entities.produit.Produit;
 import itu.fromagerie.fromagerie.entities.vente.Client;
+import itu.fromagerie.fromagerie.dto.produit.ProduitSearchDTO;
+import itu.fromagerie.fromagerie.dto.produit.CategorieProduitDTO;
+import itu.fromagerie.fromagerie.dto.produit.ProduitStatsDTO;
+import itu.fromagerie.fromagerie.dto.produit.AjustementStockDTO;
 import itu.fromagerie.fromagerie.service.client.ClientService;
 import itu.fromagerie.fromagerie.service.produit.ProduitService;
 import org.springframework.beans.factory.annotation.Autowired;

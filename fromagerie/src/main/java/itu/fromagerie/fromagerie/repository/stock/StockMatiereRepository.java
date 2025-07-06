@@ -4,6 +4,7 @@ import itu.fromagerie.fromagerie.entities.stock.StockMatiere;
 import itu.fromagerie.fromagerie.entities.stock.MatierePremiere;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -17,4 +18,12 @@ public interface StockMatiereRepository extends JpaRepository<StockMatiere, Long
     
     @Query("SELECT s FROM StockMatiere s WHERE s.quantite > 0")
     List<StockMatiere> findStocksDisponibles();
+    
+    // Méthodes pour le service
+    Optional<StockMatiere> findByMatiereId(Long matiereId);
+    
+    @Query("SELECT s FROM StockMatiere s WHERE s.matiere.id = :matiereId")
+    Optional<StockMatiere> findByMatiereId(@Param("matiereId") Long matiereId);
+    
+    void deleteByMatiereId(Long matiereId);
 }

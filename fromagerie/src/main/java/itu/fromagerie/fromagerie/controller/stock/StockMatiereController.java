@@ -1,6 +1,9 @@
 package itu.fromagerie.fromagerie.controller.stock;
 
 import itu.fromagerie.fromagerie.dto.stock.*;
+import itu.fromagerie.fromagerie.dto.stock.InventaireDTO;
+import itu.fromagerie.fromagerie.dto.stock.ValorisationStockDTO;
+import itu.fromagerie.fromagerie.dto.stock.AlerteStockDTO;
 import itu.fromagerie.fromagerie.service.stock.StockMatiereService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -243,7 +246,89 @@ public class StockMatiereController {
     @Operation(summary = "Obtenir les types de mouvement possibles", 
                description = "Récupère la liste des types de mouvement possibles")
     public ResponseEntity<String[]> getTypesMouvement() {
-        String[] types = {"ENTREE", "SORTIE", "AJUSTEMENT", "DECHET"};
+        String[] types = stockMatiereService.getTypesMouvement();
         return ResponseEntity.ok(types);
+    }
+    
+    // ==================== NOUVEAUX ENDPOINTS ====================
+    
+    @PutMapping("/matieres-premieres/{id}")
+    @Operation(summary = "Mettre à jour une matière première", 
+               description = "Met à jour les informations d'une matière première existante")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Matière première mise à jour avec succès"),
+        @ApiResponse(responseCode = "404", description = "Matière première non trouvée"),
+        @ApiResponse(responseCode = "400", description = "Données invalides")
+    })
+    public ResponseEntity<MatierePremiereDTO> updateMatierePremiere(
+            @Parameter(description = "ID de la matière première") @PathVariable Long id,
+            @RequestBody MatierePremiereDTO updateDTO) {
+        try {
+            MatierePremiereDTO matiere = stockMatiereService.updateMatierePremiere(id, updateDTO);
+            return ResponseEntity.ok(matiere);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+    
+    @DeleteMapping("/matieres-premieres/{id}")
+    @Operation(summary = "Supprimer une matière première", 
+               description = "Supprime une matière première si elle n'a pas de mouvements de stock")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Matière première supprimée avec succès"),
+        @ApiResponse(responseCode = "400", description = "Impossible de supprimer (mouvements existants)")
+    })
+    public ResponseEntity<Void> deleteMatierePremiere(
+            @Parameter(description = "ID de la matière première") @PathVariable Long id) {
+        try {
+            stockMatiereService.deleteMatierePremiere(id);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+    
+    @GetMapping("/alerts")
+    @Operation(summary = "Obtenir toutes les alertes de stock", 
+               description = "Récupère toutes les alertes : stock faible, péremption, rupture")
+    public ResponseEntity<AlerteStockDTO> getAlertesStock() {
+        try {
+            AlerteStockDTO alertes = stockMatiereService.getAlertesStock();
+            return ResponseEntity.ok(alertes);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+    
+    @PostMapping("/inventaire")
+    @Operation(summary = "Lancer un inventaire", 
+               description = "Crée un nouvel inventaire avec les quantités théoriques actuelles")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Inventaire créé avec succès"),
+        @ApiResponse(responseCode = "400", description = "Erreur lors de la création")
+    })
+    public ResponseEntity<InventaireDTO> lancerInventaire(
+            @Parameter(description = "Commentaire pour l'inventaire") 
+            @RequestParam(required = false) String commentaire) {
+        try {
+            InventaireDTO inventaire = stockMatiereService.lancerInventaire(commentaire);
+            return ResponseEntity.status(HttpStatus.CREATED).body(inventaire);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+    
+    @GetMapping("/valorisation")
+    @Operation(summary = "Calculer la valorisation du stock", 
+               description = "Calcule la valeur totale du stock de matières premières")
+    public ResponseEntity<ValorisationStockDTO> getValorisationStock() {
+        try {
+            ValorisationStockDTO valorisation = stockMatiereService.calculerValorisationStock();
+            return ResponseEntity.ok(valorisation);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 }
