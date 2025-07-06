@@ -26,6 +26,6 @@ public class Livreur {
     private String telephone;
     
     @OneToMany(mappedBy = "livreur", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore  // Ignore cette propriété lors de la sérialisation JSON pour éviter les cycles
+    @JsonIgnore  // Éviter les références circulaires
     private List<Livraison> livraisons;
 }

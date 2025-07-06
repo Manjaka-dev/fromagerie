@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Objects;
 
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import itu.fromagerie.fromagerie.entities.production.PerteProduction;
 import itu.fromagerie.fromagerie.entities.production.ProductionEffectuee;
@@ -16,12 +15,8 @@ import itu.fromagerie.fromagerie.repository.production.ProductionEffectueeReposi
 public class PerteProductionService {
 
     private final PerteProductionRepository perteRepo;
-    private final ProductionEffectueeRepository productionRepo;
-
-    @Autowired
     public PerteProductionService(PerteProductionRepository perteRepo, ProductionEffectueeRepository productionRepo) {
         this.perteRepo = perteRepo;
-        this.productionRepo = productionRepo;
     }
 
     /**
