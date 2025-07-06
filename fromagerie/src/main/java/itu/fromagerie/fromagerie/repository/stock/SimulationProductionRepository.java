@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -16,4 +18,7 @@ public interface SimulationProductionRepository extends JpaRepository<Simulation
     
     @Query("SELECT s FROM SimulationProduction s ORDER BY s.dateSimulation DESC")
     List<SimulationProduction> findAllOrderByDateDesc();
+    
+    @Query("SELECT s FROM SimulationProduction s WHERE DATE(s.dateSimulation) BETWEEN :dateDebut AND :dateFin")
+    List<SimulationProduction> findSimulationsByPeriode(LocalDate dateDebut, LocalDate dateFin);
 }

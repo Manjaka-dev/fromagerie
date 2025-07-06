@@ -19,4 +19,10 @@ public interface LotProduitRepository extends JpaRepository<LotProduit, Long> {
     
     @Query("SELECT l FROM LotProduit l WHERE l.datePeremption BETWEEN :dateDebut AND :dateFin")
     List<LotProduit> findLotsExpirantEntre(LocalDate dateDebut, LocalDate dateFin);
+
+    @Query("SELECT l FROM LotProduit l WHERE l.dateFabrication BETWEEN :dateDebut AND :dateFin")
+    List<LotProduit> findLotsByPeriode(LocalDate dateDebut, LocalDate dateFin);
+    
+    @Query("SELECT l FROM LotProduit l WHERE l.numeroLot = :numero")
+    Optional<LotProduit> findLotByNumero(String numero);
 }

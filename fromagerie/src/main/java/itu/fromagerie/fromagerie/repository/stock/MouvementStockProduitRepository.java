@@ -17,4 +17,10 @@ public interface MouvementStockProduitRepository extends JpaRepository<Mouvement
     
     @Query("SELECT m FROM MouvementStockProduit m WHERE m.lot = :lot ORDER BY m.dateMouvement DESC")
     List<MouvementStockProduit> findByLotOrderByDateDesc(LotProduit lot);
+    
+    @Query("SELECT m FROM MouvementStockProduit m WHERE m.dateMouvement BETWEEN :dateDebut AND :dateFin")
+    List<MouvementStockProduit> findMouvementsByDate(LocalDateTime dateDebut, LocalDateTime dateFin);
+    
+    @Query("SELECT m FROM MouvementStockProduit m WHERE m.typeMouvement = :type AND m.dateMouvement BETWEEN :dateDebut AND :dateFin")
+    List<MouvementStockProduit> findMouvementsByTypeAndDate(String type, LocalDateTime dateDebut, LocalDateTime dateFin);
 }
