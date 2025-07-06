@@ -34,4 +34,20 @@ public interface CommandeRepository extends JpaRepository<Commande, Long> {
            "JOIN lc.produit p " +
            "WHERE c.statut != 'Annulée'")
     List<CommandeLivraisonProjection> findCommandesLivraisons();
+    
+    @Query("SELECT DISTINCT c FROM Commande c " +
+           "LEFT JOIN FETCH c.client " +
+           "LEFT JOIN FETCH c.lignesCommande lc " +
+           "LEFT JOIN FETCH lc.produit " +
+           "ORDER BY c.dateCommande DESC")
+    List<Commande> findAllWithRelations();
+    
+    @Query("SELECT DISTINCT c FROM Commande c " +
+           "LEFT JOIN FETCH c.client " +
+           "LEFT JOIN FETCH c.lignesCommande lc " +
+           "LEFT JOIN FETCH lc.produit " +
+           "WHERE c.statut != 'Annulée' " +
+           "AND NOT EXISTS (SELECT 1 FROM Livraison l WHERE l.commande.id = c.id) " +
+           "ORDER BY c.dateCommande DESC")
+    List<Commande> findCommandesSansLivraison();
 }

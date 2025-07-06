@@ -88,22 +88,39 @@ public class LivraisonService {
     }
 
     public void saveLivraison(Long idCommande, LocalDate dateLivraison, String zone, Long livreur) {
+        // Vérifier si une livraison existe déjà pour cette commande
+        Optional<Livraison> existingLivraison = livraisonRepository.findByCommandeId(idCommande);
+        
+        Livraison livraison;
+        if (existingLivraison.isPresent()) {
+            // Mettre à jour la livraison existante
+            livraison = existingLivraison.get();
+            System.out.println("Mise à jour de la livraison existante ID: " + livraison.getId());
+        } else {
+            // Créer une nouvelle livraison
+            Commande commande = commandeRepository.findById(idCommande).orElse(null);
+            Livreur livreur1 = livreurRepository.findById(livreur).orElse(null);
 
-        Commande commande = commandeRepository.findById(idCommande).orElse(null);
-        Livreur livreur1 = livreurRepository.findById(livreur).orElse(null);
-
-        Livraison livraison = new Livraison();
-        livraison.setCommande(commande);
+            livraison = new Livraison();
+            livraison.setCommande(commande);
+            livraison.setLivreur(livreur1);
+            System.out.println("Création d'une nouvelle livraison pour la commande ID: " + idCommande);
+        }
+        
+        // Mettre à jour les informations de la livraison
         livraison.setDateLivraison(dateLivraison);
-        livraison.setLivreur(livreur1);
         livraison.setZone(zone);
 
         livraison = livraisonRepository.save(livraison);
 
+        // Créer ou mettre à jour le statut
         StatutLivraison statutLivraison = new StatutLivraison();
         statutLivraison.setStatut("Planifiée");
         statutLivraison.setLivraison(livraison);
+        statutLivraison.setDateStatut(Instant.now());
         statutLivraisonRepository.save(statutLivraison);
+        
+        System.out.println("Livraison sauvegardée avec succès - ID: " + livraison.getId());
     }
 
     public List<Livreur> listeLivreur() {

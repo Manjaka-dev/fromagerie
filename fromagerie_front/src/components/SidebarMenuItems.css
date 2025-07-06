@@ -97,3 +97,55 @@ body {
 .menu-text {
   font-weight: 500;
 }
+
+/* Styles pour les éléments du menu sidebar */
+.sidebar-menu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  text-decoration: none;
+  color: #1f2937;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.sidebar-menu-item:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+.sidebar-menu-item.active {
+  background-color: #e5e7eb;
+  border-right: 3px solid #3b82f6;
+  color: #1f2937;
+}
+
+.menu-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 0.75rem;
+  color: #374151;
+}
+
+.sidebar-menu-item:hover .menu-icon {
+  color: #111827;
+}
+
+.sidebar-menu-item.active .menu-icon {
+  color: #3b82f6;
+}
+
+.menu-name {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.sidebar-menu-item:hover .menu-name {
+  color: #111827;
+}
+
+.sidebar-menu-item.active .menu-name {
+  color: #1f2937;
+}

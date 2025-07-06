@@ -1,7 +1,7 @@
 package itu.fromagerie.fromagerie.service.client;
 
 import itu.fromagerie.fromagerie.entities.vente.Client;
-import itu.fromagerie.fromagerie.repository.client.ClientRepository;
+import itu.fromagerie.fromagerie.repository.vente.ClientRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

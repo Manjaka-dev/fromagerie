@@ -8,7 +8,7 @@ import itu.fromagerie.fromagerie.entities.produit.LotProduit;
 import itu.fromagerie.fromagerie.repository.vente.CommandeRepository;
 import itu.fromagerie.fromagerie.repository.vente.LigneCommandeRepository;
 import itu.fromagerie.fromagerie.repository.produit.ProduitRepository;
-import itu.fromagerie.fromagerie.repository.client.ClientRepository;
+import itu.fromagerie.fromagerie.repository.vente.ClientRepository;
 import itu.fromagerie.fromagerie.repository.produit.LotProduitRepository;
 import itu.fromagerie.fromagerie.service.produit.ProduitService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +16,13 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import itu.fromagerie.fromagerie.dto.commande.CommandeDTO;
 
 @Service
 public class CommandeService {
@@ -39,7 +43,73 @@ public class CommandeService {
     }
 
     public List<Commande> getAllCommandes() {
-        return commandeRepository.findAll();
+        return commandeRepository.findCommandesSansLivraison();
+    }
+    
+    public List<CommandeDTO> getAllCommandesAsDTO() {
+        List<Commande> commandes = commandeRepository.findCommandesSansLivraison();
+        System.out.println("=== COMMANDES SANS LIVRAISON ===");
+        System.out.println("Nombre de commandes trouvées: " + commandes.size());
+        for (Commande commande : commandes) {
+            System.out.println("Commande ID: " + commande.getId() + " - Client: " + 
+                              (commande.getClient() != null ? commande.getClient().getNom() : "Client inconnu"));
+        }
+        System.out.println("=== FIN COMMANDES SANS LIVRAISON ===");
+        return commandes.stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
+    
+    private CommandeDTO convertToDTO(Commande commande) {
+        CommandeDTO dto = new CommandeDTO();
+        dto.setId(commande.getId());
+        dto.setDateCommande(commande.getDateCommande());
+        dto.setStatut(commande.getStatut());
+        dto.setMontantTotal(commande.getMontantTotal());
+        
+        // Convertir le client
+        if (commande.getClient() != null) {
+            CommandeDTO.ClientDTO clientDTO = new CommandeDTO.ClientDTO();
+            clientDTO.setId(commande.getClient().getId());
+            clientDTO.setNom(commande.getClient().getNom());
+            clientDTO.setTelephone(commande.getClient().getTelephone());
+            clientDTO.setAdresse(commande.getClient().getAdresse());
+            dto.setClient(clientDTO);
+        }
+        
+        // Convertir les lignes de commande
+        if (commande.getLignesCommande() != null) {
+            List<CommandeDTO.LigneCommandeDTO> lignesDTO = commande.getLignesCommande().stream()
+                .map(this::convertLigneToDTO)
+                .collect(Collectors.toList());
+            dto.setLignesCommande(lignesDTO);
+        }
+        
+        return dto;
+    }
+    
+    private CommandeDTO.LigneCommandeDTO convertLigneToDTO(LigneCommande ligne) {
+        CommandeDTO.LigneCommandeDTO ligneDTO = new CommandeDTO.LigneCommandeDTO();
+        ligneDTO.setId(ligne.getId());
+        ligneDTO.setQuantite(ligne.getQuantite());
+        
+        // Utiliser le prix unitaire de la ligne s'il existe, sinon utiliser le prix du produit
+        BigDecimal prixUnitaire = ligne.getPrixUnitaire();
+        if (prixUnitaire == null && ligne.getProduit() != null) {
+            prixUnitaire = ligne.getProduit().getPrixVente();
+        }
+        ligneDTO.setPrixUnitaire(prixUnitaire);
+        
+        // Convertir le produit
+        if (ligne.getProduit() != null) {
+            CommandeDTO.ProduitDTO produitDTO = new CommandeDTO.ProduitDTO();
+            produitDTO.setId(ligne.getProduit().getId());
+            produitDTO.setNom(ligne.getProduit().getNom());
+            produitDTO.setPrixVente(ligne.getProduit().getPrixVente());
+            produitDTO.setPoids(ligne.getProduit().getPoids());
+            produitDTO.setIngredients(ligne.getProduit().getIngredients());
+            ligneDTO.setProduit(produitDTO);
+        }
+        
+        return ligneDTO;
     }
 
     public Optional<Commande> getCommandeById(Long id) {
@@ -97,6 +167,7 @@ public class CommandeService {
                     ligne.setCommande(commande);
                     ligne.setProduit(produit);
                     ligne.setQuantite(quantite);
+                    ligne.setPrixUnitaire(produit.getPrixVente());
                     ligneCommandeRepository.save(ligne);
                 }
             }
@@ -140,7 +211,75 @@ public class CommandeService {
         ligne.setCommande(commande);
         ligne.setProduit(produit);
         ligne.setQuantite(quantite);
+        ligne.setPrixUnitaire(produit.getPrixVente());
         
         ligneCommandeRepository.save(ligne);
+    }
+
+    public Commande createCommandeWithProducts(Long clientId, String dateCommande, List<Map<String, Object>> produits) {
+        // 1. Récupérer le client
+        Client client = clientRepository.findById(clientId)
+                .orElseThrow(() -> new IllegalArgumentException("Client non trouvé avec l'ID: " + clientId));
+
+        // 2. Créer la commande
+        Commande commande = new Commande();
+        commande.setClient(client);
+        commande.setStatut("en_attente");
+        
+        // Parser la date si fournie, sinon utiliser la date actuelle
+        if (dateCommande != null && !dateCommande.isEmpty()) {
+            try {
+                LocalDate date = LocalDate.parse(dateCommande);
+                commande.setDateCommande(date);
+            } catch (Exception e) {
+                commande.setDateCommande(LocalDate.now());
+            }
+        } else {
+            commande.setDateCommande(LocalDate.now());
+        }
+
+        // 3. Sauvegarder la commande
+        commande = commandeRepository.save(commande);
+
+        // 4. Calculer le montant total
+        BigDecimal montantTotal = BigDecimal.ZERO;
+
+        // 5. Créer les lignes de commande pour chaque produit
+        for (Map<String, Object> produitData : produits) {
+            Long produitId = Long.valueOf(produitData.get("produitId").toString());
+            Integer quantite = Integer.valueOf(produitData.get("quantite").toString());
+            
+            // Récupérer le produit
+            Produit produit = produitRepository.findById(produitId)
+                    .orElseThrow(() -> new IllegalArgumentException("Produit non trouvé avec l'ID: " + produitId));
+
+            // Créer la ligne de commande
+            LigneCommande ligneCommande = new LigneCommande();
+            ligneCommande.setCommande(commande);
+            ligneCommande.setProduit(produit);
+            ligneCommande.setQuantite(quantite);
+            ligneCommande.setPrixUnitaire(produit.getPrixVente());
+            
+            // Sauvegarder la ligne de commande
+            ligneCommandeRepository.save(ligneCommande);
+
+            // Ajouter au montant total
+            BigDecimal prixLigne = produit.getPrixVente().multiply(BigDecimal.valueOf(quantite));
+            montantTotal = montantTotal.add(prixLigne);
+
+            // Mettre à jour le stock (diminuer la quantité disponible)
+            Integer quantiteActuelle = produitService.getQuantiteProduit(produitId);
+            Integer nouvelleQuantite = quantiteActuelle - quantite;
+            if (nouvelleQuantite < 0) {
+                throw new IllegalArgumentException("Stock insuffisant pour le produit: " + produit.getNom());
+            }
+            produitService.updateLotProduit(produitId, nouvelleQuantite);
+        }
+
+        // 6. Mettre à jour le montant total de la commande
+        commande.setMontantTotal(montantTotal);
+        commande = commandeRepository.save(commande);
+        
+        return commande;
     }
 }

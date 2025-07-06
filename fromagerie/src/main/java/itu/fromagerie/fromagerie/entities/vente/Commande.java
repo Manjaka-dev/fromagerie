@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -19,9 +20,8 @@ public class Commande {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "client_id")
-    @com.fasterxml.jackson.annotation.JsonIgnore
     private Client client;
     
     @Column(name = "date_commande")
@@ -30,8 +30,10 @@ public class Commande {
     @Column(length = 30)
     private String statut; // en_attente, confirmée, annulée, livrée
     
-    @OneToMany(mappedBy = "commande", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @com.fasterxml.jackson.annotation.JsonIgnore
+    @Column(name = "montant_total", precision = 10, scale = 2)
+    private BigDecimal montantTotal;
+    
+    @OneToMany(mappedBy = "commande", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<LigneCommande> lignesCommande;
     
     @OneToOne(mappedBy = "commande", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
