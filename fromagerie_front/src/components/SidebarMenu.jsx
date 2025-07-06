@@ -1,12 +1,13 @@
 // src/components/SidebarMenu.jsx
 import React from 'react';
-import SidebarMenuItem from './SidebarMenuItem'; // Ajoutez cette ligne
+import SidebarMenuItem from './SidebarMenuItem';
 import menuItems from './menuItems';
- // Assurez-vous d'importer le fichier CSS pour le style
+import './SidebarMenuItems.css';
 
 const SidebarMenu = () => {
   return (
     <div className="sidebar-nav">
+      <h2 style={{ color: '#2c3e50', marginBottom: '40px', fontWeight: 'bold' }}>CheeseFlow</h2>
       {menuItems.map((item) => (
         <SidebarMenuItem 
           key={item.name}
