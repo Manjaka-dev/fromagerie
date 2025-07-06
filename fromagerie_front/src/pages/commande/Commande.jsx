@@ -146,36 +146,6 @@ const CommandesPage = () => {
     }
   };
 
-  // Fonction pour créer une livraison
-  const handleCreateLivraison = async () => {
-    try {
-      const livraisonData = {
-        commandeId: selectedOrder.id,
-        livreurId: livraisonForm.livreurId,
-        zone: livraisonForm.zone,
-        dateLivraison: livraisonForm.dateLivraison,
-        statut: 'planifiée'
-      };
-
-      try {
-        await livraisonAPI.createLivraison(livraisonData);
-        
-        // Réinitialiser le formulaire
-        setLivraisonForm({
-          livreurId: '',
-          zone: '',
-          dateLivraison: ''
-        });
-        setShowLivraisonModal(false);
-        setSelectedOrder(null);
-      } catch (err) {
-        throw err; // Propager l'erreur pour la gestion globale
-      }
-    } catch (err) {
-      console.error('Erreur lors de la création de la livraison:', err);
-    }
-  };
-
   const [showFilters, setShowFilters] = useState(false);
   const [searchDate, setSearchDate] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');

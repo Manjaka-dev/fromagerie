@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestController
@@ -114,12 +115,15 @@ public class ProduitController {
         }
     }
     
-    // NOUVEAUX ENDPOINTS
+    // ===== NOUVEAUX ENDPOINTS =====
     
     @GetMapping("/search")
     public ResponseEntity<Map<String, Object>> searchProduitsByNom(@RequestParam String nom) {
         try {
-            List<ProduitSearchDTO> produits = produitService.searchProduitsByNom(nom);
+            List<Produit> produits = produitService.AllProduit().stream()
+                    .filter(p -> p.getNom().toLowerCase().contains(nom.toLowerCase()))
+                    .collect(Collectors.toList());
+            
             Map<String, Object> response = new HashMap<>();
             response.put("produits", produits);
             response.put("nombreResultats", produits.size());
@@ -134,7 +138,13 @@ public class ProduitController {
     @GetMapping("/categories")
     public ResponseEntity<Map<String, Object>> getAllCategories() {
         try {
-            List<CategorieProduitDTO> categories = produitService.getAllCategories();
+            // Récupérer les catégories uniques des produits existants
+            List<String> categories = produitService.AllProduit().stream()
+                    .map(p -> p.getCategorie() != null ? p.getCategorie().getNom() : null)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+            
             Map<String, Object> response = new HashMap<>();
             response.put("categories", categories);
             response.put("nombreCategories", categories.size());
@@ -149,13 +159,25 @@ public class ProduitController {
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getProduitStats() {
         try {
-            ProduitStatsDTO stats = produitService.getProduitStats();
+            List<Produit> produits = produitService.AllProduit();
+            
             Map<String, Object> response = new HashMap<>();
-            response.put("statistiques", stats);
+            response.put("nombreTotalProduits", produits.size());
+            response.put("nombreCategories", produits.stream()
+                    .map(p -> p.getCategorie() != null ? p.getCategorie().getNom() : null)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .count());
+            response.put("prixMoyen", produits.stream()
+                    .filter(p -> p.getPrixVente() != null)
+                    .mapToDouble(p -> p.getPrixVente().doubleValue())
+                    .average()
+                    .orElse(0.0));
+            
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
-            response.put("error", "Erreur lors de la récupération des statistiques: " + e.getMessage());
+            response.put("error", "Erreur lors du calcul des statistiques: " + e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }
     }
@@ -163,28 +185,39 @@ public class ProduitController {
     @GetMapping("/stock-faible")
     public ResponseEntity<Map<String, Object>> getProduitsStockFaible() {
         try {
-            List<ProduitSearchDTO> produits = produitService.getProduitsStockFaible();
+            List<Produit> produits = produitService.AllProduit();
+            List<Map<String, Object>> produitsStockFaible = new ArrayList<>();
+            
+            for (Produit produit : produits) {
+                int quantite = produitService.getQuantiteProduit(produit.getId());
+                if (quantite < 10) { // Seuil d'alerte arbitraire
+                    Map<String, Object> produitInfo = new HashMap<>();
+                    produitInfo.put("produit", produit);
+                    produitInfo.put("quantiteDisponible", quantite);
+                    produitsStockFaible.add(produitInfo);
+                }
+            }
+            
             Map<String, Object> response = new HashMap<>();
-            response.put("produits", produits);
-            response.put("nombreProduits", produits.size());
+            response.put("produits", produitsStockFaible);
+            response.put("nombreProduits", produitsStockFaible.size());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
-            response.put("error", "Erreur lors de la récupération des produits en stock faible: " + e.getMessage());
+            response.put("error", "Erreur lors de la récupération des produits à stock faible: " + e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }
     }
     
     @PostMapping("/{id}/ajuster-stock")
-    public ResponseEntity<Map<String, Object>> ajusterStock(@PathVariable Long id, @RequestBody AjustementStockDTO ajustement) {
+    public ResponseEntity<Map<String, Object>> ajusterStock(@PathVariable Long id, @RequestBody Map<String, Object> ajustement) {
         try {
-            produitService.ajusterStock(id, ajustement.getQuantite(), ajustement.getType());
+            // Note: Cette méthode nécessiterait une implémentation dans le service
+            // Pour l'instant, on retourne un message générique
             Map<String, Object> response = new HashMap<>();
-            response.put("message", "Stock ajusté avec succès");
+            response.put("message", "Ajustement de stock non encore implémenté");
             response.put("produitId", id);
-            response.put("quantiteAjustee", ajustement.getQuantite());
-            response.put("typeAjustement", ajustement.getType());
-            response.put("raison", ajustement.getRaison());
+            response.put("ajustement", ajustement);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();

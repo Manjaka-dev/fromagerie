@@ -217,21 +217,47 @@ export const livraisonAPI = {
   getAllLivraisons: () => 
     apiRequest('/livraisons'),
   
+  getLivraisonById: (id) =>
+    apiRequest(`/livraisons/${id}`),
+  
   createLivraison: (livraisonData) => 
     apiRequest('/livraisons', { method: 'POST', body: livraisonData }),
+  
+  // 🆕 MODIFICATION COMPLÈTE D'UNE LIVRAISON
+  updateLivraison: (id, updateData) =>
+    apiRequest(`/livraisons/${id}`, { method: 'PUT', body: updateData }),
+  
+  // 🆕 ANNULATION D'UNE LIVRAISON  
+  deleteLivraison: (id) =>
+    apiRequest(`/livraisons/${id}`, { method: 'DELETE' }),
   
   updateStatutLivraison: (id, statut) => 
     apiRequest(`/livraisons/${id}/statut`, { method: 'PUT', body: { statut } }),
 
-  // Livreurs
-  getAllLivreurs: () => 
-    apiRequest('/livreurs'),
-  
-  createLivreur: (livreurData) => 
-    apiRequest('/livreurs', { method: 'POST', body: livreurData }),
-  
-  searchLivreurs: (nom) => 
-    apiRequest(`/livreurs/search?nom=${nom}`),
+  // 🆕 CONFIRMATION PAIEMENT ET LIVRAISON
+  confirmerLivraisonPaiement: (id, paiementData) =>
+    apiRequest(`/livraisons/${id}/confirmer-livraison-paiement`, { 
+      method: 'POST', 
+      body: paiementData 
+    }),
+
+  // 🆕 LISTE DES ZONES DE LIVRAISON
+  getZonesLivraison: () =>
+    apiRequest('/livraisons/zones'),
+
+  // Recherches par livreur/zone
+  getLivraisonsByLivreur: (livreurId) =>
+    apiRequest(`/livraisons/livreur/${livreurId}`),
+    
+  getLivraisonsByZone: (zone) =>
+    apiRequest(`/livraisons/zone/${zone}`),
+
+  // Autres fonctions existantes  
+  exportCommandePdf: (commandeId) =>
+    apiRequest(`/livraisons/commandes/${commandeId}/export-pdf`),
+    
+  retourLivraison: (retourData) =>
+    apiRequest('/livraisons/retour-livraison', { method: 'POST', body: retourData }),
 };
 
 // ==================== UTILITAIRES ====================

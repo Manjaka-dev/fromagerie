@@ -1,5 +1,7 @@
 package itu.fromagerie.fromagerie.service.livraison;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import itu.fromagerie.fromagerie.entities.vente.Commande;
 import itu.fromagerie.fromagerie.entities.livraison.Livraison;
 import itu.fromagerie.fromagerie.entities.livraison.Livreur;
@@ -22,6 +24,7 @@ import itu.fromagerie.fromagerie.repository.vente.PaiementRepository;
 import itu.fromagerie.fromagerie.repository.vente.LigneCommandeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -34,6 +37,10 @@ import java.util.Optional;
 
 @Service
 public class LivraisonService {
+    
+    @PersistenceContext
+    private EntityManager entityManager;
+    
     private final CommandeRepository commandeRepository;
     private final LivreurRepository livreurRepository;
     private final LivraisonRepository livraisonRepository;
@@ -249,26 +256,223 @@ public class LivraisonService {
     }
 
     public void debugStatutsLivraison() {
-        System.out.println("=== DÉBOGAGE STATUTS EN BASE ===");
-        
-        // Vérifier tous les statuts pour chaque livraison
-        List<Livraison> livraisons = livraisonRepository.findAll();
-        for (Livraison livraison : livraisons) {
-            System.out.println("Livraison ID: " + livraison.getId());
-            
-            // Récupérer tous les statuts pour cette livraison
-            List<StatutLivraison> statuts = statutLivraisonRepository.findAll().stream()
-                .filter(s -> s.getLivraison().getId().equals(livraison.getId()))
-                .sorted((s1, s2) -> s2.getDateStatut().compareTo(s1.getDateStatut()))
-                .toList();
-            
-            for (StatutLivraison statut : statuts) {
-                System.out.println("  - Statut ID: " + statut.getId() + 
-                                  " | Statut: '" + statut.getStatut() + "'" +
-                                  " | Date: " + statut.getDateStatut());
-            }
+        List<StatutLivraison> statuts = statutLivraisonRepository.findAll();
+        System.out.println("=== DÉBOGAGE STATUTS ===");
+        System.out.println("Nombre total de statuts: " + statuts.size());
+        for (StatutLivraison statut : statuts) {
+            System.out.println("Statut ID: " + statut.getId() + 
+                              " | Livraison ID: " + statut.getLivraison().getId() + 
+                              " | Statut: '" + statut.getStatut() + "'" +
+                              " | Date: " + statut.getDateStatut());
             System.out.println();
         }
         System.out.println("=== FIN DÉBOGAGE STATUTS ===");
     }
+
+    // ==================== NOUVELLES MÉTHODES POUR LES ENDPOINTS ====================
+
+    /**
+     * Met à jour une livraison existante
+     */
+    public Livraison updateLivraison(Long livraisonId, itu.fromagerie.fromagerie.dto.livraison.UpdateLivraisonDTO updateDTO) {
+        Optional<Livraison> livraisonOpt = livraisonRepository.findById(livraisonId);
+        if (livraisonOpt.isEmpty()) {
+            throw new RuntimeException("Livraison non trouvée avec l'ID: " + livraisonId);
+        }
+
+        Livraison livraison = livraisonOpt.get();
+        
+        // Mettre à jour les champs de base
+        if (updateDTO.getDateLivraison() != null) {
+            livraison.setDateLivraison(updateDTO.getDateLivraison());
+        }
+        if (updateDTO.getZone() != null) {
+            livraison.setZone(updateDTO.getZone());
+        }
+        if (updateDTO.getLivreurId() != null) {
+            Optional<Livreur> livreur = livreurRepository.findById(updateDTO.getLivreurId());
+            if (livreur.isPresent()) {
+                livraison.setLivreur(livreur.get());
+            }
+        }
+
+        // Sauvegarder la livraison mise à jour
+        Livraison livraisonMiseAJour = livraisonRepository.save(livraison);
+
+        // Mettre à jour le statut si fourni
+        if (updateDTO.getStatutLivraison() != null) {
+            StatutLivraison nouveauStatut = new StatutLivraison();
+            nouveauStatut.setLivraison(livraisonMiseAJour);
+            nouveauStatut.setStatut(updateDTO.getStatutLivraison().getLibelle());
+            nouveauStatut.setDateStatut(Instant.now());
+            statutLivraisonRepository.save(nouveauStatut);
+        }
+
+        return livraisonMiseAJour;
+    }
+
+    /**
+     * Annule une livraison en mettant son statut à "Annulée"
+     */
+    public void cancelLivraison(Long livraisonId) {
+        Optional<Livraison> livraisonOpt = livraisonRepository.findById(livraisonId);
+        if (livraisonOpt.isEmpty()) {
+            throw new RuntimeException("Livraison non trouvée avec l'ID: " + livraisonId);
+        }
+
+        Livraison livraison = livraisonOpt.get();
+        
+        // Créer un nouveau statut "Annulée"
+        StatutLivraison statutAnnule = new StatutLivraison();
+        statutAnnule.setLivraison(livraison);
+        statutAnnule.setStatut("Annulée");
+        statutAnnule.setDateStatut(Instant.now());
+        
+        statutLivraisonRepository.save(statutAnnule);
+    }
+
+    /**
+     * Récupère la liste des zones de livraison disponibles
+     */
+    public List<String> getZonesLivraisonDisponibles() {
+        List<String> zones = livraisonRepository.findDistinctZones();
+        
+        // Si aucune zone n'est trouvée, retourner des zones par défaut
+        if (zones.isEmpty()) {
+            zones = List.of(
+                "Antananarivo Centre",
+                "Antananarivo Nord", 
+                "Antananarivo Sud",
+                "Antananarivo Est",
+                "Antananarivo Ouest",
+                "Périphérie Nord",
+                "Périphérie Sud"
+            );
+        }
+        
+        return zones;
+    }
+
+    /**
+     * Récupère les livraisons d'un livreur spécifique
+     */
+    public List<itu.fromagerie.fromagerie.dto.livraison.LivraisonInfoDTO> getLivraisonsByLivreur(Long livreurId) {
+        // Vérifier que le livreur existe
+        Optional<Livreur> livreur = livreurRepository.findById(livreurId);
+        if (livreur.isEmpty()) {
+            throw new RuntimeException("Livreur non trouvé avec l'ID: " + livreurId);
+        }
+
+        List<Livraison> livraisons = livraisonRepository.findByLivreurId(livreurId);
+        return convertToLivraisonInfoDTO(livraisons);
+    }
+
+    /**
+     * Récupère les livraisons d'une zone spécifique
+     */
+    public List<itu.fromagerie.fromagerie.dto.livraison.LivraisonInfoDTO> getLivraisonsByZone(String zone) {
+        List<Livraison> livraisons = livraisonRepository.findByZone(zone);
+        return convertToLivraisonInfoDTO(livraisons);
+    }
+
+    /**
+     * Convertit une liste de Livraison en LivraisonInfoDTO
+     */
+    private List<itu.fromagerie.fromagerie.dto.livraison.LivraisonInfoDTO> convertToLivraisonInfoDTO(List<Livraison> livraisons) {
+        List<itu.fromagerie.fromagerie.dto.livraison.LivraisonInfoDTO> livraisonDTOs = new ArrayList<>();
+        
+        for (Livraison livraison : livraisons) {
+            itu.fromagerie.fromagerie.dto.livraison.LivraisonInfoDTO dto = new itu.fromagerie.fromagerie.dto.livraison.LivraisonInfoDTO();
+            
+            // Informations de base
+            dto.setLivraisonId(livraison.getId());
+            dto.setDateLivraison(livraison.getDateLivraison());
+            dto.setZone(livraison.getZone());
+            
+            // Informations commande
+            if (livraison.getCommande() != null) {
+                dto.setCommandeId(livraison.getCommande().getId());
+                dto.setDateCommande(livraison.getCommande().getDateCommande());
+                
+                // Informations client
+                if (livraison.getCommande().getClient() != null) {
+                    dto.setClientId(livraison.getCommande().getClient().getId());
+                    dto.setNomClient(livraison.getCommande().getClient().getNom());
+                    dto.setTelephoneClient(livraison.getCommande().getClient().getTelephone());
+                    dto.setAdresseClient(livraison.getCommande().getClient().getAdresse());
+                }
+            }
+            
+            // Informations livreur
+            if (livraison.getLivreur() != null) {
+                dto.setLivreurId(livraison.getLivreur().getId());
+                dto.setNomLivreur(livraison.getLivreur().getNom());
+                dto.setTelephoneLivreur(livraison.getLivreur().getTelephone());
+            }
+            
+            // Récupérer le dernier statut
+            Optional<StatutLivraison> dernierStatut = statutLivraisonRepository
+                .findTopByLivraisonOrderByDateStatutDesc(livraison);
+            if (dernierStatut.isPresent()) {
+                String statutStr = dernierStatut.get().getStatut();
+                try {
+                    dto.setStatut(itu.fromagerie.fromagerie.entities.livraison.StatutLivraisonEnum.valueOf(statutStr.toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    // Si le statut ne correspond à aucun enum, utiliser PLANIFIEE par défaut
+                    dto.setStatut(itu.fromagerie.fromagerie.entities.livraison.StatutLivraisonEnum.PLANIFIEE);
+                }
+            }
+            
+            livraisonDTOs.add(dto);
+        }
+        
+        return livraisonDTOs;
+    }
+
+    /**
+     * Corrige toutes les séquences PostgreSQL problématiques
+     */
+    @Transactional
+    public void fixStatutLivraisonSequence() {
+        try {
+            // Corriger la séquence statut_livraison
+            Long maxStatutId = statutLivraisonRepository.findAll()
+                    .stream()
+                    .mapToLong(StatutLivraison::getId)
+                    .max()
+                    .orElse(0L);
+            
+            String sql1 = "SELECT setval('statut_livraison_id_seq', " + (maxStatutId + 1) + ", false)";
+            entityManager.createNativeQuery(sql1).getSingleResult();
+            System.out.println("Séquence statut_livraison corrigée - prochain ID: " + (maxStatutId + 1));
+            
+            // Corriger la séquence paiement  
+            Long maxPaiementId = paiementRepository.findAll()
+                    .stream()
+                    .mapToLong(paiement -> paiement.getId())
+                    .max()
+                    .orElse(0L);
+            
+            String sql2 = "SELECT setval('paiement_id_seq', " + (maxPaiementId + 1) + ", false)";
+            entityManager.createNativeQuery(sql2).getSingleResult();
+            System.out.println("Séquence paiement corrigée - prochain ID: " + (maxPaiementId + 1));
+            
+            // Corriger la séquence confirmation_reception
+            Long maxConfirmationId = confirmationReceptionRepository.findAll()
+                    .stream()
+                    .mapToLong(conf -> conf.getId())
+                    .max()
+                    .orElse(0L);
+            
+            String sql3 = "SELECT setval('confirmation_reception_id_seq', " + (maxConfirmationId + 1) + ", false)";
+            entityManager.createNativeQuery(sql3).getSingleResult();
+            System.out.println("Séquence confirmation_reception corrigée - prochain ID: " + (maxConfirmationId + 1));
+            
+        } catch (Exception e) {
+            System.out.println("Erreur lors de la correction des séquences: " + e.getMessage());
+            throw e;
+        }
+    }
+
+    // ==================== MÉTHODES UTILITAIRES ====================
 }

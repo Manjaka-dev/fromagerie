@@ -3,6 +3,7 @@ package itu.fromagerie.fromagerie.controller.livraison;
 import itu.fromagerie.fromagerie.entities.livraison.RetourLivraison;
 import itu.fromagerie.fromagerie.service.livraison.RetourLivraisonService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,8 +25,10 @@ public class RetourLivraisonController {
     }
 
     @GetMapping("/{id}")
-    public Optional<RetourLivraison> getById(@PathVariable Long id) {
-        return retourLivraisonService.findById(id);
+    public ResponseEntity<RetourLivraison> getById(@PathVariable Long id) {
+        Optional<RetourLivraison> retour = retourLivraisonService.findById(id);
+        return retour.map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
