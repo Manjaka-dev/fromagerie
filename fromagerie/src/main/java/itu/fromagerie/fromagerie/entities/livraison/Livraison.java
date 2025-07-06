@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -36,32 +37,21 @@ public class Livraison {
     
     @Enumerated(EnumType.STRING)
     @Column(name = "statut_livraison")
-    private StatutLivraisonEnum statutLivraison;
+    private StatutLivraisonEnum statutLivraison = StatutLivraisonEnum.PLANIFIEE;
     
     @OneToMany(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<StatutLivraison> statuts;
-    
-    @OneToMany(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore  // Éviter les références circulaires
     private List<LivraisonProduit> produitsALivrer;
     
+    @OneToMany(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore  // Éviter les références circulaires
+    private List<StatutLivraison> historiquesStatuts;
+    
     @OneToOne(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore  // Éviter les références circulaires
     private ConfirmationReception confirmationReception;
     
     @OneToMany(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore  // Éviter les références circulaires
     private List<RetourLivraison> retours;
-    
-    public String getStatut() {
-        if (statutLivraison != null) {
-            return statutLivraison.getLibelle();
-        }
-        if (statuts != null && !statuts.isEmpty()) {
-            // Return the most recent status
-            return statuts.stream()
-                    .sorted((s1, s2) -> s2.getDateStatut().compareTo(s1.getDateStatut()))
-                    .findFirst()
-                    .map(StatutLivraison::getStatut)
-                    .orElse("En attente");
-        }
-        return "En attente";
-    }
 }

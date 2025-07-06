@@ -21,7 +21,6 @@ public interface StatistiqueProductionRepository extends JpaRepository<Statistiq
     
     @Query("SELECT SUM(s.quantiteProduite) FROM StatistiqueProduction s WHERE s.periode BETWEEN :dateDebut AND :dateFin")
     Integer getTotalQuantiteProduiteBetween(LocalDate dateDebut, LocalDate dateFin);
-
         
     // 1. Pourcentage de production journalière (par rapport à une capacité cible)
     @Query("SELECT pe.dateProduction as date, " +

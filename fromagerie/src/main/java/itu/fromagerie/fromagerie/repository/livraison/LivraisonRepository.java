@@ -22,10 +22,6 @@ public interface LivraisonRepository extends JpaRepository<Livraison, Long> {
     
     @Query("SELECT l FROM Livraison l WHERE l.dateLivraison = :date")
     List<Livraison> findByDateLivraison(LocalDate date);
-    
-    @Query("SELECT l FROM Livraison l WHERE l.dateLivraison >= CURRENT_DATE ORDER BY l.dateLivraison ASC")
-    List<Livraison> findProchainesLivraisons();
-    
     // Requête complète pour les informations de livraison
     @Query("""
         SELECT l FROM Livraison l 

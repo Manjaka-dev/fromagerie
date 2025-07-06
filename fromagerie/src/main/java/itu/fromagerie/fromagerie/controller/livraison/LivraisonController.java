@@ -202,8 +202,12 @@ public class LivraisonController {
      */
     @GetMapping("/livreur/{livreurId}")
     public ResponseEntity<List<LivraisonInfoDTO>> getLivraisonsByLivreur(@PathVariable Long livreurId) {
-        // Cette méthode nécessiterait d'être ajoutée au service
-        return ResponseEntity.ok().build();
+        try {
+            List<LivraisonInfoDTO> livraisons = livraisonService.getLivraisonsByLivreur(livreurId);
+            return ResponseEntity.ok(livraisons);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
     
     /**
@@ -211,7 +215,7 @@ public class LivraisonController {
      */
     @GetMapping("/zone/{zone}")
     public ResponseEntity<List<LivraisonInfoDTO>> getLivraisonsByZone(@PathVariable String zone) {
-        // Cette méthode nécessiterait d'être ajoutée au service
-        return ResponseEntity.ok().build();
+        List<LivraisonInfoDTO> livraisons = livraisonService.getLivraisonsByZone(zone);
+        return ResponseEntity.ok(livraisons);
     }
 }
