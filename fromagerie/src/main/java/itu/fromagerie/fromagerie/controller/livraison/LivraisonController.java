@@ -7,6 +7,8 @@ import itu.fromagerie.fromagerie.entities.livraison.StatutLivraison;
 import itu.fromagerie.fromagerie.projection.LivraisonProjection;
 import itu.fromagerie.fromagerie.service.livraison.LivraisonService;
 import itu.fromagerie.fromagerie.service.livraison.RetourLivraisonService;
+import itu.fromagerie.fromagerie.dto.livraison.UpdateLivraisonDTO;
+import itu.fromagerie.fromagerie.dto.livraison.LivraisonInfoDTO;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -18,12 +20,6 @@ import java.util.HashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import com.lowagie.text.*;
-import com.lowagie.text.pdf.PdfPTable;
-import com.lowagie.text.pdf.PdfWriter;
 
 @RestController
 @RequestMapping("/api/livraisons")
@@ -230,7 +226,17 @@ public class LivraisonController {
             @RequestBody Map<String, Object> request) {
         
         try {
-            Double montantPaiement = (Double) request.get("montantPaiement");
+            // Gérer les différents types de montant (Integer ou Double)
+            Object montantObj = request.get("montantPaiement");
+            Double montantPaiement;
+            if (montantObj instanceof Integer) {
+                montantPaiement = ((Integer) montantObj).doubleValue();
+            } else if (montantObj instanceof Double) {
+                montantPaiement = (Double) montantObj;
+            } else {
+                montantPaiement = Double.valueOf(montantObj.toString());
+            }
+            
             String methodePaiement = (String) request.get("methodePaiement");
             String datePaiement = (String) request.get("datePaiement");
             
@@ -301,55 +307,191 @@ public class LivraisonController {
     }
 
     @GetMapping("/commandes/{id}/export-pdf")
-    public void exportCommandePdf(@PathVariable("id") Integer commandeId, HttpServletResponse response) {
-        response.setContentType("application/pdf");
-        response.setHeader("Content-Disposition", "attachment; filename=commande_" + commandeId + ".pdf");
-
-        Document document = new Document();
+    public ResponseEntity<Map<String, Object>> exportCommandePdf(@PathVariable("id") Integer commandeId) {
         try {
-            PdfWriter.getInstance(document, response.getOutputStream());
-            document.open();
+            // Temporairement désactivé - problème de dépendance PDF
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Export PDF temporairement indisponible");
+            response.put("commandeId", commandeId);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Erreur lors de l'export PDF: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+    // ==================== RECHERCHES PAR LIVREUR/ZONE ====================
+    
+    /**
+     * PUT /api/livraisons/{id} - Modification complète d'une livraison
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> updateLivraison(
+            @PathVariable Long id, 
+            @RequestBody UpdateLivraisonDTO updateDTO) {
+        try {
+            // Vérifier que la livraison existe
+            Optional<Livraison> livraisonOpt = livraisonService.findLivraisonById(id);
+            if (livraisonOpt.isEmpty()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("error", "Livraison non trouvée avec l'ID: " + id);
+                return ResponseEntity.notFound().build();
+            }
 
-            var commandes = livraisonService.getCommandeLivraison();
-            var commande = commandes.stream()
-                    .filter(c -> c.getCommandeId().equals(commandeId))
+            // Mettre à jour la livraison
+            Livraison livraisonMiseAJour = livraisonService.updateLivraison(id, updateDTO);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Livraison mise à jour avec succès");
+            response.put("livraisonId", livraisonMiseAJour.getId());
+            response.put("dateLivraison", livraisonMiseAJour.getDateLivraison());
+            response.put("zone", livraisonMiseAJour.getZone());
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Erreur lors de la mise à jour de la livraison: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    /**
+     * DELETE /api/livraisons/{id} - Annulation d'une livraison
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> cancelLivraison(@PathVariable Long id) {
+        try {
+            // Vérifier que la livraison existe
+            Optional<Livraison> livraisonOpt = livraisonService.findLivraisonById(id);
+            if (livraisonOpt.isEmpty()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("error", "Livraison non trouvée avec l'ID: " + id);
+                return ResponseEntity.notFound().build();
+            }
+
+            Livraison livraison = livraisonOpt.get();
+            
+            // Vérifier que la livraison peut être annulée (pas encore livrée)
+            LivraisonProjection livraisonProjection = livraisonService.getLivraisonDetails()
+                    .stream()
+                    .filter(l -> l.getLivraisonId().equals(id))
                     .findFirst()
                     .orElse(null);
 
-            if (commande != null) {
-                document.add(new Paragraph("Commande n°" + commande.getCommandeId()));
-                document.add(new Paragraph("Client : " + commande.getClientNom()));
-                document.add(new Paragraph("Date commande : " +
-                        (commande.getDateCommande() != null ? commande.getDateCommande().toString() : "")));
-                document.add(new Paragraph(" "));
+            if (livraisonProjection != null && 
+                ("Livrée".equalsIgnoreCase(livraisonProjection.getStatutLivraison()) || 
+                 "Livre".equalsIgnoreCase(livraisonProjection.getStatutLivraison()))) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("error", "Impossible d'annuler une livraison déjà effectuée");
+                return ResponseEntity.badRequest().body(response);
+            }
 
-                PdfPTable table = new PdfPTable(2);
-                table.addCell("Produit");
-                table.addCell("Quantité");
-
-                for (var p : commande.getProduits()) {
-                    table.addCell(p.getNom());
-                    table.addCell(p.getQuantite().toString());
-                }
-                document.add(table);
-            } else {
-                document.add(new Paragraph("Commande introuvable."));
-            }
-        } catch (DocumentException | IOException e) {
-            // Log l'erreur et renvoyer une réponse d'erreur
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            try {
-                response.getWriter().write("Erreur lors de la génération du PDF: " + e.getMessage());
-            } catch (IOException ex) {
-                // Si même l'écriture de l'erreur échoue
-                throw new RuntimeException("Erreur critique lors de la génération du PDF", ex);
-            }
-        } finally {
-            if (document != null && document.isOpen()) {
-                document.close();
-            }
+            // Annuler la livraison (mettre le statut à "Annulée")
+            livraisonService.cancelLivraison(id);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Livraison annulée avec succès");
+            response.put("livraisonId", id);
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Erreur lors de l'annulation de la livraison: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
+    }
+
+    /**
+     * GET /api/livraisons/zones - Liste des zones de livraison disponibles
+     */
+    @GetMapping("/zones")
+    public ResponseEntity<Map<String, Object>> getZonesLivraison() {
+        try {
+            List<String> zones = livraisonService.getZonesLivraisonDisponibles();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("zones", zones);
+            response.put("count", zones.size());
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Erreur lors de la récupération des zones: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    /**
+     * GET /api/livraisons/{id} - Récupère une livraison par son ID
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> getLivraisonById(@PathVariable Long id) {
+        try {
+            Optional<Livraison> livraisonOpt = livraisonService.findLivraisonById(id);
+            if (livraisonOpt.isEmpty()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("error", "Livraison non trouvée avec l'ID: " + id);
+                return ResponseEntity.notFound().build();
+            }
+
+            // Récupérer les détails via la projection
+            LivraisonProjection livraisonProjection = livraisonService.getLivraisonDetails()
+                    .stream()
+                    .filter(l -> l.getLivraisonId().equals(id))
+                    .findFirst()
+                    .orElse(null);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("livraison", livraisonProjection);
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Erreur lors de la récupération de la livraison: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    // ==================== DEBUG ENDPOINTS ====================
     
+    /**
+     * GET /api/livraisons/debug/statuts - Debug des statuts
+     */
+    @GetMapping("/debug/statuts")
+    public ResponseEntity<Map<String, Object>> debugStatuts() {
+        try {
+            livraisonService.debugStatutsLivraison();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Debug des statuts exécuté - voir les logs");
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Erreur lors du debug: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    /**
+     * POST /api/livraisons/debug/fix-sequence - Corriger la séquence PostgreSQL
+     */
+    @PostMapping("/debug/fix-sequence")
+    public ResponseEntity<Map<String, Object>> fixSequence() {
+        try {
+            livraisonService.fixStatutLivraisonSequence();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Séquence PostgreSQL corrigée avec succès");
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Erreur lors de la correction de la séquence: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
     // ==================== RECHERCHES PAR LIVREUR/ZONE ====================
     
     /**

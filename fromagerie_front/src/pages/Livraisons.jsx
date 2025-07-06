@@ -387,66 +387,7 @@ const Livraison = () => {
                   </button>
                 </div>
               </div>
-            ) : (
-              filteredLivraisons.map(livraison => (
-                <div key={livraison.livraisonId} className="livraison-card">
-                  <div className="livraison-header">
-                    <div>
-                      <h3>{livraison.clientNom || 'Client inconnu'}</h3>
-                      <span className="client-name">Zone: {livraison.zone || 'Non définie'}</span>
-                    </div>
-                    <div style={{ 
-                      padding: '4px 12px', 
-                      borderRadius: '20px', 
-                      backgroundColor: getStatusColor(livraison.statutLivraison) + '20',
-                      color: getStatusColor(livraison.statutLivraison),
-                      fontWeight: 'bold',
-                      fontSize: '14px'
-                    }}>
-                      {livraison.statutLivraison || 'Statut inconnu'}
-                    </div>
-                  </div>
-                  
-                  <div className="livraison-details">
-                    <p><strong>Montant :</strong> {formatAmount(livraison.montantTotal)}</p>
-                    <p><strong>Produits :</strong> {livraison.produitsCommandes || 'Non spécifiés'}</p>
-                    <p><strong>Livreur :</strong> {livraison.livreurNom || 'Non assigné'}</p>
-                    <p><strong>Contact :</strong> {livraison.clientTelephone || 'Non disponible'}</p>
-                  </div>
-                  
-                  <div className="livraison-actions">
-                    {livraison.statutLivraison?.toLowerCase().includes('planifié') && (
-                      <button 
-                        className="track-btn"
-                        onClick={() => handleUpdateStatut(livraison)}
-                        style={{ backgroundColor: '#f59e0b' }}
-                      >
-                        <Play size={16} style={{ marginRight: '5px' }} />
-                        Démarrer
-                      </button>
-                    )}
-                    
-                    {livraison.statutLivraison?.toLowerCase().includes('en cours') && (
-                      <button 
-                        className="track-btn"
-                        onClick={() => handleUpdateStatut(livraison)}
-                        style={{ backgroundColor: '#10b981' }}
-                      >
-                        <CheckCircle size={16} style={{ marginRight: '5px' }} />
-                        Livrer
-                      </button>
-                    )}
-                    
-                    {livraison.statutLivraison?.toLowerCase().includes('livré') && (
-                      <button className="contact-btn" disabled style={{ backgroundColor: '#6b7280' }}>
-                        <CheckCircle size={16} style={{ marginRight: '5px' }} />
-                        Terminée
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
+            ))}
           </div>
         </div>
 

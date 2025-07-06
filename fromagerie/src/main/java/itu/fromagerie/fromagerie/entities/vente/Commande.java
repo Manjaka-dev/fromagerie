@@ -31,6 +31,9 @@ public class Commande {
     @Column(length = 30)
     private String statut; // en_attente, confirmée, annulée, livrée
     
+    @Column(name = "montant_total", precision = 12, scale = 2)
+    private BigDecimal montantTotal;
+    
     @OneToMany(mappedBy = "commande", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore  // Éviter les références circulaires
     private List<LigneCommande> lignesCommande;

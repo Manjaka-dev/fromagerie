@@ -36,5 +36,6 @@ public class SwaggerConfig {
                         new Server()
                                 .url("https://api.fromagerie.com")
                                 .description("Serveur de production")
+                ));
     }
 }
