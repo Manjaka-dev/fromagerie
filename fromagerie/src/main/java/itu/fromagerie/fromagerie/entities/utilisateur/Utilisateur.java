@@ -33,4 +33,23 @@ public class Utilisateur {
     
     @OneToMany(mappedBy = "utilisateur", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<JournalConnexion> journalConnexions;
+    
+    // Getters et setters manuels si Lombok ne fonctionne pas
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    
+    public String getNom() { return nom; }
+    public void setNom(String nom) { this.nom = nom; }
+    
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    
+    public String getMotDePasse() { return motDePasse; }
+    public void setMotDePasse(String motDePasse) { this.motDePasse = motDePasse; }
+    
+    public Role getRole() { return role; }
+    public void setRole(Role role) { this.role = role; }
+    
+    public List<JournalConnexion> getJournalConnexions() { return journalConnexions; }
+    public void setJournalConnexions(List<JournalConnexion> journalConnexions) { this.journalConnexions = journalConnexions; }
 }

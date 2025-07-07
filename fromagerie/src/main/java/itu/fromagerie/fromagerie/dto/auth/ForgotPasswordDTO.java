@@ -9,4 +9,8 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ForgotPasswordDTO {
     private String email;
+    
+    // Getters et setters manuels si Lombok ne fonctionne pas
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 } 

@@ -9,4 +9,8 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class RefreshTokenDTO {
     private String refreshToken;
+    
+    // Getters et setters manuels si Lombok ne fonctionne pas
+    public String getRefreshToken() { return refreshToken; }
+    public void setRefreshToken(String refreshToken) { this.refreshToken = refreshToken; }
 } 
