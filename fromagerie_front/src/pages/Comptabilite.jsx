@@ -1,6 +1,6 @@
 import '../assets/styles/Comptabilite.css';
 import { NavLink } from 'react-router-dom';
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Filter, Calendar, TrendingUp,ShoppingCart,Settings,Factory, Truck,Calculator,TrendingDown, Users, Package, FileText, Wallet, Eye, ChevronDown, ChevronUp,Bell,Clock,User,BarChart3 } from 'lucide-react';
 import SidebarMenu from "../components/SidebarMenu";
 import { comptabiliteAPI, formatCurrency, formatDate, getDateRange } from '../services/api';
@@ -185,7 +185,7 @@ const Comptabilite = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {recettesData.map((recette) => (
+              {revenus.map((recette) => (
                 <tr key={recette.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDateLocal(recette.date)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{recette.produit}</td>
@@ -246,7 +246,7 @@ const Comptabilite = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {depensesData.map((depense) => (
+              {depenses.map((depense) => (
                 <tr key={depense.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(depense.date)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 capitalize">{depense.categorie}</td>
@@ -262,123 +262,123 @@ const Comptabilite = () => {
     </div>
   );
 
-  const SalairesTab = () => (
-    <div className="space-y-6">
-      <SearchAndFilter
-        tab="salaires"
-        searchTerm={searchTerms.salaires}
-        onSearchChange={(term) => setSearchTerms({ ...searchTerms, salaires: term })}
-        filter={filters.salaires}
-        onFilterChange={(filter) => setFilters({ ...filters, salaires: filter })}
-      />
+  // const SalairesTab = () => (
+  //   <div className="space-y-6">
+  //     <SearchAndFilter
+  //       tab="salaires"
+  //       searchTerm={searchTerms.salaires}
+  //       onSearchChange={(term) => setSearchTerms({ ...searchTerms, salaires: term })}
+  //       filter={filters.salaires}
+  //       onFilterChange={(filter) => setFilters({ ...filters, salaires: filter })}
+  //     />
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gradient-to-r from-indigo-50 to-indigo-100 p-4 rounded-lg border border-indigo-200">
-          <h3 className="text-sm font-medium text-indigo-800">Masse salariale</h3>
-          <p className="text-2xl font-bold text-indigo-600">{formatCurrency(1900000)}</p>
-        </div>
-        <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
-          <h3 className="text-sm font-medium text-green-800">Salaires payés</h3>
-          <p className="text-2xl font-bold text-green-600">{formatCurrency(1105000)}</p>
-        </div>
-        <div className="bg-gradient-to-r from-red-50 to-red-100 p-4 rounded-lg border border-red-200">
-          <h3 className="text-sm font-medium text-red-800">En attente</h3>
-          <p className="text-2xl font-bold text-red-600">{formatCurrency(510000)}</p>
-        </div>
-        <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
-          <h3 className="text-sm font-medium text-blue-800">Employés</h3>
-          <p className="text-2xl font-bold text-blue-600">3</p>
-        </div>
-      </div>
+  //     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+  //       <div className="bg-gradient-to-r from-indigo-50 to-indigo-100 p-4 rounded-lg border border-indigo-200">
+  //         <h3 className="text-sm font-medium text-indigo-800">Masse salariale</h3>
+  //         <p className="text-2xl font-bold text-indigo-600">{formatCurrency(1900000)}</p>
+  //       </div>
+  //       <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+  //         <h3 className="text-sm font-medium text-green-800">Salaires payés</h3>
+  //         <p className="text-2xl font-bold text-green-600">{formatCurrency(1105000)}</p>
+  //       </div>
+  //       <div className="bg-gradient-to-r from-red-50 to-red-100 p-4 rounded-lg border border-red-200">
+  //         <h3 className="text-sm font-medium text-red-800">En attente</h3>
+  //         <p className="text-2xl font-bold text-red-600">{formatCurrency(510000)}</p>
+  //       </div>
+  //       <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+  //         <h3 className="text-sm font-medium text-blue-800">Employés</h3>
+  //         <p className="text-2xl font-bold text-blue-600">3</p>
+  //       </div>
+  //     </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employé</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Poste</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salaire brut</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salaire net</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Période</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {salairesData.map((salaire) => (
-                <tr key={salaire.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{salaire.employe}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{salaire.poste}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(salaire.salaireBrut)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{formatCurrency(salaire.salaireNet)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{salaire.periode}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(salaire.statut)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
+  //     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+  //       <div className="overflow-x-auto">
+  //         <table className="w-full">
+  //           <thead className="bg-gray-50">
+  //             <tr>
+  //               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employé</th>
+  //               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Poste</th>
+  //               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salaire brut</th>
+  //               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salaire net</th>
+  //               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Période</th>
+  //               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+  //             </tr>
+  //           </thead>
+  //           <tbody className="bg-white divide-y divide-gray-200">
+  //             {salairesData.map((salaire) => (
+  //               <tr key={salaire.id} className="hover:bg-gray-50">
+  //                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{salaire.employe}</td>
+  //                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{salaire.poste}</td>
+  //                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(salaire.salaireBrut)}</td>
+  //                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{formatCurrency(salaire.salaireNet)}</td>
+  //                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{salaire.periode}</td>
+  //                 <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(salaire.statut)}</td>
+  //               </tr>
+  //             ))}
+  //           </tbody>
+  //         </table>
+  //       </div>
+  //     </div>
+  //   </div>
+  // );
 
-  const InventaireTab = () => (
-    <div className="space-y-6">
-      <SearchAndFilter
-        tab="inventaire"
-        searchTerm={searchTerms.inventaire}
-        onSearchChange={(term) => setSearchTerms({ ...searchTerms, inventaire: term })}
-        filter={filters.inventaire}
-        onFilterChange={(filter) => setFilters({ ...filters, inventaire: filter })}
-      />
+  // const InventaireTab = () => (
+  //   <div className="space-y-6">
+  //     <SearchAndFilter
+  //       tab="inventaire"
+  //       searchTerm={searchTerms.inventaire}
+  //       onSearchChange={(term) => setSearchTerms({ ...searchTerms, inventaire: term })}
+  //       filter={filters.inventaire}
+  //       onFilterChange={(filter) => setFilters({ ...filters, inventaire: filter })}
+  //     />
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
-          <h3 className="text-sm font-medium text-blue-800">Valeur totale stock</h3>
-          <p className="text-2xl font-bold text-blue-600">{formatCurrency(1637500)}</p>
-        </div>
-        <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
-          <h3 className="text-sm font-medium text-green-800">Produits en stock</h3>
-          <p className="text-2xl font-bold text-green-600">245</p>
-        </div>
-        <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
-          <h3 className="text-sm font-medium text-purple-800">En affinage</h3>
-          <p className="text-2xl font-bold text-purple-600">20</p>
-        </div>
-        <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 p-4 rounded-lg border border-yellow-200">
-          <h3 className="text-sm font-medium text-yellow-800">Références</h3>
-          <p className="text-2xl font-bold text-yellow-600">5</p>
-        </div>
-      </div>
+  //     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+  //       <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+  //         <h3 className="text-sm font-medium text-blue-800">Valeur totale stock</h3>
+  //         <p className="text-2xl font-bold text-blue-600">{formatCurrency(1637500)}</p>
+  //       </div>
+  //       <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+  //         <h3 className="text-sm font-medium text-green-800">Produits en stock</h3>
+  //         <p className="text-2xl font-bold text-green-600">245</p>
+  //       </div>
+  //       <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
+  //         <h3 className="text-sm font-medium text-purple-800">En affinage</h3>
+  //         <p className="text-2xl font-bold text-purple-600">20</p>
+  //       </div>
+  //       <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 p-4 rounded-lg border border-yellow-200">
+  //         <h3 className="text-sm font-medium text-yellow-800">Références</h3>
+  //         <p className="text-2xl font-bold text-yellow-600">5</p>
+  //       </div>
+  //     </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valeur unitaire</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valeur totale</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {inventaireData.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.produit}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.stock}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(item.valeurUnitaire)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{formatCurrency(item.stock * item.valeurUnitaire)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(item.statut)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
+  //     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+  //       <div className="overflow-x-auto">
+  //         <table className="w-full">
+  //           <thead className="bg-gray-50">
+  //             <tr>
+  //               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
+  //               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+  //               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valeur unitaire</th>
+  //               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valeur totale</th>
+  //               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+  //             </tr>
+  //           </thead>
+  //           <tbody className="bg-white divide-y divide-gray-200">
+  //             {inventaireData.map((item) => (
+  //               <tr key={item.id} className="hover:bg-gray-50">
+  //                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.produit}</td>
+  //                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.stock}</td>
+  //                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(item.valeurUnitaire)}</td>
+  //                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{formatCurrency(item.stock * item.valeurUnitaire)}</td>
+  //                 <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(item.statut)}</td>
+  //               </tr>
+  //             ))}
+  //           </tbody>
+  //         </table>
+  //       </div>
+  //     </div>
+  //   </div>
+  // );
 
   const BilanTab = () => {
     const totalRecettes = 2450000;
