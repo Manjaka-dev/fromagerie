@@ -159,11 +159,25 @@ CREATE TABLE paiement (
 
 CREATE TABLE promotion (
     id SERIAL PRIMARY KEY,
+    produit_id INT REFERENCES produit(id),
     nom VARCHAR(100),
     description TEXT,
     reduction_pourcentage DECIMAL(5,2),
     date_debut DATE,
     date_fin DATE
+);
+
+insert into promotion (produit_id, nom, description, reduction_pourcentage, date_debut, date_fin) values (1, 'qwerty', 'asdfghjkl', 10.00, '2025-07-05', '2025-07-15');
+insert into promotion (produit_id, nom, description, reduction_pourcentage, date_debut, date_fin) values (2, 'qwerty', 'asdfghjkl', 10.00, '2025-08-05', '2025-08-15');
+
+select * from promotion where produit_id = 1 and date_debut <= '2025-07-10' and date_fin >= '2025-07-10';
+
+-- Annulée
+
+CREATE TABLE promotion_commande(
+    id SERIAL PRIMARY KEY,
+    commande_id INT REFERENCES commande(id),
+    promotion_id INT REFERENCES promotion(id)
 );
 
 -- =============================
@@ -285,3 +299,4 @@ CREATE TABLE bilan_financier (
     total_revenus DECIMAL(10,2),
     profit DECIMAL(10,2)
 );
+

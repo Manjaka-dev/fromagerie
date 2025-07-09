@@ -1,16 +1,16 @@
 package itu.fromagerie.fromagerie.service.commande;
 
-import itu.fromagerie.fromagerie.entities.vente.Commande;
-import itu.fromagerie.fromagerie.entities.vente.LigneCommande;
+import itu.fromagerie.fromagerie.entities.vente.*;
 import itu.fromagerie.fromagerie.entities.produit.Produit;
-import itu.fromagerie.fromagerie.entities.vente.Client;
-import itu.fromagerie.fromagerie.entities.produit.LotProduit;
 import itu.fromagerie.fromagerie.repository.vente.CommandeRepository;
 import itu.fromagerie.fromagerie.repository.vente.LigneCommandeRepository;
 import itu.fromagerie.fromagerie.repository.produit.ProduitRepository;
 import itu.fromagerie.fromagerie.repository.vente.ClientRepository;
 import itu.fromagerie.fromagerie.repository.produit.LotProduitRepository;
+import itu.fromagerie.fromagerie.repository.vente.PromotionCommandeRepository;
+import itu.fromagerie.fromagerie.repository.vente.PromotionRepository;
 import itu.fromagerie.fromagerie.service.produit.ProduitService;
+import itu.fromagerie.fromagerie.service.vente.PromotionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,14 +32,28 @@ public class CommandeService {
     private final ClientRepository clientRepository;
     private final ProduitService produitService;
     private final LotProduitRepository lotProduitRepository;
+    private final PromotionService promotionService;
+    private final PromotionRepository promotionRepository;
+    private final PromotionCommandeRepository promotionCommandeRepository;
     @Autowired
-    public CommandeService(CommandeRepository commandeRepository, LigneCommandeRepository ligneCommandeRepository, ProduitRepository produitRepository, ClientRepository clientRepository, ProduitService produitService, LotProduitRepository lotProduitRepository) {
+    public CommandeService(CommandeRepository commandeRepository,
+                           LigneCommandeRepository ligneCommandeRepository,
+                           ProduitRepository produitRepository, ClientRepository clientRepository,
+                           ProduitService produitService, LotProduitRepository lotProduitRepository,
+                           PromotionService promotionService,
+                           PromotionRepository promotionRepository,
+                           PromotionCommandeRepository promotionCommandeRepository)
+    {
         this.commandeRepository = commandeRepository;
         this.ligneCommandeRepository = ligneCommandeRepository;
         this.produitRepository = produitRepository;
         this.clientRepository = clientRepository;
         this.produitService = produitService;
         this.lotProduitRepository = lotProduitRepository;
+        this.promotionService = promotionService;
+        this.promotionRepository = promotionRepository;
+
+        this.promotionCommandeRepository = promotionCommandeRepository;
     }
 
     public List<Commande> getAllCommandes() {
@@ -141,8 +155,9 @@ public class CommandeService {
         Client cl = clientRepository.findById(clientId).orElse(null);
 
         Commande commande = new Commande();
+        LocalDate dateCommande = LocalDate.now();
         commande.setClient(cl);
-        commande.setDateCommande(LocalDate.now());
+        commande.setDateCommande(dateCommande);
         commande.setStatut("EN ATTENTE");
         commande = commandeRepository.save(commande);
 
@@ -160,6 +175,13 @@ public class CommandeService {
                 Integer nouveauQuantity = quantiteActuel - quantite;
                 produitService.updateLotProduit(produitId, nouveauQuantity);
 
+                if (promotionService.findPromotionCommande(produitId, dateCommande)){
+                    Promotion promotion = promotionRepository.findPromotionCommande(produitId, dateCommande);
+                    PromotionCommande pc = new PromotionCommande();
+                    pc.setCommande(commande);
+                    pc.setPromotion(promotion);
+                    promotionCommandeRepository.save(pc);
+                }
 
                 // facultatif : vérifier si le produit existe
                 if (quantite > 0) {
