@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { FaFacebook, FaGithub, FaEnvelope, FaUser, FaLock } from "react-icons/fa";
-import "@fontsource/poppins/400.css";
-import "@fontsource/poppins/600.css";
 import "./../../../assets/styles/auth/Inscription.css";
 
 export const Inscription = () => {

@@ -582,4 +582,11 @@ public class StockMatiereService {
             nombreAlertesTotal
         );
     }
+
+    /**
+     * Obtenir les types de mouvement disponibles
+     */
+    public String[] getTypesMouvement() {
+        return new String[]{"ENTREE", "SORTIE", "CORRECTION", "TRANSFERT", "PERTE", "RETOUR"};
+    }
 }

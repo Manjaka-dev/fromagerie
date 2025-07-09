@@ -282,3 +282,222 @@ export const livraisonAPI = {
     }
   },
 }; 
+
+// Service pour la production
+export const productionAPI = {
+  // Récupérer toutes les productions
+  getAllProductions: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/productions`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Erreur lors de la récupération des productions:', error);
+      throw error;
+    }
+  },
+
+  // Créer une production
+  createProduction: async (production) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/productions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(production),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Erreur lors de la création de la production:', error);
+      throw error;
+    }
+  },
+
+  // Mettre à jour une production
+  updateProduction: async (id, production) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/productions/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(production),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour de la production:', error);
+      throw error;
+    }
+  },
+
+  // Supprimer une production
+  deleteProduction: async (id) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/productions/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Erreur lors de la suppression de la production:', error);
+      throw error;
+    }
+  },
+};
+
+// Service pour la comptabilité
+export const comptabiliteAPI = {
+  // Récupérer le tableau de bord financier
+  getTableauDeBord: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/comptabilite/tableau-bord`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Erreur lors de la récupération du tableau de bord:', error);
+      throw error;
+    }
+  },
+
+  // Récupérer les rapports financiers
+  getRapportsFinanciers: async (dateDebut, dateFin) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/comptabilite/rapports?dateDebut=${dateDebut}&dateFin=${dateFin}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Erreur lors de la récupération des rapports:', error);
+      throw error;
+    }
+  },
+
+  // Récupérer les données de trésorerie
+  getTresorerie: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/comptabilite/tresorerie`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Erreur lors de la récupération de la trésorerie:', error);
+      throw error;
+    }
+  },
+};
+
+// Service pour le stock
+export const stockAPI = {
+  // Récupérer le stock
+  getStock: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/stock`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Erreur lors de la récupération du stock:', error);
+      throw error;
+    }
+  },
+
+  // Récupérer les alertes de stock
+  getAlertesStock: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/stock/alertes`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Erreur lors de la récupération des alertes:', error);
+      throw error;
+    }
+  },
+
+  // Mettre à jour le stock
+  updateStock: async (id, stock) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/stock/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(stock),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du stock:', error);
+      throw error;
+    }
+  },
+};
+
+// Fonctions utilitaires
+export const formatDate = (date) => {
+  if (!date) return '';
+  return new Date(date).toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+};
+
+export const formatCurrency = (amount) => {
+  if (!amount) return '0,00 €';
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR'
+  }).format(amount);
+};
+
+export const getDateRange = (period) => {
+  const today = new Date();
+  let startDate, endDate;
+
+  switch (period) {
+    case 'week':
+      startDate = new Date(today);
+      startDate.setDate(today.getDate() - 7);
+      endDate = today;
+      break;
+    case 'month':
+      startDate = new Date(today);
+      startDate.setMonth(today.getMonth() - 1);
+      endDate = today;
+      break;
+    case 'year':
+      startDate = new Date(today);
+      startDate.setFullYear(today.getFullYear() - 1);
+      endDate = today;
+      break;
+    default:
+      startDate = new Date(today);
+      startDate.setDate(today.getDate() - 30);
+      endDate = today;
+  }
+
+  return {
+    startDate: startDate.toISOString().split('T')[0],
+    endDate: endDate.toISOString().split('T')[0]
+  };
+};
