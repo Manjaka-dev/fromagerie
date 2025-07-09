@@ -74,11 +74,14 @@ const Livraison = () => {
 
   // Fonction pour formater le montant
   const formatAmount = (amount) => {
-    let numericAmount = amount;
-    if (typeof amount === 'object' && amount !== null) {
-      numericAmount = parseFloat(amount.toString()) || 0;
-    } else {
-      numericAmount = parseFloat(amount) || 0;
+    let numericAmount = 0;
+    if (amount !== null && amount !== undefined) {
+      if (typeof amount === 'object') {
+        // Si c'est un objet BigDecimal du backend
+        numericAmount = parseFloat(amount.toString()) || 0;
+      } else {
+        numericAmount = parseFloat(amount) || 0;
+      }
     }
     
     return new Intl.NumberFormat('fr-FR', {
@@ -117,9 +120,29 @@ const Livraison = () => {
       
       // Si le statut est "En cours" et qu'on veut passer à "Livrée", ouvrir le modal de paiement
       if (response.action === 'confirmation_paiement') {
+        // Débogage pour voir les valeurs exactes
+        console.log('=== DÉBOGAGE MONTANT ===');
+        console.log('Livraison montantTotal:', livraison.montantTotal);
+        console.log('Type de montantTotal:', typeof livraison.montantTotal);
+        console.log('MontantTotal stringifié:', JSON.stringify(livraison.montantTotal));
+        
+        // S'assurer que le montant est correctement converti
+        let montantPaiement = 0;
+        if (livraison.montantTotal !== null && livraison.montantTotal !== undefined) {
+          if (typeof livraison.montantTotal === 'object') {
+            // Si c'est un objet BigDecimal du backend
+            montantPaiement = parseFloat(livraison.montantTotal.toString()) || 0;
+          } else {
+            montantPaiement = parseFloat(livraison.montantTotal) || 0;
+          }
+        }
+        
+        console.log('Montant final pour paiement:', montantPaiement);
+        console.log('=== FIN DÉBOGAGE ===');
+        
         setSelectedLivraison(livraison);
         setPaiementForm({
-          montantPaiement: livraison.montantTotal || 0,
+          montantPaiement: montantPaiement,
           methodePaiement: 'espèces',
           datePaiement: new Date().toISOString().split('T')[0]
         });
@@ -389,7 +412,7 @@ const Livraison = () => {
             ) : (
               filteredLivraisons.map(livraison => (
                 <div key={livraison.livraisonId} className="livraison-card">
-                  <div className="livraison-header">
+                <div className="livraison-header">
                     <div>
                       <h3>{livraison.clientNom || 'Client inconnu'}</h3>
                       <span className="client-name">Zone: {livraison.zone || 'Non définie'}</span>
@@ -404,29 +427,29 @@ const Livraison = () => {
                     }}>
                       {livraison.statutLivraison || 'Statut inconnu'}
                     </div>
-                  </div>
+                </div>
                   
-                  <div className="livraison-details">
+                <div className="livraison-details">
                     <p><strong>Montant :</strong> {formatAmount(livraison.montantTotal)}</p>
                     <p><strong>Produits :</strong> {livraison.produitsCommandes || 'Non spécifiés'}</p>
                     <p><strong>Livreur :</strong> {livraison.livreurNom || 'Non assigné'}</p>
                     <p><strong>Contact :</strong> {livraison.clientTelephone || 'Non disponible'}</p>
-                  </div>
+                </div>
                   
-                  <div className="livraison-actions">
+                <div className="livraison-actions">
                     {livraison.statutLivraison?.toLowerCase().includes('planifié') && (
-                      <button 
-                        className="track-btn"
+                  <button 
+                    className="track-btn"
                         onClick={() => handleUpdateStatut(livraison)}
                         style={{ backgroundColor: '#f59e0b' }}
-                      >
+                  >
                         <Play size={16} style={{ marginRight: '5px' }} />
                         Démarrer
-                      </button>
+                  </button>
                     )}
                     
                     {livraison.statutLivraison?.toLowerCase().includes('en cours') && (
-                      <button 
+                  <button 
                         className="track-btn"
                         onClick={() => handleUpdateStatut(livraison)}
                         style={{ backgroundColor: '#10b981' }}
@@ -440,7 +463,7 @@ const Livraison = () => {
                       <button className="contact-btn" disabled style={{ backgroundColor: '#6b7280' }}>
                         <CheckCircle size={16} style={{ marginRight: '5px' }} />
                         Terminée
-                      </button>
+                  </button>
                     )}
                   </div>
                 </div>
@@ -471,7 +494,8 @@ const Livraison = () => {
                 <p><strong>Client:</strong> {selectedLivraison.clientNom}</p>
                 <p><strong>Zone:</strong> {selectedLivraison.zone}</p>
                 <p><strong>Livreur:</strong> {selectedLivraison.livreurNom}</p>
-                <p><strong>Montant total:</strong> {formatAmount(selectedLivraison.montantTotal)}</p>
+                {/* Correction : afficher le montant total de la commande si disponible */}
+                <p><strong>Montant total:</strong> {formatAmount(selectedLivraison.montantTotalCommande || selectedLivraison.montantTotal)}</p>
               </div>
 
               <div style={{ marginBottom: '20px' }}>

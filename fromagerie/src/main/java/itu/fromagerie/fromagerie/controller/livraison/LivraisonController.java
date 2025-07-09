@@ -123,7 +123,9 @@ public class LivraisonController {
             System.out.println("Livraison ID: " + liv.getLivraisonId() + 
                               " | Statut: '" + liv.getStatutLivraison() + "'" +
                               " | Zone: " + liv.getZone() +
-                              " | Client: " + liv.getClientNom());
+                              " | Client: " + liv.getClientNom() +
+                              " | Montant: " + liv.getMontantTotal() +
+                              " | Type montant: " + (liv.getMontantTotal() != null ? liv.getMontantTotal().getClass().getName() : "null"));
         }
         System.out.println("=== FIN DÉBOGAGE ===");
         
@@ -166,6 +168,15 @@ public class LivraisonController {
         // Si le statut actuel est "En cours" et qu'on veut passer à "Livrée", 
         // retourner les informations pour la confirmation de paiement
         if ("En cours".equalsIgnoreCase(statutActuel) || "en cours".equalsIgnoreCase(statutActuel)) {
+            // Débogage pour voir les valeurs exactes
+            System.out.println("=== DÉBOGAGE CONFIRMATION PAIEMENT ===");
+            System.out.println("Livraison ID: " + livraisonId);
+            System.out.println("Montant total: " + livraisonProjection.getMontantTotal());
+            System.out.println("Type de montant total: " + (livraisonProjection.getMontantTotal() != null ? livraisonProjection.getMontantTotal().getClass().getName() : "null"));
+            System.out.println("Client: " + livraisonProjection.getClientNom());
+            System.out.println("Zone: " + livraisonProjection.getZone());
+            System.out.println("=== FIN DÉBOGAGE ===");
+            
             Map<String, Object> response = new HashMap<>();
             response.put("action", "confirmation_paiement");
             response.put("livraisonId", livraisonId);
@@ -230,7 +241,15 @@ public class LivraisonController {
             @RequestBody Map<String, Object> request) {
         
         try {
-            Double montantPaiement = (Double) request.get("montantPaiement");
+            Object montantObj = request.get("montantPaiement");
+            Double montantPaiement;
+            if (montantObj instanceof Integer) {
+                montantPaiement = ((Integer) montantObj).doubleValue();
+            } else if (montantObj instanceof Double) {
+                montantPaiement = (Double) montantObj;
+            } else {
+                montantPaiement = Double.parseDouble(montantObj.toString());
+            }
             String methodePaiement = (String) request.get("methodePaiement");
             String datePaiement = (String) request.get("datePaiement");
             

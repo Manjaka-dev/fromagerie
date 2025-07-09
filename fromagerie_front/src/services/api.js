@@ -219,7 +219,7 @@ export const livraisonAPI = {
   },
 
   // Créer une livraison
-  createLivraison: async (commandeId, livreurId, zone, dateLivraison) => {
+  createLivraison: async ({ commandeId, livreurId, zone, dateLivraison }) => {
     try {
       const response = await fetch(`${API_BASE_URL}/livraisons/livraison`, {
         method: 'POST',
@@ -227,10 +227,10 @@ export const livraisonAPI = {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          commandeId,
-          livreur: livreurId,
-          zone,
-          dateLivraison
+          commandeId: parseInt(commandeId),
+          livreur: parseInt(livreurId),
+          dateLivraison,
+          zone
         }),
       });
       if (!response.ok) {

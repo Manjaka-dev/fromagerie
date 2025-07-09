@@ -180,23 +180,25 @@ const CommandesPage = () => {
 
 
 
-  // Fonction pour ajouter un produit à la commande
+  // Ajout de la fonction addProduitToOrder pour ajouter les produits sélectionnés à la commande
   const addProduitToOrder = () => {
-    if (selectedProduits.length === 0) {
-      alert('Veuillez sélectionner au moins un produit');
-      return;
-    }
-
-    const produitsToAdd = selectedProduits.map(produit => ({
-      produitId: produit.id,
-      quantite: produit.quantite || 1
-    }));
-
-    setNewOrder(prev => ({
-      ...prev,
-      produits: [...prev.produits, ...produitsToAdd]
-    }));
-
+    setNewOrder(prevOrder => {
+      // Pour chaque produit sélectionné, on met à jour la quantité si déjà présent, sinon on l’ajoute
+      const produitsMaj = [...prevOrder.produits];
+      selectedProduits.forEach(selProd => {
+        const idx = produitsMaj.findIndex(p => p.produitId === selProd.id);
+        if (idx !== -1) {
+          // Met à jour la quantité
+          produitsMaj[idx].quantite = selProd.quantite;
+        } else {
+          produitsMaj.push({
+            produitId: selProd.id,
+            quantite: selProd.quantite || 1
+          });
+        }
+      });
+      return { ...prevOrder, produits: produitsMaj };
+    });
     setSelectedProduits([]);
   };
 
@@ -305,18 +307,23 @@ const CommandesPage = () => {
         return;
       }
 
-      await livraisonAPI.createLivraison(
-        selectedOrder.id,
-        livraisonForm.livreurId,
-        livraisonForm.zone,
-        livraisonForm.dateLivraison
-      );
+      // Préparer la liste des produits à livrer à partir de la commande sélectionnée
+      const produitsALivrer = (selectedOrder.lignesCommande || []).map(lc => ({
+        produitId: lc.produit.id,
+        quantiteALivrer: lc.quantite
+      }));
+
+      await livraisonAPI.createLivraison({
+        commandeId: selectedOrder.id,
+        livreurId: livraisonForm.livreurId,
+        zone: livraisonForm.zone,
+        dateLivraison: livraisonForm.dateLivraison,
+        produitsALivrer
+      });
       
       alert('Livraison configurée avec succès !');
-      
       // Recharger les données pour mettre à jour la liste des commandes
       await loadData();
-      
       setShowLivraisonModal(false);
       setSelectedOrder(null);
       setLivraisonForm({
