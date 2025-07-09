@@ -16,21 +16,20 @@ public class SimulationProductionService {
     private SimulationProductionRepository simulationRepo;
 
     public List<SimulationDTO> getSimulations(LocalDate dateDebut, LocalDate dateFin) {
-        // TODO: Implémenter findSimulationsByPeriode dans SimulationProductionRepository
-        // Pour l'instant, retourner une liste vide
         return new ArrayList<>();
-        
-        // Code original commenté :
-        // return simulationRepo.findSimulationsByPeriode(dateDebut, dateFin)
-        //     .stream()
-        //     .map(s -> {
-        //         SimulationDTO dto = new SimulationDTO();
-        //         dto.quantiteAProduire = s.getQuantiteSuggeree();
-        //         dto.stockActuel = 0; // à compléter
-        //         dto.demandeEstimee = 0; // à compléter
-        //         dto.nbClients = 0; // à compléter
-        //         dto.moyenneQttDemandee = 0; // à compléter
-        //         return dto;
-        //     }).toList();
+    }
+
+    public List<SimulationDTO> getSimulations() {
+        return simulationRepo.findAll()
+                .stream()
+                .map(s -> {
+                    SimulationDTO dto = new SimulationDTO();
+                    dto.quantiteAProduire = s.getQuantiteSuggeree();
+                    dto.stockActuel = 0; // à compléter
+                    dto.demandeEstimee = 0; // à compléter
+                    dto.nbClients = 0; // à compléter
+                    dto.moyenneQttDemandee = 0; // à compléter
+                    return dto;
+                }).toList();
     }
 } 

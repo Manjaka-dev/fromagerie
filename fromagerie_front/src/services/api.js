@@ -21,11 +21,11 @@ const apiRequest = async (endpoint, options = {}) => {
 
   try {
     const response = await fetch(url, config);
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error(`API Error on ${endpoint}:`, error);
@@ -38,207 +38,222 @@ const apiRequest = async (endpoint, options = {}) => {
 // ==================== COMMANDES ====================
 export const commandeAPI = {
   // Récupérer toutes les commandes
-  getAllCommandes: () => 
+  getAllCommandes: () =>
     apiRequest('/commandes'),
 
   // Récupérer une commande par ID
-  getCommandeById: (id) => 
+  getCommandeById: (id) =>
     apiRequest(`/commandes/${id}`),
 
   // Créer une nouvelle commande
-  createCommande: (commandeData) => 
+  createCommande: (commandeData) =>
     apiRequest('/commandes', { method: 'POST', body: commandeData }),
 
   // Mettre à jour une commande
-  updateCommande: (id, commandeData) => 
+  updateCommande: (id, commandeData) =>
     apiRequest(`/commandes/${id}`, { method: 'PUT', body: commandeData }),
 
   // Supprimer une commande
-  deleteCommande: (id) => 
+  deleteCommande: (id) =>
     apiRequest(`/commandes/${id}`, { method: 'DELETE' }),
 
   // Filtrer les commandes par statut
-  getCommandesByStatut: (statut) => 
+  getCommandesByStatut: (statut) =>
     apiRequest(`/commandes/statut/${statut}`),
 };
 
 // ==================== CLIENTS ====================
 export const clientAPI = {
   // Récupérer tous les clients
-  getAllClients: () => 
+  getAllClients: () =>
     apiRequest('/clients'),
 
   // Récupérer un client par ID
-  getClientById: (id) => 
+  getClientById: (id) =>
     apiRequest(`/clients/${id}`),
 
   // Créer un nouveau client
-  createClient: (clientData) => 
+  createClient: (clientData) =>
     apiRequest('/clients', { method: 'POST', body: clientData }),
 
   // Mettre à jour un client
-  updateClient: (id, clientData) => 
+  updateClient: (id, clientData) =>
     apiRequest(`/clients/${id}`, { method: 'PUT', body: clientData }),
 
   // Supprimer un client
-  deleteClient: (id) => 
+  deleteClient: (id) =>
     apiRequest(`/clients/${id}`, { method: 'DELETE' }),
 
   // Rechercher des clients par nom
-  searchClients: (nom) => 
+  searchClients: (nom) =>
     apiRequest(`/clients/search?nom=${nom}`),
 };
 
 // ==================== PRODUITS ====================
 export const produitAPI = {
   // Récupérer tous les produits
-  getAllProduits: () => 
+  getAllProduits: () =>
     apiRequest('/produits'),
 
   // Récupérer un produit par ID
-  getProduitById: (id) => 
+  getProduitById: (id) =>
     apiRequest(`/produits/${id}`),
 
   // Créer un nouveau produit
-  createProduit: (produitData) => 
+  createProduit: (produitData) =>
     apiRequest('/produits', { method: 'POST', body: produitData }),
 
   // Mettre à jour un produit
-  updateProduit: (id, produitData) => 
+  updateProduit: (id, produitData) =>
     apiRequest(`/produits/${id}`, { method: 'PUT', body: produitData }),
 
   // Supprimer un produit
-  deleteProduit: (id) => 
+  deleteProduit: (id) =>
     apiRequest(`/produits/${id}`, { method: 'DELETE' }),
 
   // Rechercher des produits par nom
-  searchProduits: (nom) => 
+  searchProduits: (nom) =>
     apiRequest(`/produits/search?nom=${nom}`),
 };
 
 // ==================== LIVREURS ====================
 export const livreurAPI = {
   // Récupérer tous les livreurs
-  getAllLivreurs: () => 
+  getAllLivreurs: () =>
     apiRequest('/commandes/livreurs'),
 
   // Créer un nouveau livreur
-  createLivreur: (livreurData) => 
+  createLivreur: (livreurData) =>
     apiRequest('/livreurs', { method: 'POST', body: livreurData }),
 
   // Rechercher des livreurs par nom
-  searchLivreurs: (nom) => 
+  searchLivreurs: (nom) =>
     apiRequest(`/livreurs/search?nom=${nom}`),
 };
 
 // ==================== COMPTABILITÉ ====================
 export const comptabiliteAPI = {
   // Revenus
-  getRevenus: (dateDebut, dateFin) => 
+  getRevenus: (dateDebut, dateFin) =>
     apiRequest(`/revenus/date-range?dateDebut=${dateDebut}&dateFin=${dateFin}`),
-  
-  getTotalRevenus: (dateDebut, dateFin) => 
+
+  getTotalRevenus: (dateDebut, dateFin) =>
     apiRequest(`/revenus/total?dateDebut=${dateDebut}&dateFin=${dateFin}`),
-  
-  createRevenu: (revenuData) => 
+
+  createRevenu: (revenuData) =>
     apiRequest('/revenus', { method: 'POST', body: revenuData }),
 
   // Dépenses
-  getDepenses: (dateDebut, dateFin) => 
+  getDepenses: (dateDebut, dateFin) =>
     apiRequest(`/depenses/date-range?dateDebut=${dateDebut}&dateFin=${dateFin}`),
-  
-  getDepensesByCategorie: (categorie) => 
+
+  getDepensesByCategorie: (categorie) =>
     apiRequest(`/depenses/categorie?categorie=${categorie}`),
-  
-  getTotalDepenses: (dateDebut, dateFin) => 
+
+  getTotalDepenses: (dateDebut, dateFin) =>
     apiRequest(`/depenses/total?dateDebut=${dateDebut}&dateFin=${dateFin}`),
-  
-  createDepense: (depenseData) => 
+
+  createDepense: (depenseData) =>
     apiRequest('/depenses', { method: 'POST', body: depenseData }),
 
   // Bilans
-  getBilans: () => 
+  getBilans: () =>
     apiRequest('/bilans'),
-  
-  getBilanByPeriode: (periode) => 
+
+  getBilanByPeriode: (periode) =>
     apiRequest(`/bilans/periode?periode=${periode}`),
 };
 
 // ==================== STOCK ====================
 export const stockAPI = {
   // Matières premières
-  getAllMatieresPremiere: () => 
+  getAllMatieresPremiere: () =>
     apiRequest('/stock/matieres-premieres'),
-  
-  createMatierePremiere: (matiereData) => 
+
+  createMatierePremiere: (matiereData) =>
     apiRequest('/stock/matieres-premieres', { method: 'POST', body: matiereData }),
-  
-  getMatierePremiere: (id) => 
+
+  getMatierePremiere: (id) =>
     apiRequest(`/stock/matieres-premieres/${id}`),
 
   // Mouvements de stock
-  getMouvementsStock: (dateDebut, dateFin) => 
-    apiRequest(`/stock/mouvements?dateDebut=${dateDebut}&dateFin=${dateFin}`),
-  
-  createMouvementStock: (mouvementData) => 
+  getMouvementsStock: () =>
+    apiRequest(`/stock/mouvements`),
+
+  getMouvementsProduits: () =>
+    apiRequest(`/stock/mouvement`),
+
+  getSimulationProduits: () =>
+    apiRequest(`/stock/simulation/all`),
+
+  // getStockProduit: () =>
+  //   apiRequest(`/stock/produit-fini`),
+
+  getStockProduit: () =>
+    apiRequest(`/stock/mouvement/courant`),
+
+  createSimulationProduits: (id, quantite) =>
+    apiRequest(`/stock/simulation-production?produitId=${id}&quantite=${quantite}`, { method: 'POST' }),
+
+  createMouvementStock: (mouvementData) =>
     apiRequest('/stock/mouvements', { method: 'POST', body: mouvementData }),
 };
 
 // ==================== PRODUCTION ====================
 export const productionAPI = {
   // Productions effectuées
-  getProductionsByDate: (date) => 
+  getProductionsByDate: (date) =>
     apiRequest(`/productions/date?date=${date}`),
-  
-  getProductionsByDateRange: (dateDebut, dateFin) => 
+
+  getProductionsByDateRange: (dateDebut, dateFin) =>
     apiRequest(`/productions/date-range?dateDebut=${dateDebut}&dateFin=${dateFin}`),
-  
-  getProductionsByProduit: (produitId) => 
+
+  getProductionsByProduit: (produitId) =>
     apiRequest(`/productions/produit/${produitId}`),
 
   // Fiches de production
-  getFichesByProduit: (produitId) => 
+  getFichesByProduit: (produitId) =>
     apiRequest(`/fiches/produit/${produitId}`),
-  
-  createFicheProduction: (ficheData) => 
+
+  createFicheProduction: (ficheData) =>
     apiRequest('/fiches', { method: 'POST', body: ficheData }),
 
   // Pertes de production
-  getPertesByProduction: (productionId) => 
+  getPertesByProduction: (productionId) =>
     apiRequest(`/pertes/production/${productionId}`),
-  
-  getAverageTauxPerte: () => 
+
+  getAverageTauxPerte: () =>
     apiRequest('/pertes/average-taux'),
 };
 
 // ==================== LIVRAISONS ====================
 export const livraisonAPI = {
   // Livraisons
-  getAllLivraisons: () => 
+  getAllLivraisons: () =>
     apiRequest('/livraisons'),
-  
+
   getLivraisonById: (id) =>
     apiRequest(`/livraisons/${id}`),
-  
-  createLivraison: (livraisonData) => 
+
+  createLivraison: (livraisonData) =>
     apiRequest('/livraisons', { method: 'POST', body: livraisonData }),
-  
+
   // 🆕 MODIFICATION COMPLÈTE D'UNE LIVRAISON
   updateLivraison: (id, updateData) =>
     apiRequest(`/livraisons/${id}`, { method: 'PUT', body: updateData }),
-  
+
   // 🆕 ANNULATION D'UNE LIVRAISON  
   deleteLivraison: (id) =>
     apiRequest(`/livraisons/${id}`, { method: 'DELETE' }),
-  
-  updateStatutLivraison: (id, statut) => 
+
+  updateStatutLivraison: (id, statut) =>
     apiRequest(`/livraisons/${id}/statut`, { method: 'PUT', body: { statut } }),
 
   // 🆕 CONFIRMATION PAIEMENT ET LIVRAISON
   confirmerLivraisonPaiement: (id, paiementData) =>
-    apiRequest(`/livraisons/${id}/confirmer-livraison-paiement`, { 
-      method: 'POST', 
-      body: paiementData 
+    apiRequest(`/livraisons/${id}/confirmer-livraison-paiement`, {
+      method: 'POST',
+      body: paiementData
     }),
 
   // 🆕 LISTE DES ZONES DE LIVRAISON
@@ -248,14 +263,14 @@ export const livraisonAPI = {
   // Recherches par livreur/zone
   getLivraisonsByLivreur: (livreurId) =>
     apiRequest(`/livraisons/livreur/${livreurId}`),
-    
+
   getLivraisonsByZone: (zone) =>
     apiRequest(`/livraisons/zone/${zone}`),
 
   // Autres fonctions existantes  
   exportCommandePdf: (commandeId) =>
     apiRequest(`/livraisons/commandes/${commandeId}/export-pdf`),
-    
+
   retourLivraison: (retourData) =>
     apiRequest('/livraisons/retour-livraison', { method: 'POST', body: retourData }),
 };
@@ -281,7 +296,7 @@ export const getDateRange = (days = 30) => {
   const end = new Date();
   const start = new Date();
   start.setDate(start.getDate() - days);
-  
+
   return {
     dateDebut: start.toISOString().split('T')[0],
     dateFin: end.toISOString().split('T')[0],
@@ -294,22 +309,22 @@ export const useApiData = (apiCall, dependencies = []) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const result = await apiCall();
-        setData(result);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await apiCall();
+      setData(result);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchData();
   }, dependencies);
 
-  return { data, loading, error, refetch: () => fetchData() };
+  return { data, loading, error, refetch: fetchData };
 };

@@ -19,9 +19,13 @@ public class SimulationProductionController {
 
     @GetMapping
     public List<SimulationDTO> getSimulations(
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin
-    ) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
         return simulationService.getSimulations(dateDebut, dateFin);
     }
-} 
+
+    @GetMapping("/all")
+    public List<SimulationDTO> getSimulationsAll() {
+        return simulationService.getSimulations();
+    }
+}

@@ -2,10 +2,13 @@ import React, { useState, useMemo, useEffect } from 'react';
 import '../assets/styles/Stock.css';
 import { NavLink } from 'react-router-dom';
 import SidebarMenu from "../components/SidebarMenu";
+import styles from '../assets/styles/commande/Commande.module.css';
+
 import {
     Package,
     AlertTriangle,
     Plus,
+    X,
     Search,
     Calendar,
     TrendingUp,
@@ -19,7 +22,7 @@ import {
     Trash2,
     Download, Edit
 } from 'lucide-react';
-import { stockAPI, formatDate } from '../services/api';
+import { stockAPI } from '../services/api';
 
 const Stock = () => {
     const [activeTab, setActiveTab] = useState('stock');
@@ -27,13 +30,73 @@ const Stock = () => {
     const [activeStockType, setActiveStockType] = useState('matieres');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState('all');
-    
+
     // États pour les données du backend
     const [matieresPremieres, setMatieresPremieres] = useState([]);
     const [produitsFinis, setProduitsFinis] = useState([]);
     const [mouvementsStock, setMouvementsStock] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [mouvementsProduit, setMouvementsProduit] = useState([]);
+    const [simulationsProduction, setSimulationsProduction] = useState([]);
+    const [showAddModalAddSimulation, setShowAddModalAddSimulation] = useState(false);
+    const [selectedProduits, setSelectedProduits] = useState({
+        id: '',
+        quantite: '',
+    });
+
+
+
+
+    // const [loading, setLoading] = useState(true);
+    // const [error, setError] = useState(null);
+
+    const [matiere, setMatiere] = useState({
+        nom: '',
+        unite: '',
+        duree: '',
+        quantite: '',
+    });
+    const handleAddMatierePremiere = async () => {
+        try {
+            // S'assurer que `duree` est bien un nombre
+            const data = {
+                "nom": `${matiere.nom}`,
+                "unite": `${matiere.unite}`,
+                "dureeConservation": Number(matiere.duree),
+                "quantiteInitiale": 0,
+            };
+            alert(data.nom + " " + data.unite + " " + data.dureeConservation + " " + data.quantiteInitiale + " ");
+            const result = await stockAPI.createMatierePremiere(data);
+            console.log('Matière ajoutée avec succès :', result);
+
+            // Réinitialiser le formulaire
+            setMatiere({ nom: '', unite: '', duree: '', quantite: '' });
+
+            // Fermer la modale
+            setShowAddModal(false);
+        } catch (error) {
+            console.error('Erreur API :', error.message);
+            alert('Erreur lors de l\'ajout de la matière première.');
+        }
+    };
+
+    const handleAddSimulation = async () => {
+        try {
+            // S'assurer que `quantite` est bien un nombre
+
+            const result = await stockAPI.createSimulationProduits(Number(selectedProduits.id), Number(selectedProduits.quantite));
+            console.log('Simulation ajoutée avec succès :', result);
+            // Réinitialiser le formulaire
+            setSelectedProduits({ id: '', quantite: '' });
+            // Fermer la modale
+            setShowAddModalAddSimulation(false);
+        } catch (error) {
+            console.error('Erreur API :', error.message);
+            alert('Erreur lors de l\'ajout de la simulation.');
+        }
+    }
+
+    // Etats des modals
+    const [showAddModal, setShowAddModal] = useState(false);
 
     // Charger les données au montage
     useEffect(() => {
@@ -41,27 +104,28 @@ const Stock = () => {
     }, []);
 
     const loadStockData = async () => {
-        setLoading(true);
-        setError(null);
+        // setLoading(true);
+        // setError(null);
         try {
             // Charger les matières premières depuis l'API
             const matieres = await stockAPI.getAllMatieresPremiere();
             setMatieresPremieres(matieres || []);
 
             // Pour les produits finis, utiliser l'API produits
-            const produits = await produitAPI.getAllProduits();
+            const produits = await stockAPI.getStockProduit();
+            const produitsFinis = produits;
             // Adapter les données des produits pour l'affichage stock
-            const produitsFinis = produits.produits?.map(produit => ({
-                id: produit.id,
-                nom: produit.nom,
-                unite: produit.unite || 'Unités',
-                quantiteActuelle: produit.quantiteDisponible || 0,
-                seuilAlerte: 10,
-                seuilCritique: 5,
-                prixUnitaire: produit.prix || 0,
-                status: produit.quantiteDisponible > 10 ? 'normal' : 
-                       produit.quantiteDisponible > 5 ? 'alerte' : 'critique'
-            })) || [];
+            // const produitsFinis = produits.produits?.map(produit => ({
+            //     id: produit.id,
+            //     nom: produit.nomMatiere,
+            //     unite: produit.unite || 'Unités',
+            //     quantiteActuelle: produit.quantiteDisponible || 0,
+            //     seuilAlerte: 10,
+            //     seuilCritique: 5,
+            //     prixUnitaire: produit.prixVente || 0,
+            //     status: produit.quantiteDisponible > 10 ? 'normal' :
+            //         produit.quantiteDisponible > 5 ? 'alerte' : 'critique'
+            // })) || [];
             setProduitsFinis(produitsFinis);
 
             // Charger les mouvements de stock récents
@@ -73,11 +137,17 @@ const Stock = () => {
             );
             setMouvementsStock(mouvements || []);
 
+            const mouvement2 = await stockAPI.getMouvementsProduits();
+            setMouvementsProduit(mouvement2 || []);
+
+            const simulation = await stockAPI.getSimulationProduits();
+            setSimulationsProduction(simulation || []);
+
         } catch (err) {
             console.error('Erreur lors du chargement des données de stock:', err);
-            setError('Impossible de charger les données de stock. Veuillez vérifier que le backend est démarré.');
+            // setError('Impossible de charger les données de stock. Veuillez vérifier que le backend est démarré.');
         } finally {
-            setLoading(false);
+            // setLoading(false);
         }
     };
 
@@ -124,7 +194,7 @@ const Stock = () => {
             case 'premium': return 'text-purple-600 bg-purple-50';
             default: return 'text-gray-600 bg-gray-50';
         }
-    };
+    };``
 
     const getStatutProduitText = (statut) => {
         switch (statut) {
@@ -138,20 +208,32 @@ const Stock = () => {
 
     // Optimisation des filtres avec useMemo
     const filteredMatieres = useMemo(() => {
-        return matieresPremieres.filter(matiere => {
-            const matchesSearch = matiere.nom.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesFilter = filterType === 'all' || matiere.status === filterType;
+        const safeSearchTerm = (searchTerm || "").toLowerCase();
+        return (matieresPremieres || []).filter(matiere => {
+            const nom = matiere?.nomMatiere || "";
+            const matchesSearch = nom.toLowerCase().includes(safeSearchTerm);
+            const matchesFilter = filterType === 'all' || matiere?.status === filterType;
             return matchesSearch && matchesFilter;
         });
     }, [matieresPremieres, searchTerm, filterType]);
-
+    
     const filteredProduits = useMemo(() => {
-        return produitsFinis.filter(produit => {
-            const matchesSearch = produit.nom.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesFilter = filterType === 'all' || produit.statut === filterType;
-            return matchesSearch && matchesFilter;
+        const safeSearchTerm = (searchTerm || "").toLowerCase();
+        return (produitsFinis || []).filter(produit => {
+            const nom = produit?.nomMatiere || "";
+            return nom.toLowerCase().includes(safeSearchTerm);
         });
-    }, [produitsFinis, searchTerm, filterType]);
+    }, [produitsFinis, searchTerm]);
+    
+    
+    // const filteredProduits = useMemo(() => {
+    //     return produitsFinis.filter(produit => {
+    //         const matchesSearch = produit.nom.toLowerCase().includes(searchTerm.toLowerCase());
+    //         // const matchesFilter = filterType === 'all' || produit.statut === filterType;
+    //         return matchesSearch
+    //     });
+    // }, [produitsFinis, searchTerm, filterType]);
+
 
     return (
         <div className="dashboard-container min-h-screen bg-gray-50">
@@ -208,7 +290,7 @@ const Stock = () => {
                                 </h1>
                                 <p className="text-gray-600 mt-1">Gestion et suivi des matières premières - Fromagerie Artisanale</p>
                             </div>
-                            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+                            <button onClick={() => setShowAddModal(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
                                 <Plus className="w-4 h-4" />
                                 Nouvelle matière
                             </button>
@@ -383,9 +465,6 @@ const Stock = () => {
                                                             Conservation
                                                         </th>
                                                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Dernière MAJ
-                                                        </th>
-                                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Actions
                                                         </th>
                                                     </tr>
@@ -404,21 +483,18 @@ const Stock = () => {
                                                                     <div className="text-sm font-medium text-gray-900">{matiere.nom}</div>
                                                                 </td>
                                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                                    <div className="text-sm text-gray-900 font-semibold">{matiere.quantite}</div>
+                                                                    <div className="text-sm text-gray-900 font-semibold">{matiere.quantiteEnStock}</div>
                                                                 </td>
                                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                                     <div className="text-sm text-gray-500">{matiere.unite}</div>
                                                                 </td>
                                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(matiere.status)}`}>
+                                                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(matiere.statutStock)}`}>
                                                                         {getStatusText(matiere.status)}
                                                                     </span>
                                                                 </td>
                                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                                    <div className="text-sm text-gray-500">{matiere.duree_conservation} jours</div>
-                                                                </td>
-                                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                                    <div className="text-sm text-gray-500">{matiere.dernierMouvement}</div>
+                                                                    <div className="text-sm text-gray-500">{matiere.dureeConservation} jours</div>
                                                                 </td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                                                     <div className="flex items-center gap-2">
@@ -459,16 +535,7 @@ const Stock = () => {
                                                             Quantité
                                                         </th>
                                                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Poids Total
-                                                        </th>
-                                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Statut
-                                                        </th>
-                                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Affinage
-                                                        </th>
-                                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                            Date Production
                                                         </th>
                                                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                             Actions
@@ -486,7 +553,7 @@ const Stock = () => {
                                                         filteredProduits.map((produit) => (
                                                             <tr key={produit.id} className="hover:bg-gray-50">
                                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                                    <div className="text-sm font-medium text-gray-900">{produit.nom}</div>
+                                                                    <div className="text-sm font-medium text-gray-900">{produit.nomMatiere}</div>
                                                                 </td>
                                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                                     <div className="text-sm text-gray-500 font-mono">{produit.lot}</div>
@@ -495,18 +562,7 @@ const Stock = () => {
                                                                     <div className="text-sm text-gray-900 font-semibold">{produit.quantite}</div>
                                                                 </td>
                                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                                    <div className="text-sm text-gray-900">{(produit.quantite * produit.poids_unitaire).toFixed(1)} kg</div>
-                                                                </td>
-                                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatutProduitColor(produit.statut)}`}>
-                                                                        {getStatutProduitText(produit.statut)}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="px-6 py-4 whitespace-nowrap">
                                                                     <div className="text-sm text-gray-500">{produit.duree_affinage} jours</div>
-                                                                </td>
-                                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                                    <div className="text-sm text-gray-500">{produit.date_production}</div>
                                                                 </td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                                                     <div className="flex items-center gap-2">
@@ -598,20 +654,20 @@ const Stock = () => {
                                                 </tr>
                                             </thead>
                                             <tbody className="bg-white divide-y divide-gray-200">
-                                                {(activeStockType === 'matieres' ? mouvements : mouvementsProduits).length === 0 ? (
+                                                {(activeStockType === 'matieres' ? mouvementsStock : mouvementsProduit).length === 0 ? (
                                                     <tr>
                                                         <td colSpan={activeStockType === 'produits' ? 6 : 5} className="px-6 py-4 text-center text-gray-500">
                                                             Aucun mouvement trouvé.
                                                         </td>
                                                     </tr>
                                                 ) : (
-                                                    (activeStockType === 'matieres' ? mouvements : mouvementsProduits).map((mouvement) => (
+                                                    (activeStockType === 'matieres' ? mouvementsStock : mouvementsProduit).map((mouvement) => (
                                                         <tr key={mouvement.id} className="hover:bg-gray-50">
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                                {mouvement.date}
+                                                                {mouvement.dateMouvement}
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                                {activeStockType === 'matieres' ? mouvement.matiere : mouvement.produit}
+                                                                {activeStockType === 'matieres' ? mouvement.nomMatiere : mouvement.nomMatiere}
                                                             </td>
                                                             {activeStockType === 'produits' && (
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
@@ -619,11 +675,11 @@ const Stock = () => {
                                                                 </td>
                                                             )}
                                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${mouvement.type === 'ENTREE' ? 'text-green-600 bg-green-50' :
-                                                                    mouvement.type === 'SORTIE' ? 'text-red-600 bg-red-50' :
+                                                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${mouvement.typeMouvement === 'entree' ? 'text-green-600 bg-green-50' :
+                                                                    mouvement.typeMouvement === 'sortie' ? 'text-red-600 bg-red-50' :
                                                                         'text-orange-600 bg-orange-50'
                                                                     }`}>
-                                                                    {mouvement.type === 'ENTREE' ? 'Entrée' : mouvement.type === 'SORTIE' ? 'Sortie' : 'Ajustement'}
+                                                                    {mouvement.typeMouvement === 'entree' ? 'Entrée' : mouvement.typeMouvement === 'sortie' ? 'Sortie' : 'Ajustement'}
                                                                 </span>
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -653,7 +709,7 @@ const Stock = () => {
                                 <div className="bg-white rounded-lg shadow-sm border p-6">
                                     <div className="flex items-center justify-between mb-4">
                                         <h3 className="text-lg font-medium text-gray-900">Simulation de Production</h3>
-                                        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+                                        <button onClick={() => setShowAddModalAddSimulation(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
                                             <Plus className="w-4 h-4" />
                                             Nouvelle Simulation
                                         </button>
@@ -776,9 +832,122 @@ const Stock = () => {
                                 )}
                             </div>
                         </div>
-
-
                     )}
+
+                    {showAddModal && (
+                        <div className={styles.modalOverlayNewCommande}>
+                            <div className={styles.orderModalNewCommande}>
+                                <button onClick={() => setShowAddModal(false)}>
+                                    <X size={15} className={styles.closeButton} />
+                                </button>
+
+                                <div className={styles.modalHeaderNewCommande}>
+                                    <h2 className={styles.modalTitleNewCommande}>Nouvelle matiere premiere</h2>
+                                </div>
+
+                                <div className={styles.modalContentNewCommande}>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Nom</label>
+                                        <input
+                                            type="text"
+                                            className={styles.formInputDate}
+                                            onChange={(e) => setMatiere({ ...matiere, nom: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Unite</label>
+                                        <input
+                                            type="text"
+                                            className={styles.formInputDate}
+                                            onChange={(e) => setMatiere({ ...matiere, unite: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Duree de conservation</label>
+                                        <input
+                                            type="number"
+                                            className={styles.formInputDate}
+                                            onChange={(e) => setMatiere({ ...matiere, duree: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className={styles.modalActionsNewCommande}>
+                                    <button
+                                        className={`${styles.actionButtonNewCommande} ${styles.cancelButton}`}
+                                        onClick={() => setShowAddModal(false)}
+                                    >
+                                        Annuler
+                                    </button>
+                                    <button
+                                        className={`${styles.actionButtonNewCommande} ${styles.confirmButton}`}
+                                        onClick={handleAddMatierePremiere}
+                                    >
+                                        Enregistrer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {showAddModalAddSimulation && (
+                        <div className={styles.modalOverlayNewCommande}>
+                            <div className={styles.orderModalNewCommande}>
+                                <button onClick={() => setShowAddModalAddSimulation(false)}>
+                                    <X size={15} className={styles.closeButton} />
+                                </button>
+
+                                <div className={styles.modalHeaderNewCommande}>
+                                    <h2 className={styles.modalTitleNewCommande}>Nouvelle simulation</h2>
+                                </div>
+
+
+                                <div className={styles.modalContentNewCommande}>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Produit</label>
+                                        <select
+                                            className={styles.formSelect}
+                                            value={selectedProduits.id}
+                                            onChange={(e) => setSelectedProduits({ ...selectedProduits, id: e.target.value })}
+                                        >
+                                            <option value="">Sélectionner un produit</option>
+                                            {produitsFinis.map(produit => (
+                                                <option key={produit.id} value={produit.id}>
+                                                    {produit.nom}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Quantite produit</label>
+                                        <input
+                                            type="number"
+                                            className={styles.formInputDate}
+                                            onChange={(e) => setSelectedProduits({ ...selectedProduits, quantite: e.target.value })}
+                                            placeholder="quantite produit ..."
+
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className={styles.modalActionsNewCommande}>
+                                    <button
+                                        className={`${styles.actionButtonNewCommande} ${styles.cancelButton}`}
+                                        onClick={() => setShowAddModalAddSimulation(false)}
+                                    >
+                                        Annuler
+                                    </button>
+                                    <button
+                                        className={`${styles.actionButtonNewCommande} ${styles.confirmButton}`}
+                                        onClick={handleAddSimulation}
+                                    >
+                                        Enregistrer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                 </div>
 
             </div>

@@ -27,21 +27,21 @@ public class StockMatiereService {
 
     @Autowired
     private MatierePremiereRepository matierePremiereRepository;
-    
+
     @Autowired
     private StockMatiereRepository stockMatiereRepository;
-    
+
     @Autowired
     private MouvementStockMatiereRepository mouvementStockMatiereRepository;
-    
+
     @Autowired
     private AlertePeremptionRepository alertePeremptionRepository;
-    
+
     @Autowired
     private ProduitRepository produitRepository;
 
     // ==================== GESTION MATIERES PREMIERES ====================
-    
+
     /**
      * Créer une nouvelle matière première avec stock initial
      */
@@ -51,23 +51,23 @@ public class StockMatiereService {
         matiere.setNom(createDTO.getNom());
         matiere.setUnite(createDTO.getUnite());
         matiere.setDureeConservation(createDTO.getDureeConservation());
-        
+
         MatierePremiere savedMatiere = matierePremiereRepository.save(matiere);
-        
+
         // Créer le stock initial si quantité fournie
         if (createDTO.getQuantiteInitiale() != null && createDTO.getQuantiteInitiale().compareTo(BigDecimal.ZERO) > 0) {
             StockMatiere stock = new StockMatiere();
             stock.setMatiere(savedMatiere);
             stock.setQuantite(createDTO.getQuantiteInitiale());
             stockMatiereRepository.save(stock);
-            
+
             // Créer un mouvement d'entrée
             createMouvement(savedMatiere.getId(), "ENTREE", createDTO.getQuantiteInitiale(), "Stock initial");
         }
-        
+
         return convertToMatierePremiereDTO(savedMatiere);
     }
-    
+
     /**
      * Obtenir toutes les matières premières avec leur stock
      */
@@ -76,7 +76,7 @@ public class StockMatiereService {
                 .map(this::convertToMatierePremiereDTO)
                 .collect(Collectors.toList());
     }
-    
+
     /**
      * Obtenir une matière première par ID
      */
@@ -84,22 +84,22 @@ public class StockMatiereService {
         return matierePremiereRepository.findById(id)
                 .map(this::convertToMatierePremiereDTO);
     }
-    
+
     /**
      * Mettre à jour une matière première
      */
     public MatierePremiereDTO updateMatierePremiere(Long id, MatierePremiereDTO updateDTO) {
         MatierePremiere matiere = matierePremiereRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Matière première non trouvée"));
-        
+
         matiere.setNom(updateDTO.getNom());
         matiere.setUnite(updateDTO.getUnite());
         matiere.setDureeConservation(updateDTO.getDureeConservation());
-        
+
         MatierePremiere savedMatiere = matierePremiereRepository.save(matiere);
         return convertToMatierePremiereDTO(savedMatiere);
     }
-    
+
     /**
      * Supprimer une matière première
      */
@@ -109,23 +109,24 @@ public class StockMatiereService {
         if (!mouvements.isEmpty()) {
             throw new RuntimeException("Impossible de supprimer une matière première avec des mouvements de stock");
         }
-        
+
         // Supprimer le stock associé
         stockMatiereRepository.deleteByMatiereId(id);
-        
+
         // Supprimer la matière première
         matierePremiereRepository.deleteById(id);
     }
 
     // ==================== GESTION MOUVEMENTS STOCK ====================
-    
+
     /**
      * Créer un mouvement de stock
      */
-    public MouvementStockDTO createMouvement(Long matiereId, String typeMouvement, BigDecimal quantite, String commentaire) {
+    public MouvementStockDTO createMouvement(Long matiereId, String typeMouvement, BigDecimal quantite,
+            String commentaire) {
         MatierePremiere matiere = matierePremiereRepository.findById(matiereId)
                 .orElseThrow(() -> new RuntimeException("Matière première non trouvée"));
-        
+
         // Créer le mouvement
         MouvementStockMatiere mouvement = new MouvementStockMatiere();
         mouvement.setMatiere(matiere);
@@ -133,65 +134,67 @@ public class StockMatiereService {
         mouvement.setQuantite(quantite);
         mouvement.setCommentaire(commentaire);
         mouvement.setDateMouvement(LocalDateTime.now());
-        
+
         MouvementStockMatiere savedMouvement = mouvementStockMatiereRepository.save(mouvement);
-        
+
         // Mettre à jour le stock
         updateStock(matiereId, typeMouvement, quantite);
-        
+
         return convertToMouvementStockDTO(savedMouvement);
     }
-    
+
     /**
      * Créer un mouvement via DTO
      */
     public MouvementStockDTO createMouvement(CreateMouvementStockDTO createDTO) {
         return createMouvement(
-            createDTO.getMatiereId(),
-            createDTO.getTypeMouvement(),
-            createDTO.getQuantite(),
-            createDTO.getCommentaire()
-        );
+                createDTO.getMatiereId(),
+                createDTO.getTypeMouvement(),
+                createDTO.getQuantite(),
+                createDTO.getCommentaire());
     }
-    
+
     /**
      * Obtenir l'historique des mouvements
      */
     public List<MouvementStockDTO> getMouvements(Long matiereId, LocalDate dateDebut, LocalDate dateFin) {
-        // TODO: Implémenter les méthodes manquantes dans MouvementStockMatiereRepository
+        // TODO: Implémenter les méthodes manquantes dans
+        // MouvementStockMatiereRepository
         // Pour l'instant, retourner une liste vide
-        return new ArrayList<>();
-        
+        // return new ArrayList<>();
+        // return mouvementStockMatiereRepository.findAll().stream()
+        // .map(this::convertToMouvementStockDTO)
+        // .collect(Collectors.toList());
         // Code original commenté :
-        // List<MouvementStockMatiere> mouvements;
-        // 
-        // if (matiereId != null && dateDebut != null && dateFin != null) {
-        //     mouvements = mouvementStockMatiereRepository.findByMatiereIdAndDateMouvementBetween(
-        //         matiereId, dateDebut.atStartOfDay(), dateFin.atTime(23, 59, 59));
-        // } else if (matiereId != null) {
-        //     mouvements = mouvementStockMatiereRepository.findByMatiereIdOrderByDateMouvementDesc(matiereId);
-        // } else if (dateDebut != null && dateFin != null) {
-        //     mouvements = mouvementStockMatiereRepository.findByDateMouvementBetween(
-        //         dateDebut.atStartOfDay(), dateFin.atTime(23, 59, 59));
-        // } else {
-        //     mouvements = mouvementStockMatiereRepository.findAllByOrderByDateMouvementDesc();
-        // }
-        // 
-        // return mouvements.stream()
-        //         .map(this::convertToMouvementStockDTO)
-        //         .collect(Collectors.toList());
+        List<MouvementStockMatiere> mouvements;
+
+        if (matiereId != null && dateDebut != null && dateFin != null) {
+            mouvements = mouvementStockMatiereRepository.findByMatiereIdAndDateMouvementBetween(
+                    matiereId, dateDebut.atStartOfDay(), dateFin.atTime(23, 59, 59));
+        } else if (matiereId != null) {
+            mouvements = mouvementStockMatiereRepository.findByMatiereIdOrderByDateMouvementDesc(matiereId);
+        } else if (dateDebut != null && dateFin != null) {
+            mouvements = mouvementStockMatiereRepository.findByDateMouvementBetween(
+                    dateDebut.atStartOfDay(), dateFin.atTime(23, 59, 59));
+        } else {
+            mouvements = mouvementStockMatiereRepository.findAllByOrderByDateMouvementDesc();
+        }
+
+        return mouvements.stream()
+                .map(this::convertToMouvementStockDTO)
+                .collect(Collectors.toList());
     }
 
     // ==================== GESTION DECHETS ====================
-    
+
     /**
      * Déclarer un déchet
      */
     public DechetDTO declarerDechet(Long matiereId, BigDecimal quantite, String raison, String commentaire) {
         // Créer un mouvement de type "DECHET"
-        MouvementStockDTO mouvement = createMouvement(matiereId, "DECHET", quantite, 
-            "DÉCHET - " + raison + (commentaire != null ? " : " + commentaire : ""));
-        
+        MouvementStockDTO mouvement = createMouvement(matiereId, "DECHET", quantite,
+                "DÉCHET - " + raison + (commentaire != null ? " : " + commentaire : ""));
+
         // Convertir en DTO déchet
         DechetDTO dechet = new DechetDTO();
         dechet.setId(mouvement.getId());
@@ -203,50 +206,51 @@ public class StockMatiereService {
         dechet.setCommentaire(commentaire);
         // TODO: Calculer valeur perdue basée sur prix d'achat de la matière
         dechet.setValeurPerdue(BigDecimal.ZERO);
-        
+
         return dechet;
     }
-    
+
     /**
      * Obtenir les déchets par période
      */
     public List<DechetDTO> getDechets(LocalDate dateDebut, LocalDate dateFin) {
-        // TODO: Implémenter findByDateMouvementBetween dans MouvementStockMatiereRepository
+        // TODO: Implémenter findByDateMouvementBetween dans
+        // MouvementStockMatiereRepository
         // Pour l'instant, retourner une liste vide
         return new ArrayList<>();
-        
+
         // Code original commenté :
         // List<MouvementStockMatiere> mouvements = mouvementStockMatiereRepository
-        //     .findByDateMouvementBetween(
-        //         dateDebut.atStartOfDay(), 
-        //         dateFin.atTime(23, 59, 59)
-        //     ).stream()
-        //     .filter(m -> "DECHET".equals(m.getTypeMouvement()))
-        //     .collect(Collectors.toList());
-        // 
+        // .findByDateMouvementBetween(
+        // dateDebut.atStartOfDay(),
+        // dateFin.atTime(23, 59, 59)
+        // ).stream()
+        // .filter(m -> "DECHET".equals(m.getTypeMouvement()))
+        // .collect(Collectors.toList());
+        //
         // return mouvements.stream()
-        //         .map(this::convertToDechetDTO)
-        //         .collect(Collectors.toList());
+        // .map(this::convertToDechetDTO)
+        // .collect(Collectors.toList());
     }
 
     // ==================== ALERTES PEREMPTION ====================
-    
+
     /**
      * Créer une alerte de péremption
      */
     public AlertePeremptionDTO createAlertePeremption(Long matiereId, LocalDate datePeremption, Integer seuilAlerte) {
         MatierePremiere matiere = matierePremiereRepository.findById(matiereId)
                 .orElseThrow(() -> new RuntimeException("Matière première non trouvée"));
-        
+
         AlertePeremption alerte = new AlertePeremption();
         alerte.setMatiere(matiere);
         alerte.setDatePeremption(datePeremption);
         alerte.setSeuilAlerte(seuilAlerte);
-        
+
         AlertePeremption savedAlerte = alertePeremptionRepository.save(alerte);
         return convertToAlertePeremptionDTO(savedAlerte);
     }
-    
+
     /**
      * Obtenir les alertes actives
      */
@@ -254,29 +258,30 @@ public class StockMatiereService {
         // TODO: Implémenter findActiveAlertes dans AlertePeremptionRepository
         // Pour l'instant, retourner une liste vide
         return new ArrayList<>();
-        
+
         // Code original commenté :
         // LocalDate today = LocalDate.now();
-        // List<AlertePeremption> alertes = alertePeremptionRepository.findActiveAlertes(today);
-        // 
+        // List<AlertePeremption> alertes =
+        // alertePeremptionRepository.findActiveAlertes(today);
+        //
         // return alertes.stream()
-        //         .map(this::convertToAlertePeremptionDTO)
-        //         .collect(Collectors.toList());
+        // .map(this::convertToAlertePeremptionDTO)
+        // .collect(Collectors.toList());
     }
 
     // ==================== RESUME STOCK ====================
-    
+
     /**
      * Obtenir le résumé de tous les stocks
      */
     public List<StockSummaryDTO> getStockSummary() {
         List<StockMatiere> stocks = stockMatiereRepository.findAll();
-        
+
         return stocks.stream()
                 .map(this::convertToStockSummaryDTO)
                 .collect(Collectors.toList());
     }
-    
+
     /**
      * Obtenir les stocks faibles (en dessous du seuil)
      */
@@ -287,29 +292,29 @@ public class StockMatiereService {
     }
 
     // ==================== ESTIMATION PRODUCTION ====================
-    
+
     /**
      * Estimer la capacité de production pour un produit
      */
     public EstimationProductionDTO estimerProduction(Long produitId, Integer quantiteSouhaitee) {
         Produit produit = produitRepository.findById(produitId)
                 .orElseThrow(() -> new RuntimeException("Produit non trouvé"));
-        
+
         EstimationProductionDTO estimation = new EstimationProductionDTO();
         estimation.setProduitId(produitId);
         estimation.setNomProduit(produit.getNom());
         estimation.setQuantiteSouhaitee(quantiteSouhaitee);
-        
+
         // TODO: Implémenter la logique de calcul basée sur les recettes
         // Pour l'instant, simulation simple
         estimation.setProductionPossible(true);
         estimation.setMatieresManquantes(List.of());
-        
+
         return estimation;
     }
 
     // ==================== METHODES UTILITAIRES ====================
-    
+
     private void updateStock(Long matiereId, String typeMouvement, BigDecimal quantite) {
         // TODO: Implémenter findByMatiereId dans StockMatiereRepository
         // Pour l'instant, utiliser findAll() et filtrer
@@ -323,7 +328,7 @@ public class StockMatiereService {
                     newStock.setQuantite(BigDecimal.ZERO);
                     return newStock;
                 });
-        
+
         switch (typeMouvement.toUpperCase()) {
             case "ENTREE":
                 stock.setQuantite(stock.getQuantite().add(quantite));
@@ -336,15 +341,15 @@ public class StockMatiereService {
                 stock.setQuantite(quantite);
                 break;
         }
-        
+
         // Empêcher les stocks négatifs
         if (stock.getQuantite().compareTo(BigDecimal.ZERO) < 0) {
             throw new RuntimeException("Stock insuffisant pour cette opération");
         }
-        
+
         stockMatiereRepository.save(stock);
     }
-    
+
     private String determinerStatutStock(BigDecimal quantite) {
         if (quantite.compareTo(BigDecimal.ZERO) == 0) {
             return "VIDE";
@@ -358,14 +363,14 @@ public class StockMatiereService {
     }
 
     // ==================== CONVERSIONS DTO ====================
-    
+
     private MatierePremiereDTO convertToMatierePremiereDTO(MatierePremiere matiere) {
         MatierePremiereDTO dto = new MatierePremiereDTO();
         dto.setId(matiere.getId());
         dto.setNom(matiere.getNom());
         dto.setUnite(matiere.getUnite());
         dto.setDureeConservation(matiere.getDureeConservation());
-        
+
         // Récupérer la quantité en stock
         Optional<StockMatiere> stock = stockMatiereRepository.findAll().stream()
                 .filter(s -> s.getMatiere().getId().equals(matiere.getId()))
@@ -373,10 +378,10 @@ public class StockMatiereService {
         BigDecimal quantite = stock.map(StockMatiere::getQuantite).orElse(BigDecimal.ZERO);
         dto.setQuantiteEnStock(quantite);
         dto.setStatutStock(determinerStatutStock(quantite));
-        
+
         return dto;
     }
-    
+
     private MouvementStockDTO convertToMouvementStockDTO(MouvementStockMatiere mouvement) {
         MouvementStockDTO dto = new MouvementStockDTO();
         dto.setId(mouvement.getId());
@@ -388,7 +393,7 @@ public class StockMatiereService {
         dto.setCommentaire(mouvement.getCommentaire());
         return dto;
     }
-    
+
     private AlertePeremptionDTO convertToAlertePeremptionDTO(AlertePeremption alerte) {
         AlertePeremptionDTO dto = new AlertePeremptionDTO();
         dto.setId(alerte.getId());
@@ -396,11 +401,11 @@ public class StockMatiereService {
         dto.setNomMatiere(alerte.getMatiere().getNom());
         dto.setDatePeremption(alerte.getDatePeremption());
         dto.setSeuilAlerte(alerte.getSeuilAlerte());
-        
+
         // Calculer jours restants
         long joursRestants = ChronoUnit.DAYS.between(LocalDate.now(), alerte.getDatePeremption());
         dto.setJoursRestants((int) joursRestants);
-        
+
         // Déterminer niveau alerte
         if (joursRestants <= 0) {
             dto.setNiveauAlerte("CRITIQUE");
@@ -409,10 +414,10 @@ public class StockMatiereService {
         } else {
             dto.setNiveauAlerte("NORMAL");
         }
-        
+
         return dto;
     }
-    
+
     private StockSummaryDTO convertToStockSummaryDTO(StockMatiere stock) {
         StockSummaryDTO dto = new StockSummaryDTO();
         dto.setMatiereId(stock.getMatiere().getId());
@@ -425,7 +430,7 @@ public class StockMatiereService {
         dto.setValeurStock(BigDecimal.ZERO); // TODO: calculer basé sur prix
         return dto;
     }
-    
+
     private DechetDTO convertToDechetDTO(MouvementStockMatiere mouvement) {
         DechetDTO dto = new DechetDTO();
         dto.setId(mouvement.getId());
@@ -434,7 +439,7 @@ public class StockMatiereService {
         dto.setQuantiteGaspillee(mouvement.getQuantite());
         dto.setDateDechet(mouvement.getDateMouvement().toLocalDate());
         dto.setCommentaire(mouvement.getCommentaire());
-        
+
         // Extraire la raison du commentaire si possible
         String commentaire = mouvement.getCommentaire();
         if (commentaire != null && commentaire.startsWith("DÉCHET - ")) {
@@ -443,26 +448,26 @@ public class StockMatiereService {
                 dto.setRaisonDechet(parts[0].replace("DÉCHET - ", ""));
             }
         }
-        
+
         dto.setValeurPerdue(BigDecimal.ZERO); // TODO: calculer
         return dto;
     }
-    
+
     // ==================== GESTION INVENTAIRE ====================
-    
+
     /**
      * Lancer un inventaire
      */
     public InventaireDTO lancerInventaire(String commentaire) {
         List<MatierePremiere> matieres = matierePremiereRepository.findAll();
         List<InventaireDTO.LigneInventaireDTO> lignes = new ArrayList<>();
-        
+
         for (MatierePremiere matiere : matieres) {
             StockMatiere stock = stockMatiereRepository.findAll().stream()
                     .filter(s -> s.getMatiere().getId().equals(matiere.getId()))
                     .findFirst().orElse(null);
             BigDecimal quantiteTheorique = stock != null ? stock.getQuantite() : BigDecimal.ZERO;
-            
+
             InventaireDTO.LigneInventaireDTO ligne = new InventaireDTO.LigneInventaireDTO();
             ligne.setMatiereId(matiere.getId());
             ligne.setNomMatiere(matiere.getNom());
@@ -471,22 +476,22 @@ public class StockMatiereService {
             ligne.setEcart(BigDecimal.ZERO);
             ligne.setUnite(matiere.getUnite());
             ligne.setCommentaire("");
-            
+
             lignes.add(ligne);
         }
-        
+
         InventaireDTO inventaire = new InventaireDTO();
         inventaire.setDateInventaire(LocalDate.now());
         inventaire.setStatut("EN_COURS");
         inventaire.setLignes(lignes);
         inventaire.setValeurTotale(BigDecimal.ZERO);
         inventaire.setCommentaire(commentaire);
-        
+
         return inventaire;
     }
-    
+
     // ==================== VALORISATION STOCK ====================
-    
+
     /**
      * Calculer la valorisation du stock
      */
@@ -494,14 +499,14 @@ public class StockMatiereService {
         List<StockMatiere> stocks = stockMatiereRepository.findAll();
         List<ValorisationStockDTO.ValorisationMatiereDTO> valorisations = new ArrayList<>();
         BigDecimal valeurTotale = BigDecimal.ZERO;
-        
+
         for (StockMatiere stock : stocks) {
             // Prix unitaire fictif pour l'exemple (à remplacer par le vrai prix d'achat)
             BigDecimal prixUnitaire = BigDecimal.valueOf(5.0); // Prix par défaut
-            
+
             BigDecimal valeurMatiere = stock.getQuantite().multiply(prixUnitaire);
             valeurTotale = valeurTotale.add(valeurMatiere);
-            
+
             ValorisationStockDTO.ValorisationMatiereDTO valorisation = new ValorisationStockDTO.ValorisationMatiereDTO();
             valorisation.setMatiereId(stock.getMatiere().getId());
             valorisation.setNomMatiere(stock.getMatiere().getNom());
@@ -510,33 +515,32 @@ public class StockMatiereService {
             valorisation.setValeurTotale(valeurMatiere);
             valorisation.setUnite(stock.getMatiere().getUnite());
             valorisation.setStatut(determinerStatutStock(stock.getQuantite()));
-            
+
             valorisations.add(valorisation);
         }
-        
+
         return new ValorisationStockDTO(
-            LocalDate.now(),
-            valeurTotale,
-            valorisations.size(),
-            valorisations
-        );
+                LocalDate.now(),
+                valeurTotale,
+                valorisations.size(),
+                valorisations);
     }
-    
+
     // ==================== ALERTES STOCK ====================
-    
+
     /**
      * Obtenir toutes les alertes de stock
      */
     public AlerteStockDTO getAlertesStock() {
         List<AlerteStockDTO.AlerteStockFaibleDTO> alertesStockFaible = new ArrayList<>();
         List<AlerteStockDTO.AlerteRuptureDTO> alertesRupture = new ArrayList<>();
-        
+
         List<StockMatiere> stocks = stockMatiereRepository.findAll();
-        
+
         for (StockMatiere stock : stocks) {
             BigDecimal quantite = stock.getQuantite();
             String statut = determinerStatutStock(quantite);
-            
+
             if ("FAIBLE".equals(statut)) {
                 AlerteStockDTO.AlerteStockFaibleDTO alerte = new AlerteStockDTO.AlerteStockFaibleDTO();
                 alerte.setMatiereId(stock.getMatiere().getId());
@@ -546,7 +550,7 @@ public class StockMatiereService {
                 alerte.setUnite(stock.getMatiere().getUnite());
                 alerte.setNiveau("FAIBLE");
                 alerte.setDateAlerte(LocalDate.now());
-                
+
                 alertesStockFaible.add(alerte);
             } else if ("CRITIQUE".equals(statut)) {
                 AlerteStockDTO.AlerteStockFaibleDTO alerte = new AlerteStockDTO.AlerteStockFaibleDTO();
@@ -557,7 +561,7 @@ public class StockMatiereService {
                 alerte.setUnite(stock.getMatiere().getUnite());
                 alerte.setNiveau("CRITIQUE");
                 alerte.setDateAlerte(LocalDate.now());
-                
+
                 alertesStockFaible.add(alerte);
             } else if (quantite.compareTo(BigDecimal.ZERO) == 0) {
                 AlerteStockDTO.AlerteRuptureDTO alerte = new AlerteStockDTO.AlerteRuptureDTO();
@@ -566,20 +570,19 @@ public class StockMatiereService {
                 alerte.setUnite(stock.getMatiere().getUnite());
                 alerte.setDateRupture(LocalDate.now());
                 alerte.setImpact("PRODUCTION_BLOQUEE");
-                
+
                 alertesRupture.add(alerte);
             }
         }
-        
+
         List<AlertePeremptionDTO> alertesPeremption = getAlertesActives();
-        
+
         int nombreAlertesTotal = alertesStockFaible.size() + alertesRupture.size() + alertesPeremption.size();
-        
+
         return new AlerteStockDTO(
-            alertesStockFaible,
-            alertesPeremption,
-            alertesRupture,
-            nombreAlertesTotal
-        );
+                alertesStockFaible,
+                alertesPeremption,
+                alertesRupture,
+                nombreAlertesTotal);
     }
 }

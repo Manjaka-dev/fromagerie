@@ -223,7 +223,6 @@ public class StockMatiereController {
             return ResponseEntity.badRequest().build();
         }
     }
-
     // ==================== ENDPOINTS UTILITAIRES ====================
 
     @GetMapping("/stocks-faibles")
@@ -242,13 +241,13 @@ public class StockMatiereController {
         return ResponseEntity.ok(statuts);
     }
 
-    @GetMapping("/types-mouvement")
-    @Operation(summary = "Obtenir les types de mouvement possibles", 
-               description = "Récupère la liste des types de mouvement possibles")
-    public ResponseEntity<String[]> getTypesMouvement() {
-        String[] types = stockMatiereService.getTypesMouvement();
-        return ResponseEntity.ok(types);
-    }
+    // @GetMapping("/types-mouvement")
+    // @Operation(summary = "Obtenir les types de mouvement possibles", 
+    //            description = "Récupère la liste des types de mouvement possibles")
+    // public ResponseEntity<String[]> getTypesMouvement() {
+    //     String[] types = stockMatiereService.getTypesMouvement();
+    //     return ResponseEntity.ok(types);
+    // }
     
     // ==================== NOUVEAUX ENDPOINTS ====================
     

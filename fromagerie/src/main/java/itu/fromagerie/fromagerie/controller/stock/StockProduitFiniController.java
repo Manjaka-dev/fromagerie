@@ -7,6 +7,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/stock/produit-fini")
@@ -16,13 +17,17 @@ public class StockProduitFiniController {
     @Autowired
     private StockProduitFiniService stockService;
 
+    @GetMapping
+    public StockStatDTO getStatStockAll() {
+        return stockService.getAll();
+    }
+
     @GetMapping("/stat")
     public StockStatDTO getStatStock(
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin,
-        @RequestParam int nbClients,
-        @RequestParam int qttDemandee
-    ) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin,
+            @RequestParam int nbClients,
+            @RequestParam int qttDemandee) {
         return stockService.getStatStock(dateDebut, dateFin, nbClients, qttDemandee);
     }
-} 
+}

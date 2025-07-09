@@ -20,7 +20,7 @@ public interface StockMatiereRepository extends JpaRepository<StockMatiere, Long
     List<StockMatiere> findStocksDisponibles();
     
     // Méthodes pour le service
-    Optional<StockMatiere> findByMatiereId(Long matiereId);
+    // Optional<StockMatiere> findByMatiereId(Long matiereId);
     
     @Query("SELECT s FROM StockMatiere s WHERE s.matiere.id = :matiereId")
     Optional<StockMatiere> findByMatiereId(@Param("matiereId") Long matiereId);

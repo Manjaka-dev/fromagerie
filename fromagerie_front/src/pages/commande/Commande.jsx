@@ -24,17 +24,6 @@ import {
 } from 'lucide-react';
 
 import styles from './../../assets/styles/commande/Commande.module.css';
-
-// Utility function to format amounts
-const formatAmount = (amount) => {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount);
-};
-
-// Utility function to format dates
-const formatDate = (dateString) => {
-  const options = { year: 'numeric', month: 'long', day: 'numeric' };
-  return new Date(dateString).toLocaleDateString('fr-FR', options);
-};
 import SidebarMenu from "../../components/SidebarMenu";
 import { FaTag } from 'react-icons/fa';
 import { commandeAPI, clientAPI, produitAPI, livreurAPI, livraisonAPI } from '../../services/api';
@@ -86,16 +75,6 @@ const CommandesPage = () => {
   useEffect(() => {
     loadData();
   }, []);
-
-  // Fonction pour réinitialiser les filtres
-  const clearFilters = () => {
-    setFilters({
-      dateDebut: '',
-      dateFin: '',
-      statut: 'tous',
-      client: 'tous'
-    });
-  };
 
   const loadData = async () => {
     setLoading(true);
@@ -563,7 +542,7 @@ const CommandesPage = () => {
                 <select
                   value={filters.client}
                   onChange={(e) => setFilters({ ...filters, client: e.target.value })}
-                  className={styles.clearFiltersBtn}>
+                >
                   <option value="tous">Tous les clients</option>
                   {clients.map(client => (
                     <option key={client.id} value={client.id}>
@@ -578,7 +557,7 @@ const CommandesPage = () => {
               </button>
             </div>
 
-            /* Liste des commandes */
+            {/* Liste des commandes */}
             <div className={styles.commandesList}>
               <h2 className={styles.listTitle}>Liste des Commandes</h2>
               
@@ -603,26 +582,20 @@ const CommandesPage = () => {
                       onClick={() => handleOpenLivraisonModal(commande)}
                       style={{ cursor: 'pointer' }}
                     >
-                      <div className={styles.commandeHeader}>
-                        <div className={styles.clientInfo}>
+                                          <div className={styles.commandeHeader}>
+                                              <div className={styles.clientInfo}>
                           <h3 className={styles.clientName}>{commande.client?.nom || 'Client inconnu'}</h3>
                         </div>
                         <div className={styles.commandeActions}>
                           <button
                             className={styles.cancelButton}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCancelOrder(commande.id);
-                            }}
+                            onClick={() => handleCancelOrder(commande.id)}
                           >
                             Annuler
                           </button>
                           <button
                             className={styles.deleteButton}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteOrder(commande.id);
-                            }}
+                            onClick={() => handleDeleteOrder(commande.id)}
                           >
                             <Trash2 size={16} />
                           </button>
@@ -766,34 +739,22 @@ const CommandesPage = () => {
                                 const newSelectedProduits = [...selectedProduits];
                                 newSelectedProduits[index].quantite = parseInt(e.target.value) || 1;
                                 setSelectedProduits(newSelectedProduits);
-                                }}
-                                className={styles.formInput}
-                              />
-                              </div>
-                            ))}
-                            <button 
-                              type="button" 
-                              onClick={() => {
-                              if (selectedProduits.length === 0) {
-                                alert('Veuillez sélectionner au moins un produit.');
-                                return;
-                              }
-                              const updatedOrder = {
-                                ...newOrder,
-                                produits: selectedProduits.map(p => ({
-                                produitId: p.id,
-                                quantite: p.quantite
-                                }))
-                              };
-                              setNewOrder(updatedOrder);
-                              alert('Produits ajoutés à la commande avec succès.');
                               }}
-                              className={styles.addProductButton}
-                            >
-                              <Plus size={16} /> Ajouter à la commande
-                            </button>
-                            </div>
-                          )}
+                              className={styles.formInput}
+                            />
+                          </div>
+                        ))}
+                        <button 
+                          type="button" 
+                          onClick={addProduitToOrder}
+                          className={styles.addProductButton}
+                        >
+                          <Plus size={16} /> Ajouter à la commande
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Produits ajoutés à la commande */}
                     {newOrder.produits.length > 0 && (
                       <div className={styles.formGroup}>
                         <label className={styles.formLabel}>Produits dans la commande</label>

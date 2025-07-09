@@ -17,4 +17,6 @@ public class MouvementStockDTO {
     private BigDecimal quantite;
     private String dateMouvement;
     private String commentaire;
+    private String lot = null;
+
 }

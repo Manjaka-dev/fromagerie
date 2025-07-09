@@ -20,13 +20,13 @@ public class LotProduitService {
     public List<LotTraceDTO> getLotsByPeriode(LocalDate dateDebut, LocalDate dateFin) {
         // TODO: Implémenter findLotsByPeriode dans LotProduitRepository
         // Pour l'instant, retourner une liste vide
-        return new ArrayList<>();
+        // return new ArrayList<>();
         
         // Code original commenté :
-        // List<LotProduit> lots = lotRepo.findLotsByPeriode(dateDebut, dateFin);
-        // return lots.stream()
-        //         .map(this::mapToLotTraceDTO)
-        //         .collect(Collectors.toList());
+        List<LotProduit> lots = lotRepo.findLotsByPeriode(dateDebut, dateFin);
+        return lots.stream()
+                .map(this::mapToLotTraceDTO)
+                .collect(Collectors.toList());
     }
 
     public LotTraceDTO getLotByNumero(String numeroLot) {
