@@ -8,9 +8,11 @@ import itu.fromagerie.fromagerie.entities.livraison.RetourLivraison;
 import itu.fromagerie.fromagerie.entities.vente.Paiement;
 import itu.fromagerie.fromagerie.entities.livraison.ConfirmationReception;
 import itu.fromagerie.fromagerie.entities.vente.LigneCommande;
+import itu.fromagerie.fromagerie.entities.vente.Promotion;
 import itu.fromagerie.fromagerie.projection.CommandeLivraisonGroup;
 import itu.fromagerie.fromagerie.projection.CommandeLivraisonProjection;
 import itu.fromagerie.fromagerie.projection.LivraisonProjection;
+import itu.fromagerie.fromagerie.repository.vente.PromotionCommandeRepository;
 import itu.fromagerie.fromagerie.service.produit.ProduitService;
 import itu.fromagerie.fromagerie.repository.livraison.LivraisonRepository;
 import itu.fromagerie.fromagerie.repository.livraison.LivreurRepository;
@@ -20,6 +22,7 @@ import itu.fromagerie.fromagerie.repository.livraison.RetourLivraisonRepository;
 import itu.fromagerie.fromagerie.repository.vente.CommandeRepository;
 import itu.fromagerie.fromagerie.repository.vente.PaiementRepository;
 import itu.fromagerie.fromagerie.repository.vente.LigneCommandeRepository;
+import itu.fromagerie.fromagerie.service.vente.PromotionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +35,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.math.BigDecimal.valueOf;
+
 @Service
 public class LivraisonService {
     private final CommandeRepository commandeRepository;
@@ -42,10 +47,17 @@ public class LivraisonService {
     private final LigneCommandeRepository ligneCommandeRepository;
     private final PaiementRepository paiementRepository;
     private final ConfirmationReceptionRepository confirmationReceptionRepository;
-    private final ProduitService produitService;
+    private final PromotionCommandeRepository promotionCommandeRepository;
+    private final PromotionService promotionService;
 
     @Autowired
-    public LivraisonService(CommandeRepository commandeRepository, LivreurRepository livreurRepository, LivraisonRepository livraisonRepository, StatutLivraisonRepository statutLivraisonRepository, RetourLivraisonRepository retourLivraisonRepository, LigneCommandeRepository ligneCommandeRepository, PaiementRepository paiementRepository, ConfirmationReceptionRepository confirmationReceptionRepository, ProduitService produitService) {
+    public LivraisonService(CommandeRepository commandeRepository, LivreurRepository livreurRepository,
+                            LivraisonRepository livraisonRepository, StatutLivraisonRepository statutLivraisonRepository,
+                            RetourLivraisonRepository retourLivraisonRepository, LigneCommandeRepository ligneCommandeRepository,
+                            PaiementRepository paiementRepository, ConfirmationReceptionRepository confirmationReceptionRepository,
+                            PromotionCommandeRepository promotionCommandeRepository,
+                            PromotionService promotionService)
+    {
         this.commandeRepository = commandeRepository;
         this.livreurRepository = livreurRepository;
         this.livraisonRepository = livraisonRepository;
@@ -54,7 +66,8 @@ public class LivraisonService {
         this.ligneCommandeRepository = ligneCommandeRepository;
         this.paiementRepository = paiementRepository;
         this.confirmationReceptionRepository = confirmationReceptionRepository;
-        this.produitService = produitService;
+        this.promotionCommandeRepository = promotionCommandeRepository;
+        this.promotionService = promotionService;
     }
 
     public List<CommandeLivraisonGroup> getCommandeLivraison() {
@@ -152,11 +165,28 @@ public class LivraisonService {
         return statutLivraisonRepository.save(statutLivraison);
     }
 
-    public void enregistrerPaiement(Long commandeId, Double montant, String methode, LocalDate datePaiement) {
+    public void enregistrerPaiement(Long commandeId, double montant, String methode, LocalDate datePaiement) {
+        // 0. verification promotion
+        BigDecimal montantInsere = BigDecimal.valueOf(montant); // montant est un paramètre
+
+        if (promotionService.findStatutPromotionCommande(commandeId) &&
+                promotionService.findStatutLivraisonCommande(commandeId)) {
+
+            Promotion pr = promotionCommandeRepository.getPromotionByCommandeId(commandeId);
+            BigDecimal reduction = pr.getReductionPourcentage(); // Par exemple 20 pour 20%
+
+            // Calcul du montant de la réduction
+            BigDecimal reductionMontant = montantInsere.multiply(reduction).divide(BigDecimal.valueOf(100));
+
+            // Appliquer la réduction au montant initial
+            montantInsere = montantInsere.subtract(reductionMontant);
+        }
+
+
         // 1. Créer un nouveau paiement
         Paiement paiement = new Paiement();
         paiement.setCommande(commandeRepository.findById(commandeId).orElse(null));
-        paiement.setMontant(BigDecimal.valueOf(montant));
+        paiement.setMontant(montantInsere);
         paiement.setMethode(methode);
         paiement.setDatePaiement(datePaiement);
         
