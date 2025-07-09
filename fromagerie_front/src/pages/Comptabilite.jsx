@@ -1,11 +1,19 @@
 import '../assets/styles/Comptabilite.css';
 import { NavLink } from 'react-router-dom';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Search, Filter, Calendar, TrendingUp,ShoppingCart,Settings,Factory, Truck,Calculator,TrendingDown, Users, Package, FileText, Wallet, Eye, ChevronDown, ChevronUp,Bell,Clock,User,BarChart3 } from 'lucide-react';
 import SidebarMenu from "../components/SidebarMenu";
-const Comptabilite = () => {
+import { comptabiliteAPI, formatCurrency, formatDate, getDateRange } from '../services/api';
 
-    // Ajout de searchQuery
+const Comptabilite = () => {
+  // États pour les données
+  const [revenus, setRevenus] = useState([]);
+  const [depenses, setDepenses] = useState([]);
+  const [bilans, setBilans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Ajout de searchQuery
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('recettes');
   const [searchTerms, setSearchTerms] = useState({
@@ -17,55 +25,44 @@ const Comptabilite = () => {
     tresorerie: ''
   });
   const [filters, setFilters] = useState({
-    recettes: { periode: 'tous', statut: 'tous', client: 'tous' },
-    depenses: { periode: 'tous', statut: 'tous', categorie: 'tous' },
-    salaires: { periode: 'tous', statut: 'tous', poste: 'tous' },
-    inventaire: { categorie: 'tous' },
-    facturation: { periode: 'tous', statut: 'tous' },
-    tresorerie: { compte: 'tous' }
+    recettes: { periode: 'mois', statut: 'tous' },
+    depenses: { periode: 'mois', categorie: 'toutes' },
+    salaires: { periode: 'mois', employe: 'tous' },
+    inventaire: { categorie: 'toutes', statut: 'tous' },
+    facturation: { periode: 'mois', statut: 'toutes' },
+    tresorerie: { periode: 'mois', type: 'tous' }
   });
 
-  // Données de démonstration
-  const recettesData = [
-    { id: 1, date: '2025-07-01', produit: 'Gouda 250g', quantite: 50, prixUnitaire: 3000, client: 'Épicerie Martin', paiement: 'mobile money', statut: 'payé' },
-    { id: 2, date: '2025-07-02', produit: 'Gouda 500g', quantite: 30, prixUnitaire: 5500, client: 'Restaurant Le Gourmet', paiement: 'virement bancaire', statut: 'payé' },
-    { id: 3, date: '2025-07-03', produit: 'Gouda 1kg', quantite: 20, prixUnitaire: 10000, client: 'Hôtel Luxury', paiement: 'espèces', statut: 'en attente' },
-    { id: 4, date: '2025-07-04', produit: 'Gouda 5kg', quantite: 5, prixUnitaire: 45000, client: 'Distributeur Central', paiement: 'virement bancaire', statut: 'payé' }
-  ];
+  // Charger les données au montage
+  useEffect(() => {
+    loadComptabiliteData();
+  }, []);
 
-  const depensesData = [
-    { id: 1, date: '2025-07-01', categorie: 'matières premières', description: 'Lait bio - 500L', montant: 125000, statut: 'réglé' },
-    { id: 2, date: '2025-07-02', categorie: 'transport', description: 'Livraison clients Antananarivo', montant: 25000, statut: 'réglé' },
-    { id: 3, date: '2025-07-03', categorie: 'énergie', description: 'Électricité atelier', montant: 45000, statut: 'en attente' },
-    { id: 4, date: '2025-07-04', categorie: 'emballage', description: 'Papier d\'emballage biodégradable', montant: 15000, statut: 'réglé' }
-  ];
+  const loadComptabiliteData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const dateRange = getDateRange(30); // 30 derniers jours
 
-  const salairesData = [
-    { id: 1, employe: 'Rakoto Jean', poste: 'Maître fromager', salaireBrut: 800000, salaireNet: 680000, statut: 'payé', periode: 'juin 2025' },
-    { id: 2, employe: 'Rasoa Marie', poste: 'Assistant production', salaireBrut: 500000, salaireNet: 425000, statut: 'payé', periode: 'juin 2025' },
-    { id: 3, employe: 'Rabe Paul', poste: 'Commercial', salaireBrut: 600000, salaireNet: 510000, statut: 'non payé', periode: 'juin 2025' }
-  ];
+      // Charger les revenus depuis l'API
+      const revenusData = await comptabiliteAPI.getRevenus(dateRange.dateDebut, dateRange.dateFin);
+      setRevenus(revenusData || []);
 
-  const inventaireData = [
-    { id: 1, produit: 'Gouda 250g', stock: 100, valeurUnitaire: 3000, statut: 'en stock' },
-    { id: 2, produit: 'Gouda 500g', stock: 75, valeurUnitaire: 5500, statut: 'en stock' },
-    { id: 3, produit: 'Gouda 1kg', stock: 50, valeurUnitaire: 10000, statut: 'en stock' },
-    { id: 4, produit: 'Gouda 5kg', stock: 15, valeurUnitaire: 45000, statut: 'en cours d\'affinage' },
-    { id: 5, produit: 'Gouda 10kg', stock: 5, valeurUnitaire: 85000, statut: 'en cours d\'affinage' }
-  ];
+      // Charger les dépenses depuis l'API
+      const depensesData = await comptabiliteAPI.getDepenses(dateRange.dateDebut, dateRange.dateFin);
+      setDepenses(depensesData || []);
 
-  const facturationData = [
-    { id: 1, numeroFacture: 'FAC-2025-001', client: 'Épicerie Martin', montantTotal: 150000, montantPaye: 150000, paiement: 'mobile money', dateFacturation: '2025-07-01', statut: 'payée' },
-    { id: 2, numeroFacture: 'FAC-2025-002', client: 'Restaurant Le Gourmet', montantTotal: 165000, montantPaye: 165000, paiement: 'virement bancaire', dateFacturation: '2025-07-02', statut: 'payée' },
-    { id: 3, numeroFacture: 'FAC-2025-003', client: 'Hôtel Luxury', montantTotal: 200000, montantPaye: 0, paiement: 'espèces', dateFacturation: '2025-07-03', statut: 'en attente' }
-  ];
+      // Charger les bilans depuis l'API
+      const bilansData = await comptabiliteAPI.getBilans();
+      setBilans(bilansData || []);
 
-  const tresorerieData = [
-    { id: 1, compte: 'Caisse', solde: 250000, type: 'espèces' },
-    { id: 2, compte: 'BNI Madagascar', solde: 1250000, type: 'bancaire' },
-    { id: 3, compte: 'BOA Madagascar', solde: 750000, type: 'bancaire' },
-    { id: 4, compte: 'Mobile Money', solde: 125000, type: 'mobile' }
-  ];
+    } catch (err) {
+      console.error('Erreur lors du chargement des données comptables:', err);
+      setError('Impossible de charger les données comptables. Veuillez vérifier que le backend est démarré.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const tabs = [
     { id: 'recettes', label: 'Recettes', icon: TrendingUp },
@@ -77,16 +74,12 @@ const Comptabilite = () => {
     { id: 'tresorerie', label: 'Trésorerie', icon: Wallet }
   ];
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('fr-MG', {
-      style: 'currency',
-      currency: 'MGA',
-      minimumFractionDigits: 0
-    }).format(amount).replace('MGA', 'Ar');
+  const formatCurrencyLocal = (amount) => {
+    return formatCurrency(amount);
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('fr-FR');
+  const formatDateLocal = (dateString) => {
+    return formatDate(dateString);
   };
 
   const getStatusBadge = (statut) => {
@@ -160,15 +153,15 @@ const Comptabilite = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
           <h3 className="text-sm font-medium text-green-800">Revenus du jour</h3>
-          <p className="text-2xl font-bold text-green-600">{formatCurrency(590000)}</p>
+          <p className="text-2xl font-bold text-green-600">{formatCurrencyLocal(590000)}</p>
         </div>
         <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
           <h3 className="text-sm font-medium text-blue-800">Revenus du mois</h3>
-          <p className="text-2xl font-bold text-blue-600">{formatCurrency(2450000)}</p>
+          <p className="text-2xl font-bold text-blue-600">{formatCurrencyLocal(2450000)}</p>
         </div>
         <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
           <h3 className="text-sm font-medium text-purple-800">Revenus de l'année</h3>
-          <p className="text-2xl font-bold text-purple-600">{formatCurrency(18500000)}</p>
+          <p className="text-2xl font-bold text-purple-600">{formatCurrencyLocal(18500000)}</p>
         </div>
         <div className="bg-gradient-to-r from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200">
           <h3 className="text-sm font-medium text-orange-800">Nombre de ventes</h3>
@@ -194,11 +187,11 @@ const Comptabilite = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {recettesData.map((recette) => (
                 <tr key={recette.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(recette.date)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDateLocal(recette.date)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{recette.produit}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{recette.quantite}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(recette.prixUnitaire)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{formatCurrency(recette.quantite * recette.prixUnitaire)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrencyLocal(recette.prixUnitaire)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{formatCurrencyLocal(recette.quantite * recette.prixUnitaire)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{recette.client}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{recette.paiement}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(recette.statut)}</td>
@@ -224,19 +217,19 @@ const Comptabilite = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-gradient-to-r from-red-50 to-red-100 p-4 rounded-lg border border-red-200">
           <h3 className="text-sm font-medium text-red-800">Dépenses du jour</h3>
-          <p className="text-2xl font-bold text-red-600">{formatCurrency(210000)}</p>
+          <p className="text-2xl font-bold text-red-600">{formatCurrencyLocal(210000)}</p>
         </div>
         <div className="bg-gradient-to-r from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200">
           <h3 className="text-sm font-medium text-orange-800">Dépenses du mois</h3>
-          <p className="text-2xl font-bold text-orange-600">{formatCurrency(1850000)}</p>
+          <p className="text-2xl font-bold text-orange-600">{formatCurrencyLocal(1850000)}</p>
         </div>
         <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 p-4 rounded-lg border border-yellow-200">
           <h3 className="text-sm font-medium text-yellow-800">Dépenses de l'année</h3>
-          <p className="text-2xl font-bold text-yellow-600">{formatCurrency(12500000)}</p>
+          <p className="text-2xl font-bold text-yellow-600">{formatCurrencyLocal(12500000)}</p>
         </div>
         <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 rounded-lg border border-gray-200">
           <h3 className="text-sm font-medium text-gray-800">En attente</h3>
-          <p className="text-2xl font-bold text-gray-600">{formatCurrency(45000)}</p>
+          <p className="text-2xl font-bold text-gray-600">{formatCurrencyLocal(45000)}</p>
         </div>
       </div>
 
@@ -759,7 +752,24 @@ const Comptabilite = () => {
         </div>
 
         {/* Contenu de l'onglet actif */}
-        {renderTabContent()}
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <span className="ml-2 text-gray-600">Chargement des données...</span>
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+            <p className="text-red-600">{error}</p>
+            <button 
+              onClick={loadComptabiliteData}
+              className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Réessayer
+            </button>
+          </div>
+        ) : (
+          renderTabContent()
+        )}
       </div>
     </div>
   </div>

@@ -1,7 +1,6 @@
 package itu.fromagerie.fromagerie.service.production;
 
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import itu.fromagerie.fromagerie.entities.production.ProductionEffectuee;
 import itu.fromagerie.fromagerie.entities.produit.Produit;
@@ -16,7 +15,6 @@ public class ProductionEffectueeService {
 
     private final ProductionEffectueeRepository proEffecRepo;
 
-    @Autowired
     public ProductionEffectueeService(ProductionEffectueeRepository proEffecRepo) {
         this.proEffecRepo = proEffecRepo;
     }

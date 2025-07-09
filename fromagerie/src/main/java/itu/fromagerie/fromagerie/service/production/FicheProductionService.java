@@ -1,7 +1,6 @@
 package itu.fromagerie.fromagerie.service.production;
 
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import itu.fromagerie.fromagerie.entities.production.FicheProduction;
 import itu.fromagerie.fromagerie.entities.produit.Produit;
@@ -17,7 +16,6 @@ public class FicheProductionService {
 
     private final FicheProductionRepository ficheProductionRepo;
 
-    @Autowired
     public FicheProductionService(FicheProductionRepository ficheProductionRepo) {
         this.ficheProductionRepo = ficheProductionRepo;
     }

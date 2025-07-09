@@ -1,7 +1,6 @@
 package itu.fromagerie.fromagerie.service.comptabilite;
 
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import itu.fromagerie.fromagerie.entities.comptabilite.BilanFinancier;
 import itu.fromagerie.fromagerie.repository.comptabilite.BilanFinancierRepository;
@@ -17,7 +16,6 @@ public class BilanFinancierService {
 
     private final BilanFinancierRepository bilanFinancierRepo;
 
-    @Autowired
     public BilanFinancierService(BilanFinancierRepository bilanFinancierRepo) {
         this.bilanFinancierRepo = bilanFinancierRepo;
     }

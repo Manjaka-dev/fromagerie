@@ -1,7 +1,6 @@
 package itu.fromagerie.fromagerie.service.comptabilite;
 
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import itu.fromagerie.fromagerie.entities.comptabilite.Depense;
 import itu.fromagerie.fromagerie.repository.comptabilite.DepenseRepository;
@@ -17,7 +16,6 @@ public class DepenseService {
 
     private final DepenseRepository depenseRepo;
 
-    @Autowired
     public DepenseService(DepenseRepository depenseRepo) {
         this.depenseRepo = depenseRepo;
     }

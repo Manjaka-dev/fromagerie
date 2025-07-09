@@ -447,45 +447,93 @@
     color: #555;
   }
   
-  /* Responsive */
-  @media (max-width: 1024px) {
-    .livraison-list {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-  
-  @media (max-width: 768px) {
-    .livraison-list {
-      grid-template-columns: 1fr;
-    }
-    
-    .search-section {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 10px;
-    }
-    
-    .filters-section {
-      flex-direction: column;
-      align-items: center;
-    }
-    
-    .filter-group {
-      width: 100%;
-      max-width: 200px;
-    }
-    
-    .livreurs-stat {
-      text-align: left;
-    }
-    
-    .modal-content {
-      margin: 20px;
-      padding: 20px;
-    }
-  }
-  
-  @media (max-width: 600px) {
+  /* Styles pour les statuts */
+.statut-planifiée {
+  color: #3498db;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background-color: #e3f2fd;
+}
+
+.statut-en-cours {
+  color: #f39c12;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background-color: #fff3e0;
+}
+
+.statut-livré {
+  color: #27ae60;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background-color: #e8f5e8;
+}
+
+.statut-annulée,
+.statut-échec {
+  color: #e74c3c;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background-color: #ffebee;
+}
+
+/* Messages d'état */
+.loading-message,
+.error-message,
+.empty-message {
+  text-align: center;
+  padding: 40px 20px;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.loading-message {
+  background-color: #f8f9fa;
+  color: #6c757d;
+}
+
+.error-message {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.error-message button {
+  margin-top: 10px;
+  padding: 8px 16px;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.error-message button:hover {
+  background-color: #c62828;
+}
+
+.empty-message {
+  background-color: #f5f5f5;
+  color: #757575;
+}
+
+/* Amélioration des boutons d'action */
+.livraison-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.livraison-actions .track-btn:disabled,
+.livraison-actions .contact-btn:disabled {
+  background-color: #bdc3c7;
+  color: #7f8c8d;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
     .search-section {
       flex-direction: column;
       align-items: flex-start;

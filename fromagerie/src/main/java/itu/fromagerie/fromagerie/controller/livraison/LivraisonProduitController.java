@@ -21,8 +21,8 @@ public class LivraisonProduitController {
      */
     @GetMapping("/livraison/{livraisonId}")
     public ResponseEntity<List<LivraisonProduit>> getProduitsDelivraison(@PathVariable Long livraisonId) {
-        // Cette méthode nécessiterait une requête personnalisée
-        return ResponseEntity.ok().build();
+        List<LivraisonProduit> produits = livraisonProduitRepository.findByLivraisonId(livraisonId);
+        return ResponseEntity.ok(produits);
     }
     
     /**
