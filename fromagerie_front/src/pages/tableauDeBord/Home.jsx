@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import {
@@ -24,12 +24,73 @@ import {
 } from 'lucide-react';
 import './../../assets/styles/tableauDeBord/home.css';
 import SidebarMenu from "../../components/SidebarMenu";
+import { dashboardAPI, formatCurrency, formatDate } from '../../services/api';
+
 const TableauDeBord = () => {
   const [activeMenuItem, setActiveMenuItem] = useState('Tableau de Bord');
   const [showFilters, setShowFilters] = useState(false);
   const [searchName, setSearchName] = useState('');
   const [searchDate, setSearchDate] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
+  
+  // États pour les données du dashboard
+  const [statsGlobales, setStatsGlobales] = useState(null);
+  const [productionsRecent, setProductionsRecent] = useState([]);
+  const [livraisonsPlanifiees, setLivraisonsPlanifiees] = useState([]);
+  const [loadingStats, setLoadingStats] = useState(true);
+  const [loadingProductions, setLoadingProductions] = useState(true);
+  const [loadingLivraisons, setLoadingLivraisons] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fonction pour charger les données depuis l'API
+  useEffect(() => {
+    // Récupérer les statistiques globales
+    const fetchStatsGlobales = async () => {
+      try {
+        setLoadingStats(true);
+        const data = await dashboardAPI.getStatsGlobales();
+        setStatsGlobales(data);
+        setLoadingStats(false);
+      } catch (err) {
+        console.error("Erreur lors du chargement des statistiques globales:", err);
+        setError(err.message);
+        setLoadingStats(false);
+      }
+    };
+
+    // Récupérer les productions récentes (7 derniers jours par défaut)
+    const fetchProductionsRecent = async () => {
+      try {
+        setLoadingProductions(true);
+        const data = await dashboardAPI.getProductionsRecent();
+        setProductionsRecent(data);
+        setLoadingProductions(false);
+      } catch (err) {
+        console.error("Erreur lors du chargement des productions récentes:", err);
+        setError(err.message);
+        setLoadingProductions(false);
+      }
+    };
+
+    // Récupérer les livraisons planifiées (7 prochains jours par défaut)
+    const fetchLivraisonsPlanifiees = async () => {
+      try {
+        setLoadingLivraisons(true);
+        const data = await dashboardAPI.getLivraisonsPlanifiees();
+        setLivraisonsPlanifiees(data);
+        setLoadingLivraisons(false);
+      } catch (err) {
+        console.error("Erreur lors du chargement des livraisons planifiées:", err);
+        setError(err.message);
+        setLoadingLivraisons(false);
+      }
+    };
+
+    // Charger toutes les données au chargement du composant
+    fetchStatsGlobales();
+    fetchProductionsRecent();
+    fetchLivraisonsPlanifiees();
+  }, []);
 
   // Dans votre composant
   const [selectedYear, setSelectedYear] = useState('all');
@@ -89,25 +150,23 @@ const TableauDeBord = () => {
   // --------------------------------------------------
 
   // Données pour le graphique en secteurs de production
-  const productionData = [
-    { name: 'Prod Hebdomadaires', value: 52.1, color: '#1f2937' },
-    { name: 'Taux de qualité', value: 22.8, color: '#60a5fa' },
-    { name: 'Livraisons planifié', value: 13.9, color: '#86efac' }
-  ];
+  const productionData = statsGlobales ? [
+    { name: 'Prod Hebdomadaires', value: statsGlobales.productionsHebdomadaires || 0, color: '#1f2937' },
+    { name: 'Taux de qualité', value: statsGlobales.tauxQualite || 0, color: '#60a5fa' },
+    { name: 'Livraisons planifié', value: statsGlobales.livraisonsPlanifiees || 0, color: '#86efac' }
+  ] : [];
   // --------------------------------------------------
   // Ajoutez ces données avec les autres données statiques
-  const topClients = [
+  const topClients = statsGlobales?.topClients || [
     { name: 'Epicerie Bio Lyon', quantity: 250, value: 12500 },
     { name: 'Fromagerie Martin', quantity: 180, value: 9000 },
     { name: 'Marché de Belleville', quantity: 150, value: 7500 }
   ];
   // ---------------------------------------------
   // Données des livraisons (étendues pour la démonstration)
-  const allLivraisons = [
-    { name: 'Epicerie Bio Lyon', quantity: '50 kg', date: '12 Juin à 09:00', status: 'Confirmé' },
+  const allLivraisons = livraisonsPlanifiees || [
     { name: 'Epicerie Bio Lyon', quantity: '50 kg', date: '12 Juin à 09:00', status: 'Confirmé' },
     { name: 'Fromagerie Martin', quantity: '75 kg', date: '13 Juin à 14:30', status: 'Préparation' },
-    { name: 'Epicerie Bio Lyon', quantity: '50 kg', date: '12 Juin à 09:00', status: 'Confirmé' },
     { name: 'Marché de Belleville', quantity: '30 kg', date: '14 Juin à 08:00', status: 'Préparation' },
     { name: 'Restaurant Le Gourmet', quantity: '25 kg', date: '15 Juin à 16:00', status: 'Confirmé' }
   ];
@@ -151,12 +210,14 @@ const TableauDeBord = () => {
 
 
   const [showDetails, setShowDetails] = useState(false);
-  const kpiData = [
+  
+  // Utilisation des données de l'API pour les KPIs
+  const kpiData = statsGlobales ? [
     {
       id: 1,
       title: "Fromages conformes",
       description: "Taux de qualité (fromages sans défaut)",
-      value: 81,
+      value: statsGlobales.tauxQualite || 0,
       color: "#ef4444",
       bgColor: "#ecb3b3"
     },
@@ -164,7 +225,7 @@ const TableauDeBord = () => {
       id: 2,
       title: "Stock utilisé",
       description: "% de matières premières déjà utilisées cette semaine",
-      value: 22,
+      value: statsGlobales.tauxUtilisationStock || 0,
       color: "#22c55e",
       bgColor: "#a7e8bf"
     },
@@ -172,11 +233,11 @@ const TableauDeBord = () => {
       id: 3,
       title: "Commandes livrées",
       description: "% de commandes déjà expédiées vs commandes reçues",
-      value: 62,
+      value: statsGlobales.tauxCommandesLivrees || 0,
       color: "#3b82f6",
       bgColor: "rgba(59, 131, 246, 0.48)"
     }
-  ];
+  ] : [];
 
   const createPieData = (value) => [
     { name: 'completed', value: value },
@@ -215,7 +276,14 @@ const TableauDeBord = () => {
 
 
   // Données des pertes par période
-  const lossData = [
+  const lossData = productionsRecent?.map(item => ({
+    period: formatDate(item.date).split(' ')[0], // Prend juste le jour de la semaine
+    date: formatDate(item.date),
+    production: item.quantiteProduction || 0,
+    deterioration: item.perteDeterioration || 0,
+    defauts: item.perteDefauts || 0,
+    total: (item.perteDeterioration || 0) + (item.perteDefauts || 0)
+  })) || [
     { period: 'Lun', date: '17 Jun', production: 45, deterioration: 8, defauts: 3, total: 11 },
     { period: 'Mar', date: '18 Jun', production: 52, deterioration: 12, defauts: 5, total: 17 },
     { period: 'Mer', date: '19 Jun', production: 48, deterioration: 6, defauts: 2, total: 8 },
@@ -250,7 +318,32 @@ const TableauDeBord = () => {
   // ---------------------------------------------------------
 
   // Données des bénéfices
-  const benefitData = [
+  const benefitData = statsGlobales ? [
+    {
+      period: 'Journalier',
+      value: statsGlobales.beneficeJournalier || 0,
+      trend: statsGlobales.tendanceBeneficeJournalier || 0,
+      isPositive: statsGlobales.tendanceBeneficeJournalier > 0,
+      icon: statsGlobales.tendanceBeneficeJournalier > 0 ? TrendingUp : TrendingDown,
+      comparison: 'vs hier'
+    },
+    {
+      period: 'Mensuel',
+      value: statsGlobales.beneficeMensuel || 0,
+      trend: statsGlobales.tendanceBeneficeMensuel || 0,
+      isPositive: statsGlobales.tendanceBeneficeMensuel > 0,
+      icon: statsGlobales.tendanceBeneficeMensuel > 0 ? TrendingUp : TrendingDown,
+      comparison: 'vs mois dernier'
+    },
+    {
+      period: 'Annuel',
+      value: statsGlobales.beneficeAnnuel || 0,
+      trend: statsGlobales.tendanceBeneficeAnnuel || 0,
+      isPositive: statsGlobales.tendanceBeneficeAnnuel > 0,
+      icon: statsGlobales.tendanceBeneficeAnnuel > 0 ? TrendingUp : TrendingDown,
+      comparison: 'vs année dernière'
+    }
+  ] : [
     {
       period: 'Journalier',
       value: 600000,
@@ -279,6 +372,14 @@ const TableauDeBord = () => {
 
   // -----------------RECHERCHE-------------------------------
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Composant de chargement
+  const LoadingSpinner = () => (
+    <div className="loading-spinner">
+      <div className="spinner"></div>
+      <p>Chargement des données...</p>
+    </div>
+  );
 
   return (
     <div className="dashboard-container">
@@ -343,24 +444,33 @@ const TableauDeBord = () => {
           {/* 3 blocs de bénéfices : journaliere,mensuel,annuel */}
           {/* Section Bénéfices */}
           <div className="benefits-container">
-            {benefitData.map((benefit, index) => (
-              <div key={index} className="benefit-card">
-                <div className="benefit-header">
-                  <div>
-                    <div className="benefit-value">
-                      {benefit.period === 'Journalier'
-                        ? ` ${benefit.value.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
-                        : benefit.value.toLocaleString('fr-FR')}
+            {loadingStats ? (
+              <LoadingSpinner />
+            ) : error ? (
+              <div className="error-message">
+                <AlertTriangle size={24} />
+                <p>Erreur lors du chargement des données: {error}</p>
+              </div>
+            ) : (
+              benefitData.map((benefit, index) => (
+                <div key={index} className="benefit-card">
+                  <div className="benefit-header">
+                    <div>
+                      <div className="benefit-value">
+                        {benefit.period === 'Journalier'
+                          ? ` ${benefit.value.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
+                          : benefit.value.toLocaleString('fr-FR')}
+                      </div>
+                      <div className="benefit-period">Bénéfice {benefit.period}</div>
                     </div>
-                    <div className="benefit-period">Bénéfice {benefit.period}</div>
-                  </div>
-                  <div className={`benefit-trend ${benefit.isPositive ? 'trend-positive' : 'trend-negative'}`}>
-                    <benefit.icon className="benefit-icon" size={14} />
-                    {benefit.trend}% {benefit.comparison}
+                    <div className={`benefit-trend ${benefit.isPositive ? 'trend-positive' : 'trend-negative'}`}>
+                      <benefit.icon className="benefit-icon" size={14} />
+                      {benefit.trend}% {benefit.comparison}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
 
           <div className="dashboard-grid">
@@ -375,96 +485,102 @@ const TableauDeBord = () => {
                       className={`filter-btn ${showFilters ? 'active' : ''}`}
                       onClick={() => setShowFilters(!showFilters)}
                     >
-                      <Filter className="filter-icon" />
-                      Filtres
+                      <Filter size={18} />
                       {hasActiveFilters && <span className="filter-badge"></span>}
                     </button>
-                    <button className="view-all-btn">
-                      Voir Planning Complet
-                      <span className="arrow">→</span>
-                    </button>
                   </div>
                 </div>
 
-                {/* Filtres */}
-                {showFilters && (
-                  <div className="filters-container">
-                    <div className="filters-row">
-                      <div className="filter-group">
-                        <label className="filter-label">Rechercher par nom</label>
-                        {/* <Search className="search-icon" /> */}
-                        <input
-                          type="text"
-                          placeholder="Nom du client..."
-                          value={searchName}
-                          onChange={(e) => setSearchName(e.target.value)}
-                          className="searchInputFilter"
-                        />
-                      </div>
+                {loadingLivraisons ? (
+                  <LoadingSpinner />
+                ) : error ? (
+                  <div className="error-message">
+                    <AlertTriangle size={24} />
+                    <p>Erreur lors du chargement des livraisons: {error}</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Filtres */}
+                    {showFilters && (
+                      <div className="filters-container">
+                        <div className="filters-row">
+                          <div className="filter-group">
+                            <label className="filter-label">Rechercher par nom</label>
+                            {/* <Search className="search-icon" /> */}
+                            <input
+                              type="text"
+                              placeholder="Nom du client..."
+                              value={searchName}
+                              onChange={(e) => setSearchName(e.target.value)}
+                              className="searchInputFilter"
+                            />
+                          </div>
 
-                      <div className="filter-group">
-                        <label className="filter-label">Filtrer par date</label>
-                        <input
-                          type="text"
-                          placeholder="Ex: 12 Juin, 13 Juin..."
-                          value={searchDate}
-                          onChange={(e) => setSearchDate(e.target.value)}
-                          className="dateInputFilter"
-                        />
-                      </div>
+                          <div className="filter-group">
+                            <label className="filter-label">Filtrer par date</label>
+                            <input
+                              type="text"
+                              placeholder="Ex: 12 Juin, 13 Juin..."
+                              value={searchDate}
+                              onChange={(e) => setSearchDate(e.target.value)}
+                              className="dateInputFilter"
+                            />
+                          </div>
 
-                      <div className="filter-group">
-                        <label className="filter-label">Statut</label>
-                        <select
-                          value={selectedStatus}
-                          onChange={(e) => setSelectedStatus(e.target.value)}
-                          className="status-select"
-                        >
-                          <option value="">Tous les statuts</option>
-                          <option value="Confirmé">Confirmé</option>
-                          <option value="Préparation">Préparation</option>
-                        </select>
-                      </div>
+                          <div className="filter-group">
+                            <label className="filter-label">Statut</label>
+                            <select
+                              value={selectedStatus}
+                              onChange={(e) => setSelectedStatus(e.target.value)}
+                              className="status-select"
+                            >
+                              <option value="">Tous les statuts</option>
+                              <option value="Confirmé">Confirmé</option>
+                              <option value="Préparation">Préparation</option>
+                            </select>
+                          </div>
 
-                      {hasActiveFilters && (
-                        <button className="clear-filters-btn" onClick={clearFilters}>
-                          <X className="clear-icon" />
-                          Effacer
-                        </button>
+                          {hasActiveFilters && (
+                            <button className="clear-filters-btn" onClick={clearFilters}>
+                              <X className="clear-icon" />
+                              Effacer
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="livraisons-list">
+                      {getFilteredLivraisons().length > 0 ? (
+                        getFilteredLivraisons().map((livraison, index) => (
+                          <div key={index} className="livraison-item">
+                            <div className="livraison-info">
+                              <h3 className="livraison-name">{livraison.name}</h3>
+                              <div className="livraison-date">
+                                <Calendar className="calendar-icon" />
+                                <span>{livraison.date}</span>
+                              </div>
+                            </div>
+
+                            <div className="livraison-details">
+                              <div className="livraison-quantity">{livraison.quantity}</div>
+                              <span className={`status-badge ${getStatusColor(livraison.status)}`}>
+                                {livraison.status}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="no-results">
+                          <p>Aucune livraison trouvée avec ces critères.</p>
+                          <button onClick={clearFilters} className="reset-btn">
+                            Réinitialiser les filtres
+                          </button>
+                        </div>
                       )}
                     </div>
-                  </div>
+                  </>
                 )}
-
-                <div className="livraisons-list">
-                  {getFilteredLivraisons().length > 0 ? (
-                    getFilteredLivraisons().map((livraison, index) => (
-                      <div key={index} className="livraison-item">
-                        <div className="livraison-info">
-                          <h3 className="livraison-name">{livraison.name}</h3>
-                          <div className="livraison-date">
-                            <Calendar className="calendar-icon" />
-                            <span>{livraison.date}</span>
-                          </div>
-                        </div>
-
-                        <div className="livraison-details">
-                          <div className="livraison-quantity">{livraison.quantity}</div>
-                          <span className={`status-badge ${getStatusColor(livraison.status)}`}>
-                            {livraison.status}
-                          </span>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="no-results">
-                      <p>Aucune livraison trouvée avec ces critères.</p>
-                      <button onClick={clearFilters} className="reset-btn">
-                        Réinitialiser les filtres
-                      </button>
-                    </div>
-                  )}
-                </div>
               </div>
             </div>
             <div className="right-bloc">
@@ -633,68 +749,17 @@ const TableauDeBord = () => {
                     <TrendingDown className="loss-icon" />
                     <h3 className="section-title">Statistique d'évolution de perte</h3>
                   </div>
-
-                  {/* Contrôles de date avec bouton Appliquer */}
-                  <div className="loss-controls">
-                    <div className="date-range-selector">
-                      <div className="date-input-group">
-                        <label htmlFor="start-date">Du</label>
-                        <input
-                          type="date"
-                          id="start-date"
-                          value={startDate}
-                          onChange={(e) => setTempStartDate(e.target.value)}
-                          className="date-input"
-                        />
-                      </div>
-                      <div className="date-input-group">
-                        <label htmlFor="end-date">Au</label>
-                        <input
-                          type="date"
-                          id="end-date"
-                          value={tempEndDate}
-                          onChange={(e) => setTempEndDate(e.target.value)}
-                          className="date-input"
-                          min={tempStartDate}
-                        />
-                      </div>
-                      <button
-                        className="apply-date-btn"
-                        onClick={handleApplyDateFilter}
-                        disabled={!hasDateChanged}
-                      >
-                        Appliquer
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* KPI de pertes */}
-                <div className="loss-kpi-row">
-                  <div className="loss-kpi-item">
-                    <div className="loss-kpi-value">{totalLosses} kg</div>
-                    <div className="loss-kpi-label">Total des pertes</div>
-                    <div className={`loss-kpi-trend ${lossEvolution > 0 ? 'negative' : 'positive'}`}>
-                      {lossEvolution > 0 ? '↑' : '↓'} {Math.abs(lossEvolution)}% vs période précédente
-                    </div>
-                  </div>
-
-                  <div className="loss-kpi-item">
-                    <div className="loss-kpi-value">{lossPercentage}%</div>
-                    <div className="loss-kpi-label">Taux de perte</div>
-                    <div className="loss-kpi-detail">{totalLosses}kg / {totalProduction}kg produits</div>
-                  </div>
-
-                  <div className="loss-kpi-item">
-                    <div className="loss-kpi-value">{averageDailyLoss} kg</div>
-                    <div className="loss-kpi-label">Moyenne journalière</div>
-                    <div className="loss-kpi-detail">Sur {lossData.length} jours</div>
-                  </div>
                 </div>
               </div>
-
-              {/* Contenu principal avec graphiques */}
-              <div className="loss-statistics-section">
+              
+              {loadingProductions ? (
+                <LoadingSpinner />
+              ) : error ? (
+                <div className="error-message">
+                  <AlertTriangle size={24} />
+                  <p>Erreur lors du chargement des données de production: {error}</p>
+                </div>
+              ) : (
                 <div className="loss-content">
                   {/* Graphique linéaire d'évolution */}
                   <div className="loss-chart-container">

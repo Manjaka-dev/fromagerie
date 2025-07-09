@@ -4,6 +4,48 @@
   --success: #10b981;
   --error: #ef4444;
 }
+
+/* Styles pour l'indicateur de chargement */
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  width: 100%;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--error);
+  background-color: #fef2f2;
+  border: 1px solid #fee2e2;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem;
+}
+
+.error-message p {
+  margin-left: 0.5rem;
+}
+
 /* Reset CSS pour éliminer les marges par défaut */
 * {
   margin: 0;

@@ -211,6 +211,21 @@ export const productionAPI = {
     apiRequest('/pertes/average-taux'),
 };
 
+// ==================== DASHBOARD ====================
+export const dashboardAPI = {
+  // Statistiques globales du dashboard
+  getStatsGlobales: () => 
+    apiRequest('/dashboard/stats-globales'),
+    
+  // Productions récentes pour graphiques
+  getProductionsRecent: (jours = 7) => 
+    apiRequest(`/dashboard/productions-recent?jours=${jours}`),
+    
+  // Livraisons planifiées à venir
+  getLivraisonsPlanifiees: (jours = 7) => 
+    apiRequest(`/dashboard/livraisons-planifiees?jours=${jours}`),
+};
+
 // ==================== LIVRAISONS ====================
 export const livraisonAPI = {
   // Livraisons
