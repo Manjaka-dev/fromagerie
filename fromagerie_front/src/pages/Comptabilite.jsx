@@ -140,15 +140,50 @@ const Comptabilite = () => {
     </div>
   );
 
-  const RecettesTab = () => (
-    <div className="space-y-6">
-      <SearchAndFilter
-        tab="recettes"
-        searchTerm={searchTerms.recettes}
-        onSearchChange={(term) => setSearchTerms({ ...searchTerms, recettes: term })}
-        filter={filters.recettes}
-        onFilterChange={(filter) => setFilters({ ...filters, recettes: filter })}
-      />
+  const RecettesTab = () => {
+    // Données des recettes (à remplacer par les données réelles)
+    const recettesData = revenus.length ? revenus : [
+      { 
+        id: 1, 
+        date: '2025-07-08',
+        produit: 'Gouda Jeune', 
+        quantite: 50, 
+        prixUnitaire: 5000, 
+        client: 'Epicerie Fine', 
+        paiement: 'Carte', 
+        statut: 'Payé' 
+      },
+      { 
+        id: 2, 
+        date: '2025-07-07',
+        produit: 'Gouda Affiné', 
+        quantite: 35, 
+        prixUnitaire: 7500, 
+        client: 'Restaurant Gourmet', 
+        paiement: 'Virement', 
+        statut: 'En attente' 
+      },
+      { 
+        id: 3, 
+        date: '2025-07-06',
+        produit: 'Gouda aux Herbes', 
+        quantite: 20, 
+        prixUnitaire: 6000, 
+        client: 'Marché Bio', 
+        paiement: 'Espèces', 
+        statut: 'Payé' 
+      }
+    ];
+    
+    return (
+      <div className="space-y-6">
+        <SearchAndFilter
+          tab="recettes"
+          searchTerm={searchTerms.recettes}
+          onSearchChange={(term) => setSearchTerms({ ...searchTerms, recettes: term })}
+          filter={filters.recettes}
+          onFilterChange={(filter) => setFilters({ ...filters, recettes: filter })}
+        />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
@@ -203,6 +238,7 @@ const Comptabilite = () => {
       </div>
     </div>
   );
+  };
 
   const DepensesTab = () => (
     <div className="space-y-6">

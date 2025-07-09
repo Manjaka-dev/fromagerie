@@ -79,7 +79,7 @@ const NotificationManager = () => {
         </div>
       ))}
       
-      <style jsx>{`
+      <style>{`
         .notification-container {
           position: fixed;
           top: 1rem;

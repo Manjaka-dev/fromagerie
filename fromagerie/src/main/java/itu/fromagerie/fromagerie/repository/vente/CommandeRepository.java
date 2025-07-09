@@ -50,4 +50,10 @@ public interface CommandeRepository extends JpaRepository<Commande, Long> {
            "AND NOT EXISTS (SELECT 1 FROM Livraison l WHERE l.commande.id = c.id) " +
            "ORDER BY c.dateCommande DESC")
     List<Commande> findCommandesSansLivraison();
+    
+    @Query("SELECT COUNT(c) FROM Commande c WHERE c.dateCommande BETWEEN :dateDebut AND :dateFin")
+    Long countCommandesByDateBetween(LocalDate dateDebut, LocalDate dateFin);
+    
+    @Query("SELECT COUNT(c) FROM Commande c WHERE c.statut != 'Annulée' AND NOT EXISTS (SELECT 1 FROM Livraison l WHERE l.commande.id = c.id)")
+    Long countCommandesSansLivraison();
 }

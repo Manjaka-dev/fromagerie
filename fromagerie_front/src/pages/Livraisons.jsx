@@ -413,7 +413,7 @@ const Livraison = () => {
                 <p><strong>Client:</strong> {selectedLivraison.clientNom}</p>
                 <p><strong>Zone:</strong> {selectedLivraison.zone}</p>
                 <p><strong>Livreur:</strong> {selectedLivraison.livreurNom}</p>
-                <p><strong>Montant total:</strong> {formatAmount(selectedLivraison.montantTotal)}</p>
+                <p><strong>Montant total:</strong> {formatCurrency(selectedLivraison.montantTotal)}</p>
               </div>
 
               <div style={{ marginBottom: '20px' }}>

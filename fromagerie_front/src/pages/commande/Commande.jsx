@@ -26,7 +26,7 @@ import {
 import styles from './../../assets/styles/commande/Commande.module.css';
 import SidebarMenu from "../../components/SidebarMenu";
 import { FaTag } from 'react-icons/fa';
-import { commandeAPI, clientAPI, produitAPI, livreurAPI, livraisonAPI } from '../../services/api';
+import { commandeAPI, clientAPI, produitAPI, livreurAPI, livraisonAPI, formatCurrency } from '../../services/api';
 
 const CommandesPage = () => {
   const [searchClient, setSearchClient] = useState('');
@@ -46,6 +46,17 @@ const CommandesPage = () => {
     statut: 'tous',
     client: 'tous'
   });
+
+  // Fonction pour réinitialiser les filtres
+  const clearFilters = () => {
+    setFilters({
+      dateDebut: '',
+      dateFin: '',
+      statut: 'tous',
+      client: 'tous'
+    });
+    setSearchClient('');
+  };
 
   // États pour les modales
   const [showAddModal, setShowAddModal] = useState(false);
@@ -606,7 +617,7 @@ const CommandesPage = () => {
                         <div className={styles.detailRow}>
                           <Wallet className={styles.detailIcon} />
                           <span className={styles.detailLabel}>Prix total:</span>
-                          <span className={styles.detailValue}>{formatAmount(commande.montantTotal || 0)}</span>
+                          <span className={styles.detailValue}>{formatCurrency(commande.montantTotal || 0)}</span>
                         </div>
 
                         <div className={styles.detailRow}>
@@ -636,7 +647,7 @@ const CommandesPage = () => {
                                   Quantité: {ligne.quantite}
                                 </span>
                                 <span className={styles.produitPrice}>
-                                  {formatAmount(ligne.prixUnitaire || 0)}
+                                  {formatCurrency(ligne.prixUnitaire || 0)}
                                 </span>
                               </div>
                             ))}
@@ -717,7 +728,7 @@ const CommandesPage = () => {
                               }}
                             />
                             <label htmlFor={`produit-${produit.id}`}>
-                              {produit.nom} - {formatAmount(produit.prixVente || 0)}
+                              {produit.nom} - {formatCurrency(produit.prixVente || 0)}
                             </label>
                           </div>
                         ))}
@@ -765,7 +776,7 @@ const CommandesPage = () => {
                               <div key={index} className={styles.selectedProductItem}>
                                 <span>{produit?.nom || 'Produit inconnu'}</span>
                                 <span>Quantité: {produitData.quantite}</span>
-                                <span>Prix: {formatAmount((produit?.prixVente || 0) * produitData.quantite)}</span>
+                                <span>Prix: {formatCurrency((produit?.prixVente || 0) * produitData.quantite)}</span>
                                 <button
                                   type="button"
                                   onClick={() => removeProduitFromOrder(index)}
@@ -778,7 +789,7 @@ const CommandesPage = () => {
                           })}
                         </div>
                         <div className={styles.orderTotal}>
-                          <strong>Total: {formatAmount(calculateOrderTotal())}</strong>
+                          <strong>Total: {formatCurrency(calculateOrderTotal())}</strong>
                         </div>
                       </div>
                     )}
@@ -821,7 +832,7 @@ const CommandesPage = () => {
                       <label className={styles.formLabel}>Commande</label>
                       <div className={styles.commandeInfo}>
                         <p><strong>Client:</strong> {selectedOrder.client?.nom || 'Client inconnu'}</p>
-                        <p><strong>Montant:</strong> {formatAmount(selectedOrder.montantTotal || 0)}</p>
+                        <p><strong>Montant:</strong> {formatCurrency(selectedOrder.montantTotal || 0)}</p>
                         <p><strong>Date:</strong> {formatDate(selectedOrder.dateCommande)}</p>
                       </div>
                     </div>

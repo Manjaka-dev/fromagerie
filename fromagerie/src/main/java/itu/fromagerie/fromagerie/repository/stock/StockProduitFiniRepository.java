@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,4 +18,7 @@ public interface StockProduitFiniRepository extends JpaRepository<StockProduitFi
     
     @Query("SELECT s FROM StockProduitFini s WHERE s.quantite > 0")
     List<StockProduitFini> findStocksDisponibles();
+
+    @Query("SELECT COALESCE(SUM(s.quantite), 0) FROM StockProduitFini s WHERE s.quantite > 0")
+    BigDecimal getQuantiteTotaleStockDisponible();
 }

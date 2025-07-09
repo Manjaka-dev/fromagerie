@@ -19,7 +19,7 @@ import {
     Trash2,
     Download, Edit
 } from 'lucide-react';
-import { stockAPI, formatDate } from '../services/api';
+import { stockAPI, produitAPI, formatDate } from '../services/api';
 
 const Stock = () => {
     const [activeTab, setActiveTab] = useState('stock');

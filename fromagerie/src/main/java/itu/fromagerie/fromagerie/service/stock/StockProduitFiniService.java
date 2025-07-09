@@ -15,10 +15,17 @@ public class StockProduitFiniService {
     private StockProduitFiniRepository stockRepo;
 
     public StockStatDTO getStatStock(LocalDate dateDebut, LocalDate dateFin, int nbClients, int qttDemandee) {
-        // TODO: Implémenter getQuantiteTotaleByPeriode dans StockProduitFiniRepository
-        int quantite = 0; // Valeur par défaut
+        // Utiliser des vraies données de stock au lieu des valeurs en dur
+        
+        // Convertir BigDecimal en int pour la compatibilité avec le DTO
+        BigDecimal quantiteBD = stockRepo.getQuantiteTotaleStockDisponible();
+        int quantite = quantiteBD != null ? quantiteBD.intValue() : 0;
+        
+        // Calculer les seuils basés sur les valeurs réelles
         int seuilCritique = (int) Math.ceil(0.5 * quantite);
         int seuilDemande = nbClients * qttDemandee;
+        
+        // Remplir le DTO avec les valeurs calculées
         StockStatDTO dto = new StockStatDTO();
         dto.date = dateFin;
         dto.quantiteTotale = quantite;
@@ -26,15 +33,15 @@ public class StockProduitFiniService {
         dto.seuilDemandeValeur = seuilDemande;
         dto.seuilCritique = quantite <= seuilCritique;
         dto.suffisant = quantite >= seuilDemande;
+        
         return dto;
     }
 
     public BigDecimal getQuantiteTotale(LocalDate dateDebut, LocalDate dateFin) {
-        // TODO: Implémenter getQuantiteTotaleByPeriode dans StockProduitFiniRepository
-        // Pour l'instant, retourner zéro
-        return BigDecimal.ZERO;
+        // Utiliser le repository pour obtenir la quantité totale de stock
+        BigDecimal quantite = stockRepo.getQuantiteTotaleStockDisponible();
         
-        // Code original commenté :
-        // return stockRepo.getQuantiteTotaleByPeriode(dateDebut, dateFin);
+        // Si la valeur est null, retourner zéro
+        return quantite != null ? quantite : BigDecimal.ZERO;
     }
-} 
+}
