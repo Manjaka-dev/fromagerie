@@ -24,9 +24,6 @@ public interface LotProduitRepository extends JpaRepository<LotProduit, Long> {
     
     @Query("SELECT COALESCE(SUM(l.quantite), 0) FROM LotProduit l WHERE l.produit.id = :produitId")
     Integer getQuantiteProduit(@Param("produitId") int produitId);
-
-    @Query("SELECT l FROM LotProduit l WHERE l.dateFabrication BETWEEN :dateDebut AND :dateFin")
-    List<LotProduit> findLotsByPeriode(LocalDate dateDebut, LocalDate dateFin);
     
     @Modifying
     @Query("UPDATE LotProduit l SET l.quantite = :quantite WHERE l.produit.id = :produitId")

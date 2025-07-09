@@ -42,18 +42,18 @@ public class Livraison {
     private StatutLivraisonEnum statutLivraison = StatutLivraisonEnum.PLANIFIEE;
     
     @OneToMany(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore  // Éviter les références circulaires
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<LivraisonProduit> produitsALivrer;
     
     @OneToMany(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore  // Éviter les références circulaires
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<StatutLivraison> historiquesStatuts;
     
     @OneToOne(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore  // Éviter les références circulaires
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private ConfirmationReception confirmationReception;
     
     @OneToMany(mappedBy = "livraison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore  // Éviter les références circulaires
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<RetourLivraison> retours;
 }

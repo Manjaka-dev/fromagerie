@@ -2,10 +2,6 @@ package itu.fromagerie.fromagerie.controller.produit;
 
 import itu.fromagerie.fromagerie.entities.produit.Produit;
 import itu.fromagerie.fromagerie.entities.vente.Client;
-import itu.fromagerie.fromagerie.dto.produit.ProduitSearchDTO;
-import itu.fromagerie.fromagerie.dto.produit.CategorieProduitDTO;
-import itu.fromagerie.fromagerie.dto.produit.ProduitStatsDTO;
-import itu.fromagerie.fromagerie.dto.produit.AjustementStockDTO;
 import itu.fromagerie.fromagerie.service.client.ClientService;
 import itu.fromagerie.fromagerie.service.produit.ProduitService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +12,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestController
@@ -111,117 +106,6 @@ public class ProduitController {
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("error", "Erreur lors de la suppression du produit: " + e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
-    
-    // ===== NOUVEAUX ENDPOINTS =====
-    
-    @GetMapping("/search")
-    public ResponseEntity<Map<String, Object>> searchProduitsByNom(@RequestParam String nom) {
-        try {
-            List<Produit> produits = produitService.AllProduit().stream()
-                    .filter(p -> p.getNom().toLowerCase().contains(nom.toLowerCase()))
-                    .collect(Collectors.toList());
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("produits", produits);
-            response.put("nombreResultats", produits.size());
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("error", "Erreur lors de la recherche: " + e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
-    
-    @GetMapping("/categories")
-    public ResponseEntity<Map<String, Object>> getAllCategories() {
-        try {
-            // Récupérer les catégories uniques des produits existants
-            List<String> categories = produitService.AllProduit().stream()
-                    .map(p -> p.getCategorie() != null ? p.getCategorie().getNom() : null)
-                    .filter(Objects::nonNull)
-                    .distinct()
-                    .collect(Collectors.toList());
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("categories", categories);
-            response.put("nombreCategories", categories.size());
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("error", "Erreur lors de la récupération des catégories: " + e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
-    
-    @GetMapping("/stats")
-    public ResponseEntity<Map<String, Object>> getProduitStats() {
-        try {
-            List<Produit> produits = produitService.AllProduit();
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("nombreTotalProduits", produits.size());
-            response.put("nombreCategories", produits.stream()
-                    .map(p -> p.getCategorie() != null ? p.getCategorie().getNom() : null)
-                    .filter(Objects::nonNull)
-                    .distinct()
-                    .count());
-            response.put("prixMoyen", produits.stream()
-                    .filter(p -> p.getPrixVente() != null)
-                    .mapToDouble(p -> p.getPrixVente().doubleValue())
-                    .average()
-                    .orElse(0.0));
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("error", "Erreur lors du calcul des statistiques: " + e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
-    
-    @GetMapping("/stock-faible")
-    public ResponseEntity<Map<String, Object>> getProduitsStockFaible() {
-        try {
-            List<Produit> produits = produitService.AllProduit();
-            List<Map<String, Object>> produitsStockFaible = new ArrayList<>();
-            
-            for (Produit produit : produits) {
-                int quantite = produitService.getQuantiteProduit(produit.getId());
-                if (quantite < 10) { // Seuil d'alerte arbitraire
-                    Map<String, Object> produitInfo = new HashMap<>();
-                    produitInfo.put("produit", produit);
-                    produitInfo.put("quantiteDisponible", quantite);
-                    produitsStockFaible.add(produitInfo);
-                }
-            }
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("produits", produitsStockFaible);
-            response.put("nombreProduits", produitsStockFaible.size());
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("error", "Erreur lors de la récupération des produits à stock faible: " + e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
-    
-    @PostMapping("/{id}/ajuster-stock")
-    public ResponseEntity<Map<String, Object>> ajusterStock(@PathVariable Long id, @RequestBody Map<String, Object> ajustement) {
-        try {
-            // Note: Cette méthode nécessiterait une implémentation dans le service
-            // Pour l'instant, on retourne un message générique
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "Ajustement de stock non encore implémenté");
-            response.put("produitId", id);
-            response.put("ajustement", ajustement);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("error", "Erreur lors de l'ajustement du stock: " + e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }
     }

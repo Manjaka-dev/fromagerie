@@ -28,7 +28,7 @@ import {
   FileText
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
-import { livraisonAPI, formatCurrency, formatDate } from '../services/api';
+import { livraisonAPI } from '../services/api';
 
 const Livraison = () => {
   // États pour les données
@@ -53,14 +53,6 @@ const Livraison = () => {
     datePaiement: new Date().toISOString().split('T')[0]
   });
 
-  // États pour les statistiques
-  const [stats, setStats] = useState({
-    livraisonsDuJour: 0,
-    livreursActifs: 0,
-    distanceOptimisee: "0 km",
-    tempsEstime: "0h 00min"
-  });
-
   // Charger les données au montage
   useEffect(() => {
     loadLivraisons();
@@ -70,145 +62,220 @@ const Livraison = () => {
     setLoading(true);
     setError(null);
     try {
-      const livraisonsData = await livraisonAPI.getAllLivraisons();
-      
-      // Adapter les données de l'API backend pour l'interface
-      const adaptedLivraisons = livraisonsData.map(livraison => ({
-        id: livraison.id,
-        commande: {
-          id: livraison.commandeId || livraison.id,
-          clientNom: livraison.clientNom,
-          total: livraison.montantTotal || 0
-        },
-        livreur: {
-          nom: livraison.livreurNom || 'Livreur non assigné',
-          telephone: livraison.livreurTelephone || ''
-        },
-        zone: livraison.zone || 'Zone non définie',
-        dateLivraison: livraison.dateLivraison || new Date().toISOString().split('T')[0],
-        statut: mapStatutFromBackend(livraison.statut),
-        adresse: livraison.adresse || 'Adresse du client',
-        produits: livraison.produits || []
-      }));
-
-      setLivraisons(adaptedLivraisons);
-      
-      // Calculer les statistiques
-      calculateStats(adaptedLivraisons);
-      
+      const response = await livraisonAPI.getAllLivraisons();
+      setLivraisons(response.livraisons || []);
     } catch (err) {
       console.error('Erreur lors du chargement des livraisons:', err);
-      setError('Impossible de charger les livraisons. Veuillez vérifier que le backend est démarré.');
+      setError('Erreur lors du chargement des livraisons');
     } finally {
       setLoading(false);
     }
   };
 
-  // Fonction pour mapper les statuts du backend vers le frontend
-  const mapStatutFromBackend = (statutBackend) => {
-    if (!statutBackend) return 'inconnu';
+  // Fonction pour formater le montant
+  const formatAmount = (amount) => {
+    let numericAmount = 0;
+    if (amount !== null && amount !== undefined) {
+      if (typeof amount === 'object') {
+        // Si c'est un objet BigDecimal du backend
+        numericAmount = parseFloat(amount.toString()) || 0;
+      } else {
+        numericAmount = parseFloat(amount) || 0;
+      }
+    }
     
-    const statutMap = {
-      'Planifiée': 'planifiée',
-      'En cours': 'en cours',
-      'Livrée': 'livré',
-      'Annulée': 'annulée',
-      'Échec de livraison': 'échec'
-    };
-    
-    return statutMap[statutBackend] || statutBackend.toLowerCase();
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'MGA',
+      minimumFractionDigits: 0
+    }).format(numericAmount).replace('MGA', 'Ar');
   };
 
-  // Fonction pour parser les produits depuis la chaîne de caractères
-  const parseProduits = (produitsString) => {
-    if (!produitsString) return [];
-    
-    try {
-      // Essayer de parser comme JSON d'abord
-      if (produitsString.startsWith('[') || produitsString.startsWith('{')) {
-        return JSON.parse(produitsString);
-      }
-      
-      // Sinon, traiter comme une chaîne de produits séparés par des virgules
-      return produitsString.split(',').map((produit, index) => ({
-        nom: produit.trim(),
-        quantite: 1 // Quantité par défaut
-      }));
-    } catch (error) {
-      console.error('Erreur lors du parsing des produits:', error);
-      return [{ nom: produitsString, quantite: 1 }];
+  // Fonction pour formater la date
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Date non définie';
+    return new Date(dateString).toLocaleDateString('fr-FR');
+  };
+
+  // Fonction pour obtenir la couleur du statut
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'planifiée':
+      case 'planifié':
+        return '#3b82f6'; // bleu
+      case 'en cours':
+        return '#f59e0b'; // orange
+      case 'livrée':
+      case 'livre':
+        return '#10b981'; // vert
+      default:
+        return '#6b7280'; // gris
     }
   };
 
-  // Fonction pour calculer les statistiques
-  const calculateStats = (livraisons) => {
-    const today = new Date().toISOString().split('T')[0];
-    
-    const livraisonsDuJour = livraisons.filter(liv => 
-      liv.dateLivraison === today && liv.statut === 'livré'
-    ).length;
-    
-    const livreursActifs = new Set(
-      livraisons
-        .filter(liv => liv.statut === 'en cours' || liv.statut === 'planifiée')
-        .map(liv => liv.livreur.nom)
-    ).size;
-    
-    setStats({
-      livraisonsDuJour,
-      livreursActifs,
-      distanceOptimisee: `${Math.round(livraisons.length * 2.5)} km`,
-      tempsEstime: `${Math.floor(livraisons.length * 0.5)}h ${Math.round((livraisons.length * 0.5 % 1) * 60)}min`
-    });
-  };
-
-  // Fonction pour mettre à jour le statut d'une livraison
-  const updateStatutLivraison = async (id, nouveauStatut) => {
+  // Fonction pour mettre à jour le statut
+  const handleUpdateStatut = async (livraison) => {
     try {
-      // Utiliser l'endpoint backend pour mettre à jour le statut
-      const response = await livraisonAPI.updateStatutLivraison(id);
+      const response = await livraisonAPI.updateStatutLivraison(livraison.livraisonId);
       
+      // Si le statut est "En cours" et qu'on veut passer à "Livrée", ouvrir le modal de paiement
       if (response.action === 'confirmation_paiement') {
-        // Si une confirmation de paiement est nécessaire, ouvrir la modal
-        setSelectedLivraison(response.livraison);
+        // Débogage pour voir les valeurs exactes
+        console.log('=== DÉBOGAGE MONTANT ===');
+        console.log('Livraison montantTotal:', livraison.montantTotal);
+        console.log('Type de montantTotal:', typeof livraison.montantTotal);
+        console.log('MontantTotal stringifié:', JSON.stringify(livraison.montantTotal));
+        
+        // S'assurer que le montant est correctement converti
+        let montantPaiement = 0;
+        if (livraison.montantTotal !== null && livraison.montantTotal !== undefined) {
+          if (typeof livraison.montantTotal === 'object') {
+            // Si c'est un objet BigDecimal du backend
+            montantPaiement = parseFloat(livraison.montantTotal.toString()) || 0;
+          } else {
+            montantPaiement = parseFloat(livraison.montantTotal) || 0;
+          }
+        }
+        
+        console.log('Montant final pour paiement:', montantPaiement);
+        console.log('=== FIN DÉBOGAGE ===');
+        
+        setSelectedLivraison(livraison);
         setPaiementForm({
-          ...paiementForm,
-          montantPaiement: response.livraison.montantTotal || 0
+          montantPaiement: montantPaiement,
+          methodePaiement: 'espèces',
+          datePaiement: new Date().toISOString().split('T')[0]
         });
         setShowPaiementModal(true);
       } else {
-        // Recharger les données après mise à jour
+        // Recharger les données
         await loadLivraisons();
+        alert('Statut mis à jour avec succès !');
       }
-    } catch (err) {
-      console.error('Erreur lors de la mise à jour du statut:', err);
-      setError('Impossible de mettre à jour le statut de la livraison.');
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du statut:', error);
+      alert('Erreur lors de la mise à jour du statut');
     }
   };
 
-  // Fonction pour traiter le paiement
-  const handlePaiement = async () => {
+  // Fonction pour confirmer la livraison et le paiement
+  const handleConfirmerLivraison = async () => {
     try {
-      await livraisonAPI.confirmerLivraisonEtPaiement(selectedLivraison.livraisonId, paiementForm);
-      
-      // Fermer la modal et réinitialiser
-      setShowPaiementModal(false);
-      setPaiementForm({
-        montantPaiement: '',
-        methodePaiement: 'espèces',
-        datePaiement: new Date().toISOString().split('T')[0]
+      if (!paiementForm.montantPaiement || !paiementForm.methodePaiement || !paiementForm.datePaiement) {
+        alert('Veuillez remplir tous les champs');
+        return;
+      }
+
+      await livraisonAPI.confirmerLivraisonEtPaiement(selectedLivraison.livraisonId, {
+        montantPaiement: parseFloat(paiementForm.montantPaiement),
+        methodePaiement: paiementForm.methodePaiement,
+        datePaiement: paiementForm.datePaiement
       });
+
+      alert('Livraison confirmée et paiement enregistré avec succès !');
+      setShowPaiementModal(false);
       setSelectedLivraison(null);
-      
-      // Recharger les données
       await loadLivraisons();
-    } catch (err) {
-      console.error('Erreur lors du traitement du paiement:', err);
-      setError('Erreur lors de la confirmation du paiement.');
+    } catch (error) {
+      console.error('Erreur lors de la confirmation:', error);
+      alert('Erreur lors de la confirmation');
     }
   };
 
-  // -----------------RECHERCHE-------------------------------
+  // Fonction pour effacer tous les filtres
+  const clearFilters = () => {
+    setFilters({
+      dateDebut: '',
+      dateFin: '',
+      statut: 'tous'
+    });
+    setSearchQuery('');
+  };
+
+  // Fonction pour vérifier si une date est dans la plage
+  const isDateInRange = (dateString, dateDebut, dateFin) => {
+    if (!dateString) return true;
+    
+    const date = new Date(dateString);
+    const start = dateDebut ? new Date(dateDebut) : null;
+    const end = dateFin ? new Date(dateFin) : null;
+    
+    if (start && date < start) return false;
+    if (end && date > end) return false;
+    
+    return true;
+  };
+
+  // Filtrer les livraisons selon la recherche et les filtres
+  const filteredLivraisons = livraisons.filter(livraison => {
+    // Filtre par recherche textuelle
+    const matchesSearch = 
+      livraison.clientNom?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      livraison.zone?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      livraison.livreurNom?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Filtre par statut
+    const matchesStatus = filters.statut === 'tous' || 
+      livraison.statutLivraison?.toLowerCase().includes(filters.statut.toLowerCase());
+    
+    // Filtre par date (on utilise la date de livraison si disponible)
+    const matchesDate = isDateInRange(livraison.dateLivraison, filters.dateDebut, filters.dateFin);
+    
+    return matchesSearch && matchesStatus && matchesDate;
+  });
+
+  // Calculer les statistiques
+  const stats = {
+    totalLivraisons: livraisons.length,
+    livraisonsPlanifiees: livraisons.filter(l => l.statutLivraison?.toLowerCase().includes('planifié')).length,
+    livraisonsEnCours: livraisons.filter(l => l.statutLivraison?.toLowerCase().includes('en cours')).length,
+    livraisonsLivrees: livraisons.filter(l => l.statutLivraison?.toLowerCase().includes('livré')).length
+  };
+
+  if (loading) {
+    return (
+      <div className="dashboard-container">
+        <div className="sidebar">
+          <div className="sidebar-header">
+            <h1 className="app-title">CheeseFlow</h1>
+            <p className="app-subtitle">Production</p>
+            <p className="app-subtitle">Gouda Artisanale</p>
+          </div>
+          <SidebarMenu />
+        </div>
+        <div className="main-content">
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <Loader className="animate-spin" size={48} />
+            <span style={{ marginLeft: '10px' }}>Chargement des livraisons...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="dashboard-container">
+        <div className="sidebar">
+          <div className="sidebar-header">
+            <h1 className="app-title">CheeseFlow</h1>
+            <p className="app-subtitle">Production</p>
+            <p className="app-subtitle">Gouda Artisanale</p>
+          </div>
+          <SidebarMenu />
+        </div>
+        <div className="main-content">
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
+            <AlertTriangle size={48} color="red" />
+            <p style={{ marginTop: '10px', color: 'red' }}>{error}</p>
+            <button onClick={loadLivraisons} style={{ marginTop: '10px', padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '5px' }}>
+              Réessayer
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-container">
@@ -337,57 +404,71 @@ const Livraison = () => {
 
           {/* Liste des livraisons */}
           <div className="livraison-list">
-            {loading && (
-              <div className="loading-message">
-                <p>Chargement des livraisons...</p>
-              </div>
-            )}
-            
-            {error && (
-              <div className="error-message">
-                <p>Erreur : {error}</p>
-                <button onClick={loadLivraisons}>Réessayer</button>
-              </div>
-            )}
-            
-            {!loading && !error && livraisons.length === 0 && (
-              <div className="empty-message">
+            {filteredLivraisons.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
+                <Truck size={48} />
                 <p>Aucune livraison trouvée</p>
               </div>
-            )}
-            
-            {!loading && !error && livraisons.map(livraison => (
-              <div key={livraison.id} className="livraison-card">
+            ) : (
+              filteredLivraisons.map(livraison => (
+                <div key={livraison.livraisonId} className="livraison-card">
                 <div className="livraison-header">
-                  <h3>CheeseFlow</h3>
-                  <span className="client-name">{livraison.commande.clientNom}</span>
+                    <div>
+                      <h3>{livraison.clientNom || 'Client inconnu'}</h3>
+                      <span className="client-name">Zone: {livraison.zone || 'Non définie'}</span>
+                    </div>
+                    <div style={{ 
+                      padding: '4px 12px', 
+                      borderRadius: '20px', 
+                      backgroundColor: getStatusColor(livraison.statutLivraison) + '20',
+                      color: getStatusColor(livraison.statutLivraison),
+                      fontWeight: 'bold',
+                      fontSize: '14px'
+                    }}>
+                      {livraison.statutLivraison || 'Statut inconnu'}
+                    </div>
                 </div>
+                  
                 <div className="livraison-details">
-                  <p><strong>Montant :</strong> {formatCurrency(livraison.commande.total)}</p>
-                  <p><strong>Produits :</strong> {livraison.produits.map(p => `${p.nom} (${p.quantite})`).join(', ')}</p>
-                  <p><strong>Livreur :</strong> {livraison.livreur.nom}</p>
-                  <p><strong>Zone :</strong> {livraison.zone}</p>
-                  <p><strong>Statut :</strong> <span className={`statut-${livraison.statut.replace(' ', '-')}`}>{livraison.statut}</span></p>
-                  <p><strong>Prévu :</strong> {formatDate(livraison.dateLivraison)}</p>
+                    <p><strong>Montant :</strong> {formatAmount(livraison.montantTotal)}</p>
+                    <p><strong>Produits :</strong> {livraison.produitsCommandes || 'Non spécifiés'}</p>
+                    <p><strong>Livreur :</strong> {livraison.livreurNom || 'Non assigné'}</p>
+                    <p><strong>Contact :</strong> {livraison.clientTelephone || 'Non disponible'}</p>
                 </div>
+                  
                 <div className="livraison-actions">
+                    {livraison.statutLivraison?.toLowerCase().includes('planifié') && (
                   <button 
                     className="track-btn"
-                    onClick={() => updateStatutLivraison(livraison.id, 'en cours')}
-                    disabled={livraison.statut === 'livré' || livraison.statut === 'en cours'}
+                        onClick={() => handleUpdateStatut(livraison)}
+                        style={{ backgroundColor: '#f59e0b' }}
                   >
-                    {livraison.statut === 'planifiée' ? 'Démarrer' : 'Suivre'}
+                        <Play size={16} style={{ marginRight: '5px' }} />
+                        Démarrer
                   </button>
+                    )}
+                    
+                    {livraison.statutLivraison?.toLowerCase().includes('en cours') && (
                   <button 
-                    className="contact-btn"
-                    onClick={() => updateStatutLivraison(livraison.id, 'livré')}
-                    disabled={livraison.statut === 'livré' || livraison.statut === 'planifiée'}
-                  >
-                    {livraison.statut === 'en cours' ? 'Terminer' : 'Contacter'}
+                        className="track-btn"
+                        onClick={() => handleUpdateStatut(livraison)}
+                        style={{ backgroundColor: '#10b981' }}
+                      >
+                        <CheckCircle size={16} style={{ marginRight: '5px' }} />
+                        Livrer
+                      </button>
+                    )}
+                    
+                    {livraison.statutLivraison?.toLowerCase().includes('livré') && (
+                      <button className="contact-btn" disabled style={{ backgroundColor: '#6b7280' }}>
+                        <CheckCircle size={16} style={{ marginRight: '5px' }} />
+                        Terminée
                   </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -413,7 +494,8 @@ const Livraison = () => {
                 <p><strong>Client:</strong> {selectedLivraison.clientNom}</p>
                 <p><strong>Zone:</strong> {selectedLivraison.zone}</p>
                 <p><strong>Livreur:</strong> {selectedLivraison.livreurNom}</p>
-                <p><strong>Montant total:</strong> {formatAmount(selectedLivraison.montantTotal)}</p>
+                {/* Correction : afficher le montant total de la commande si disponible */}
+                <p><strong>Montant total:</strong> {formatAmount(selectedLivraison.montantTotalCommande || selectedLivraison.montantTotal)}</p>
               </div>
 
               <div style={{ marginBottom: '20px' }}>

@@ -1,48 +1,18 @@
 package itu.fromagerie.fromagerie.repository.livraison;
 
 import itu.fromagerie.fromagerie.entities.livraison.Livraison;
-import itu.fromagerie.fromagerie.entities.vente.Commande;
-import itu.fromagerie.fromagerie.entities.livraison.Livreur;
-import itu.fromagerie.fromagerie.entities.livraison.StatutLivraisonEnum;
 import itu.fromagerie.fromagerie.projection.LivraisonProjection;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 public interface LivraisonRepository extends JpaRepository<Livraison, Long> {
     Optional<Livraison> findByCommandeId(Long commandeId);
 
-    Optional<Livraison> findByCommande(Commande commande);
-    List<Livraison> findByLivreur(Livreur livreur);
-    List<Livraison> findByZone(String zone);
-    List<Livraison> findByDateLivraisonBetween(LocalDate dateDebut, LocalDate dateFin);
-    List<Livraison> findByStatutLivraison(StatutLivraisonEnum statut);
-    
-    // Nouvelles méthodes ajoutées
-    List<Livraison> findByLivreurId(Long livreurId);
-    
-    @Query("SELECT DISTINCT l.zone FROM Livraison l WHERE l.zone IS NOT NULL ORDER BY l.zone")
-    List<String> findDistinctZones();
-    
-    @Query("SELECT l FROM Livraison l WHERE l.dateLivraison = :date")
-    List<Livraison> findByDateLivraison(LocalDate date);
-    // Requête complète pour les informations de livraison
-    @Query("""
-        SELECT l FROM Livraison l 
-        JOIN FETCH l.commande c 
-        JOIN FETCH c.client cl 
-        JOIN FETCH l.livreur lr 
-        LEFT JOIN FETCH l.produitsALivrer pa 
-        LEFT JOIN FETCH pa.produit p 
-        WHERE l.dateLivraison BETWEEN :dateDebut AND :dateFin
-        ORDER BY l.dateLivraison DESC
-        """)
-    List<Livraison> findLivraisonsCompletes(LocalDate dateDebut, LocalDate dateFin);
     
     @Query(value = """
         SELECT
