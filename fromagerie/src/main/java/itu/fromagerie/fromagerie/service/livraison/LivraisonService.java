@@ -475,4 +475,36 @@ public class LivraisonService {
     }
 
     // ==================== MÉTHODES UTILITAIRES ====================
+
+    /**
+     * Récupère toutes les livraisons avec le statut "PLANIFIEE"
+     * @return Liste des livraisons planifiées sous forme de LivraisonInfoDTO
+     */
+    public List<itu.fromagerie.fromagerie.dto.livraison.LivraisonInfoDTO> getLivraisonsPlanifiees() {
+        try {
+            // Utiliser le repository pour récupérer les livraisons planifiées
+            List<Livraison> livraisons = livraisonRepository.findByStatutLivraison(itu.fromagerie.fromagerie.entities.livraison.StatutLivraisonEnum.PLANIFIEE);
+            return convertToLivraisonInfoDTO(livraisons);
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la récupération des livraisons planifiées: " + e.getMessage());
+            // En cas d'erreur, retourner une liste vide plutôt que null
+            return new ArrayList<>();
+        }
+    }
+    
+    /**
+     * Récupère toutes les livraisons avec le statut "EN_COURS"
+     * @return Liste des livraisons en cours sous forme de LivraisonInfoDTO
+     */
+    public List<itu.fromagerie.fromagerie.dto.livraison.LivraisonInfoDTO> getLivraisonsEnCours() {
+        try {
+            // Utiliser le repository pour récupérer les livraisons en cours
+            List<Livraison> livraisons = livraisonRepository.findByStatutLivraison(itu.fromagerie.fromagerie.entities.livraison.StatutLivraisonEnum.EN_COURS);
+            return convertToLivraisonInfoDTO(livraisons);
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la récupération des livraisons en cours: " + e.getMessage());
+            // En cas d'erreur, retourner une liste vide plutôt que null
+            return new ArrayList<>();
+        }
+    }
 }

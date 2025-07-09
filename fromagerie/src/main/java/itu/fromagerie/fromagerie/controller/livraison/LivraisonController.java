@@ -290,6 +290,78 @@ public class LivraisonController {
             return ResponseEntity.badRequest().body(response);
         }
     }
+    /**
+     * Récupère toutes les livraisons planifiées
+     * @return Liste des livraisons planifiées
+     */
+    @GetMapping("/planifiees")
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Récupérer les livraisons planifiées",
+        description = "Retourne la liste de toutes les livraisons avec le statut 'PLANIFIEE'",
+        tags = {"Livraisons"}
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "Liste des livraisons planifiées récupérée avec succès",
+            content = @io.swagger.v3.oas.annotations.media.Content(
+                mediaType = "application/json",
+                array = @io.swagger.v3.oas.annotations.media.ArraySchema(
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = LivraisonInfoDTO.class)
+                )
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "500",
+            description = "Erreur serveur lors de la récupération des livraisons planifiées"
+        )
+    })
+    public ResponseEntity<List<LivraisonInfoDTO>> getLivraisonsPlanifiees() {
+        try {
+            List<LivraisonInfoDTO> livraisons = livraisonService.getLivraisonsPlanifiees();
+            return ResponseEntity.ok(livraisons);
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la récupération des livraisons planifiées: " + e.getMessage());
+            return ResponseEntity.status(500).build();
+        }
+    }
+    
+    /**
+     * Récupère toutes les livraisons en cours
+     * @return Liste des livraisons en cours
+     */
+    @GetMapping("/en-cours")
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Récupérer les livraisons en cours",
+        description = "Retourne la liste de toutes les livraisons avec le statut 'EN_COURS'",
+        tags = {"Livraisons"}
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "Liste des livraisons en cours récupérée avec succès",
+            content = @io.swagger.v3.oas.annotations.media.Content(
+                mediaType = "application/json",
+                array = @io.swagger.v3.oas.annotations.media.ArraySchema(
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = LivraisonInfoDTO.class)
+                )
+            )
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "500",
+            description = "Erreur serveur lors de la récupération des livraisons en cours"
+        )
+    })
+    public ResponseEntity<List<LivraisonInfoDTO>> getLivraisonsEnCours() {
+        try {
+            List<LivraisonInfoDTO> livraisons = livraisonService.getLivraisonsEnCours();
+            return ResponseEntity.ok(livraisons);
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la récupération des livraisons en cours: " + e.getMessage());
+            return ResponseEntity.status(500).build();
+        }
+    }
+
     @PostMapping("/retour-livraison")
     public ResponseEntity<Map<String, Object>> retourLivraison(@RequestBody Map<String, Object> request) {
         try {

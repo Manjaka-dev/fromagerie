@@ -8,6 +8,14 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +24,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/statistiques/production")
 @CrossOrigin(origins = "*")
+@Tag(name = "Statistiques de Production", description = "Endpoints pour analyser et suivre les statistiques de production")
 public class StatistiqueProductionController {
 
     @Autowired
@@ -84,8 +93,24 @@ public class StatistiqueProductionController {
      * Calcule le pourcentage de production journalière
      */
     @GetMapping("/journaliere/pourcentage")
+    @Operation(
+        summary = "Calcul du pourcentage de production journalière",
+        description = "Calcule le pourcentage de production par rapport à la capacité journalière pour une date donnée",
+        tags = {"Statistiques", "Production"}
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200", 
+            description = "Pourcentage de production calculé avec succès",
+            content = @Content(mediaType = "application/json")
+        ),
+        @ApiResponse(responseCode = "400", description = "Paramètres invalides")
+    })
     public ResponseEntity<Map<String, Object>> getPourcentageProductionJournaliere(
+            @Parameter(description = "Date pour laquelle calculer le pourcentage", required = true)
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            
+            @Parameter(description = "Capacité journalière de production en unités", required = true)
             @RequestParam Integer capaciteJournaliere) {
         
         Map<String, Object> stats = statistiqueProductionService.getPourcentageProductionJournaliere(date, capaciteJournaliere);
@@ -98,7 +123,21 @@ public class StatistiqueProductionController {
      * Calcule le taux de qualité journalier
      */
     @GetMapping("/journaliere/qualite")
+    @Operation(
+        summary = "Calcul du taux de qualité journalier",
+        description = "Calcule le taux de qualité des produits fabriqués pour une journée spécifique",
+        tags = {"Statistiques", "Qualité"}
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200", 
+            description = "Taux de qualité calculé avec succès",
+            content = @Content(mediaType = "application/json")
+        ),
+        @ApiResponse(responseCode = "400", description = "Date invalide")
+    })
     public ResponseEntity<Map<String, Object>> getTauxQualiteJournalier(
+            @Parameter(description = "Date pour laquelle calculer le taux de qualité", required = true)
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         
         Map<String, Object> stats = statistiqueProductionService.getTauxQualiteJournalier(date);
@@ -111,7 +150,21 @@ public class StatistiqueProductionController {
      * Calcule le taux de perte journalier
      */
     @GetMapping("/journaliere/perte")
+    @Operation(
+        summary = "Calcul du taux de perte journalier",
+        description = "Calcule le pourcentage de pertes (déchets, produits défectueux) par rapport à la production journalière",
+        tags = {"Statistiques", "Pertes"}
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200", 
+            description = "Taux de perte calculé avec succès",
+            content = @Content(mediaType = "application/json")
+        ),
+        @ApiResponse(responseCode = "400", description = "Date invalide")
+    })
     public ResponseEntity<Map<String, Object>> getTauxPerteJournalier(
+            @Parameter(description = "Date pour laquelle calculer le taux de perte", required = true)
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         
         Map<String, Object> stats = statistiqueProductionService.getTauxPerteJournalier(date);
@@ -153,8 +206,24 @@ public class StatistiqueProductionController {
      * Calcule la moyenne des commandes par semaine
      */
     @GetMapping("/capacite/moyenne-semaine")
+    @Operation(
+        summary = "Moyenne des commandes par semaine",
+        description = "Calcule le nombre moyen de commandes reçues par semaine sur une période donnée",
+        tags = {"Statistiques", "Commandes"}
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200", 
+            description = "Moyenne calculée avec succès",
+            content = @Content(mediaType = "application/json")
+        ),
+        @ApiResponse(responseCode = "400", description = "Paramètres de date invalides")
+    })
     public ResponseEntity<Map<String, Object>> getMoyenneCommandesParSemaine(
+            @Parameter(description = "Date de début de la période d'analyse", required = true)
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
+            
+            @Parameter(description = "Date de fin de la période d'analyse", required = true)
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
         
         Double moyenne = statistiqueProductionService.getMoyenneCommandesParSemaine(dateDebut, dateFin);
@@ -170,8 +239,24 @@ public class StatistiqueProductionController {
      * Calcule la capacité journalière basée sur les commandes
      */
     @GetMapping("/capacite/journaliere")
+    @Operation(
+        summary = "Capacité journalière de production",
+        description = "Calcule la capacité journalière optimale de production basée sur l'historique des commandes",
+        tags = {"Statistiques", "Capacité"}
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200", 
+            description = "Capacité journalière calculée avec succès",
+            content = @Content(mediaType = "application/json")
+        ),
+        @ApiResponse(responseCode = "400", description = "Paramètres de date invalides")
+    })
     public ResponseEntity<Map<String, Object>> getCapaciteJournaliere(
+            @Parameter(description = "Date de début pour l'analyse historique", required = true)
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
+            
+            @Parameter(description = "Date de fin pour l'analyse historique", required = true)
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
         
         Integer capacite = statistiqueProductionService.getCapaciteJournaliere(dateDebut, dateFin);

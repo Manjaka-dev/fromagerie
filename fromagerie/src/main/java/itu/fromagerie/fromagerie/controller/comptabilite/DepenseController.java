@@ -23,8 +23,16 @@ public class DepenseController {
 
     @GetMapping("/categorie")
     public ResponseEntity<List<Depense>> getDepensesByCategorie(@RequestParam String categorie) {
-        List<Depense> depenses = depenseService.findByCategorie(categorie);
-        return ResponseEntity.ok(depenses);
+        System.out.println("Recherche des dépenses pour la catégorie: '" + categorie + "'");
+        try {
+            List<Depense> depenses = depenseService.findByCategorie(categorie);
+            System.out.println("Nombre de dépenses trouvées: " + (depenses != null ? depenses.size() : 0));
+            return ResponseEntity.ok(depenses);
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la recherche des dépenses par catégorie: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @GetMapping("/date-range")
@@ -53,8 +61,16 @@ public class DepenseController {
 
     @GetMapping("/total/categorie")
     public ResponseEntity<BigDecimal> getTotalDepensesByCategorie(@RequestParam String categorie) {
-        BigDecimal total = depenseService.getTotalDepensesByCategorie(categorie);
-        return ResponseEntity.ok(total);
+        System.out.println("Endpoint appelé: /api/depenses/total/categorie avec paramètre categorie='" + categorie + "'");
+        try {
+            BigDecimal total = depenseService.getTotalDepensesByCategorie(categorie);
+            System.out.println("Total des dépenses pour la catégorie '" + categorie + "': " + total);
+            return ResponseEntity.ok(total);
+        } catch (Exception e) {
+            System.err.println("Erreur lors du calcul du total des dépenses par catégorie: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @PostMapping

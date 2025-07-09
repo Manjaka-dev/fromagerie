@@ -31,7 +31,26 @@ public class DepenseService {
         if (categorie.trim().isEmpty()) {
             throw new IllegalArgumentException("Categorie cannot be empty");
         }
-        return depenseRepo.findByCategorie(categorie);
+        
+        // Afficher toutes les catégories disponibles pour le débogage
+        System.out.println("=== Catégories de dépenses disponibles ===");
+        List<String> categories = depenseRepo.findAll().stream()
+                .map(Depense::getCategorie)
+                .distinct()
+                .toList();
+                
+        categories.forEach(cat -> System.out.println("- '" + cat + "'"));
+        
+        // Essayer avec la catégorie exacte d'abord
+        List<Depense> depenses = depenseRepo.findByCategorie(categorie);
+        
+        // Si aucun résultat, essayer une recherche insensible à la casse
+        if (depenses.isEmpty()) {
+            System.out.println("Aucun résultat trouvé avec recherche exacte, essai avec recherche insensible à la casse");
+            depenses = depenseRepo.findByCategorieContainingIgnoreCase(categorie);
+        }
+        
+        return depenses;
     }
 
     /**
@@ -92,7 +111,19 @@ public class DepenseService {
         if (categorie.trim().isEmpty()) {
             throw new IllegalArgumentException("Categorie cannot be empty");
         }
+        
+        System.out.println("Calcul du total des dépenses pour la catégorie: '" + categorie + "'");
+        
+        // Essayer d'abord avec la correspondance exacte
         BigDecimal total = depenseRepo.getTotalDepensesByCategorie(categorie);
+        
+        // Si aucun résultat, essayer avec la recherche approximative
+        if (total == null || total.compareTo(BigDecimal.ZERO) == 0) {
+            System.out.println("Aucun total trouvé avec recherche exacte, essai avec recherche approximative");
+            total = depenseRepo.getTotalDepensesByCategorieContaining(categorie);
+        }
+        
+        System.out.println("Total calculé: " + (total != null ? total : "NULL"));
         return total != null ? total : BigDecimal.ZERO;
     }
 

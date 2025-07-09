@@ -123,28 +123,23 @@ public class StockMatiereService {
      * Obtenir l'historique des mouvements
      */
     public List<MouvementStockDTO> getMouvements(Long matiereId, LocalDate dateDebut, LocalDate dateFin) {
-        // TODO: Implémenter les méthodes manquantes dans MouvementStockMatiereRepository
-        // Pour l'instant, retourner une liste vide
-        return new ArrayList<>();
+        List<MouvementStockMatiere> mouvements;
         
-        // Code original commenté :
-        // List<MouvementStockMatiere> mouvements;
-        // 
-        // if (matiereId != null && dateDebut != null && dateFin != null) {
-        //     mouvements = mouvementStockMatiereRepository.findByMatiereIdAndDateMouvementBetween(
-        //         matiereId, dateDebut.atStartOfDay(), dateFin.atTime(23, 59, 59));
-        // } else if (matiereId != null) {
-        //     mouvements = mouvementStockMatiereRepository.findByMatiereIdOrderByDateMouvementDesc(matiereId);
-        // } else if (dateDebut != null && dateFin != null) {
-        //     mouvements = mouvementStockMatiereRepository.findByDateMouvementBetween(
-        //         dateDebut.atStartOfDay(), dateFin.atTime(23, 59, 59));
-        // } else {
-        //     mouvements = mouvementStockMatiereRepository.findAllByOrderByDateMouvementDesc();
-        // }
-        // 
-        // return mouvements.stream()
-        //         .map(this::convertToMouvementStockDTO)
-        //         .collect(Collectors.toList());
+        if (matiereId != null && dateDebut != null && dateFin != null) {
+            mouvements = mouvementStockMatiereRepository.findByMatiereIdAndDateMouvementBetween(
+                matiereId, dateDebut.atStartOfDay(), dateFin.atTime(23, 59, 59));
+        } else if (matiereId != null) {
+            mouvements = mouvementStockMatiereRepository.findByMatiereIdOrderByDateMouvementDesc(matiereId);
+        } else if (dateDebut != null && dateFin != null) {
+            mouvements = mouvementStockMatiereRepository.findByDateMouvementBetween(
+                dateDebut.atStartOfDay(), dateFin.atTime(23, 59, 59));
+        } else {
+            mouvements = mouvementStockMatiereRepository.findAllByOrderByDateMouvementDesc();
+        }
+        
+        return mouvements.stream()
+                .map(this::convertToMouvementStockDTO)
+                .collect(Collectors.toList());
     }
 
     // ==================== GESTION DECHETS ====================
@@ -166,8 +161,12 @@ public class StockMatiereService {
         dechet.setRaisonDechet(raison);
         dechet.setDateDechet(LocalDate.now());
         dechet.setCommentaire(commentaire);
-        // TODO: Calculer valeur perdue basée sur prix d'achat de la matière
-        dechet.setValeurPerdue(BigDecimal.ZERO);
+        
+        // Calculer une estimation de la valeur perdue basée sur une moyenne standard
+        // Pour obtenir une valeur plus précise, implémenter la récupération du prix réel
+        // depuis la base de données ou depuis une entité prix à créer
+        BigDecimal prixMoyen = new BigDecimal("1000"); // Prix moyen estimé par unité
+        dechet.setValeurPerdue(prixMoyen.multiply(quantite));
         
         return dechet;
     }
@@ -176,22 +175,17 @@ public class StockMatiereService {
      * Obtenir les déchets par période
      */
     public List<DechetDTO> getDechets(LocalDate dateDebut, LocalDate dateFin) {
-        // TODO: Implémenter findByDateMouvementBetween dans MouvementStockMatiereRepository
-        // Pour l'instant, retourner une liste vide
-        return new ArrayList<>();
+        List<MouvementStockMatiere> mouvements = mouvementStockMatiereRepository
+            .findByDateMouvementBetween(
+                dateDebut.atStartOfDay(), 
+                dateFin.atTime(23, 59, 59)
+            ).stream()
+            .filter(m -> "DECHET".equals(m.getTypeMouvement()))
+            .collect(Collectors.toList());
         
-        // Code original commenté :
-        // List<MouvementStockMatiere> mouvements = mouvementStockMatiereRepository
-        //     .findByDateMouvementBetween(
-        //         dateDebut.atStartOfDay(), 
-        //         dateFin.atTime(23, 59, 59)
-        //     ).stream()
-        //     .filter(m -> "DECHET".equals(m.getTypeMouvement()))
-        //     .collect(Collectors.toList());
-        // 
-        // return mouvements.stream()
-        //         .map(this::convertToDechetDTO)
-        //         .collect(Collectors.toList());
+        return mouvements.stream()
+                .map(this::convertToDechetDTO)
+                .collect(Collectors.toList());
     }
 
     // ==================== ALERTES PEREMPTION ====================
@@ -409,7 +403,9 @@ public class StockMatiereService {
             }
         }
         
-        dto.setValeurPerdue(BigDecimal.ZERO); // TODO: calculer
+        // Calculer une estimation de la valeur perdue
+        BigDecimal prixMoyen = new BigDecimal("1000"); // Prix moyen estimé par unité
+        dto.setValeurPerdue(prixMoyen.multiply(dto.getQuantiteGaspillee()));
         return dto;
     }
 }

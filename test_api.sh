@@ -98,6 +98,44 @@ test_get_endpoint "/api/commandes" "Liste des commandes"
 test_get_endpoint "/api/commandes/1" "Commande par ID"
 test_get_endpoint "/api/commandes/livreurs" "Liste des livreurs pour commandes"
 
+# ===== TESTS DASHBOARD (CORRIGÉ) =====
+echo -e "${YELLOW}=== DASHBOARD (CORRIGÉ) ===${NC}"
+test_get_endpoint "/api/dashboard" "Dashboard principal (utilise maintenant des données réelles)"
+test_get_endpoint "/api/dashboard/filtre?dateDebut=$(date -v-30d +%Y-%m-%d)&dateFin=$(date +%Y-%m-%d)" "Dashboard filtré sur période"
+test_get_endpoint "/api/dashboard/stats-globales" "Statistiques globales (KPIs corrigés)"
+test_get_endpoint "/api/dashboard/productions-recent?jours=7" "Productions récentes (données réelles)"
+
+# ===== TESTS STATISTIQUES PRODUCTION (CORRIGÉ) =====
+echo -e "${YELLOW}=== STATISTIQUES PRODUCTION (CORRIGÉ) ===${NC}"
+test_get_endpoint "/api/statistiques/production/periode?dateDebut=$(date -v-30d +%Y-%m-%d)&dateFin=$(date +%Y-%m-%d)" "Statistiques sur période"
+test_get_endpoint "/api/statistiques/production/pourcentage-journalier" "Pourcentage production journalière"
+test_get_endpoint "/api/statistiques/production/qualite-journalier" "Taux qualité journalier"
+test_get_endpoint "/api/statistiques/production/perte-journalier" "Taux perte journalier"
+test_get_endpoint "/api/statistiques/production/commandes-semaine" "Moyenne commandes par semaine"
+test_get_endpoint "/api/statistiques/production/capacite-journaliere" "Capacité journalière"
+
+# ===== TESTS STOCK (CORRIGÉ) =====
+echo -e "${YELLOW}=== STOCK (CORRIGÉ) ===${NC}"
+test_get_endpoint "/api/stock/mouvement?dateDebut=$(date -v-7d +%Y-%m-%d)T00:00:00&dateFin=$(date +%Y-%m-%d)T23:59:59" "Mouvements stock"
+test_get_endpoint "/api/stock/produit-fini/stat?dateDebut=$(date -v-30d +%Y-%m-%d)&dateFin=$(date +%Y-%m-%d)&nbClients=10&qttDemandee=5" "Statistiques stock produit fini"
+test_get_endpoint "/api/stock/simulation?dateDebut=$(date -v-30d +%Y-%m-%d)&dateFin=$(date +%Y-%m-%d)" "Simulations production"
+
+# ===== TESTS LIVRAISONS (CORRIGÉ) =====
+echo -e "${YELLOW}=== LIVRAISONS (CORRIGÉ) ===${NC}"
+test_get_endpoint "/api/livraisons" "Toutes les livraisons"
+test_get_endpoint "/api/livraisons/planifiees" "Livraisons planifiées"
+test_get_endpoint "/api/livraisons/en-cours" "Livraisons en cours"
+
+# ===== TESTS COMPTABILITÉ (CORRIGÉ) =====
+echo -e "${YELLOW}=== COMPTABILITÉ (CORRIGÉ) ===${NC}"
+test_get_endpoint "/api/bilans" "Bilans financiers (données réelles)"
+test_get_endpoint "/api/bilans/total-profit?dateDebut=$(date -v-30d +%Y-%m-%d)&dateFin=$(date +%Y-%m-%d)" "Profit total sur période"
+test_get_endpoint "/api/depenses/date-range?dateDebut=$(date -v-30d +%Y-%m-%d)&dateFin=$(date +%Y-%m-%d)" "Dépenses sur période"
+test_get_endpoint "/api/depenses/total?dateDebut=$(date -v-30d +%Y-%m-%d)&dateFin=$(date +%Y-%m-%d)" "Total dépenses"
+test_get_endpoint "/api/depenses/categorie?categorie=Matières%20premières" "Dépenses par catégorie"
+test_get_endpoint "/api/revenus/date-range?dateDebut=$(date -v-30d +%Y-%m-%d)&dateFin=$(date +%Y-%m-%d)" "Revenus sur période"
+test_get_endpoint "/api/revenus/total?dateDebut=$(date -v-30d +%Y-%m-%d)&dateFin=$(date +%Y-%m-%d)" "Total revenus"
+
 # ===== TESTS LIVRAISONS =====
 echo -e "${YELLOW}=== LIVRAISONS ===${NC}"
 test_get_endpoint "/api/livraisons" "Liste des livraisons"

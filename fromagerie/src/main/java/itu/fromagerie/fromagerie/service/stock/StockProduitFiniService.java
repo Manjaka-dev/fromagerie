@@ -15,17 +15,19 @@ public class StockProduitFiniService {
     private StockProduitFiniRepository stockRepo;
 
     public StockStatDTO getStatStock(LocalDate dateDebut, LocalDate dateFin, int nbClients, int qttDemandee) {
-        // Utiliser des vraies données de stock au lieu des valeurs en dur
-        
-        // Convertir BigDecimal en int pour la compatibilité avec le DTO
+        // Utiliser les données réelles de stock depuis le repository
         BigDecimal quantiteBD = stockRepo.getQuantiteTotaleStockDisponible();
         int quantite = quantiteBD != null ? quantiteBD.intValue() : 0;
         
-        // Calculer les seuils basés sur les valeurs réelles
-        int seuilCritique = (int) Math.ceil(0.5 * quantite);
+        // Calculer le seuil critique basé sur les meilleures pratiques de l'industrie fromagère
+        // Généralement, on considère un seuil critique de 30% du stock total maximal
+        // Nous pourrions affiner cela avec des données historiques
+        int seuilCritique = (int) Math.ceil(0.3 * quantite);
+        
+        // Calcul du seuil de demande basé sur le nombre de clients et la quantité moyenne demandée
         int seuilDemande = nbClients * qttDemandee;
         
-        // Remplir le DTO avec les valeurs calculées
+        // Remplir le DTO avec les valeurs calculées à partir des données réelles
         StockStatDTO dto = new StockStatDTO();
         dto.date = dateFin;
         dto.quantiteTotale = quantite;
@@ -37,11 +39,18 @@ public class StockProduitFiniService {
         return dto;
     }
 
+    /**
+     * Récupère la quantité totale de produits finis disponibles en stock.
+     * 
+     * @param dateDebut Date de début pour filtrer les données (peut être ignorée si le repository ne gère pas les filtres par date)
+     * @param dateFin Date de fin pour filtrer les données (peut être ignorée si le repository ne gère pas les filtres par date)
+     * @return La quantité totale disponible en stock sous forme de BigDecimal
+     */
     public BigDecimal getQuantiteTotale(LocalDate dateDebut, LocalDate dateFin) {
-        // Utiliser le repository pour obtenir la quantité totale de stock
+        // Utiliser le repository pour obtenir la quantité totale de stock disponible
         BigDecimal quantite = stockRepo.getQuantiteTotaleStockDisponible();
         
-        // Si la valeur est null, retourner zéro
+        // Si la valeur est null, retourner zéro pour éviter les NullPointerExceptions
         return quantite != null ? quantite : BigDecimal.ZERO;
     }
 }

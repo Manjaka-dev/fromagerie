@@ -12,6 +12,7 @@ import java.util.List;
 @Repository
 public interface DepenseRepository extends JpaRepository<Depense, Long> {
     List<Depense> findByCategorie(String categorie);
+    List<Depense> findByCategorieContainingIgnoreCase(String categorie);
     List<Depense> findByDateDepenseBetween(LocalDate dateDebut, LocalDate dateFin);
     List<Depense> findByLibelleContainingIgnoreCase(String libelle);
     
@@ -20,4 +21,7 @@ public interface DepenseRepository extends JpaRepository<Depense, Long> {
     
     @Query("SELECT SUM(d.montant) FROM Depense d WHERE d.categorie = :categorie")
     BigDecimal getTotalDepensesByCategorie(String categorie);
+    
+    @Query("SELECT SUM(d.montant) FROM Depense d WHERE LOWER(d.categorie) LIKE LOWER(CONCAT('%', :categorie, '%'))")
+    BigDecimal getTotalDepensesByCategorieContaining(String categorie);
 }
