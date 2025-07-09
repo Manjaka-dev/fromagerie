@@ -18,4 +18,6 @@ public interface StockMatiereRepository extends JpaRepository<StockMatiere, Long
     
     @Query("SELECT s FROM StockMatiere s WHERE s.quantite > 0")
     List<StockMatiere> findStocksDisponibles();
+    
+    void deleteByMatiereId(Long matiereId);
 }
