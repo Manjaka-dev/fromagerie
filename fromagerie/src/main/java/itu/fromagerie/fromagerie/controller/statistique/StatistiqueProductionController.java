@@ -92,7 +92,7 @@ public class StatistiqueProductionController {
     /**
      * Calcule le pourcentage de production journalière
      */
-    @GetMapping("/journaliere/pourcentage")
+    @GetMapping({"/journaliere/pourcentage", "/pourcentage-journalier"})
     @Operation(
         summary = "Calcul du pourcentage de production journalière",
         description = "Calcule le pourcentage de production par rapport à la capacité journalière pour une date donnée",
@@ -122,7 +122,7 @@ public class StatistiqueProductionController {
     /**
      * Calcule le taux de qualité journalier
      */
-    @GetMapping("/journaliere/qualite")
+    @GetMapping({"/journaliere/qualite", "/qualite-journalier"})
     @Operation(
         summary = "Calcul du taux de qualité journalier",
         description = "Calcule le taux de qualité des produits fabriqués pour une journée spécifique",
@@ -149,7 +149,7 @@ public class StatistiqueProductionController {
     /**
      * Calcule le taux de perte journalier
      */
-    @GetMapping("/journaliere/perte")
+    @GetMapping({"/journaliere/perte", "/perte-journalier"})
     @Operation(
         summary = "Calcul du taux de perte journalier",
         description = "Calcule le pourcentage de pertes (déchets, produits défectueux) par rapport à la production journalière",
@@ -205,7 +205,7 @@ public class StatistiqueProductionController {
     /**
      * Calcule la moyenne des commandes par semaine
      */
-    @GetMapping("/capacite/moyenne-semaine")
+    @GetMapping({"/capacite/moyenne-semaine", "/commandes-semaine"})
     @Operation(
         summary = "Moyenne des commandes par semaine",
         description = "Calcule le nombre moyen de commandes reçues par semaine sur une période donnée",
@@ -238,7 +238,7 @@ public class StatistiqueProductionController {
     /**
      * Calcule la capacité journalière basée sur les commandes
      */
-    @GetMapping("/capacite/journaliere")
+    @GetMapping({"/capacite/journaliere", "/capacite-journaliere"})
     @Operation(
         summary = "Capacité journalière de production",
         description = "Calcule la capacité journalière optimale de production basée sur l'historique des commandes",

@@ -9,7 +9,14 @@ import lombok.AllArgsConstructor;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "statistique_production")
+@Table(
+    name = "statistique_production",
+    indexes = {
+        @Index(name = "idx_statprod_produit", columnList = "produit_id"),
+        @Index(name = "idx_statprod_periode", columnList = "periode"),
+        @Index(name = "idx_statprod_prod_periode", columnList = "produit_id,periode")
+    }
+)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
