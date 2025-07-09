@@ -206,17 +206,38 @@ public class ProduitController {
     }
     
     @PostMapping("/{id}/ajuster-stock")
-    public ResponseEntity<Map<String, Object>> ajusterStock(@PathVariable Long id, @RequestBody Map<String, Object> ajustement) {
+    @io.swagger.v3.oas.annotations.Operation(
+        summary = "Ajuster le stock d'un produit",
+        description = "Modifie la quantité en stock d'un produit et enregistre l'opération",
+        tags = {"Produits", "Stock"}
+    )
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200", 
+            description = "Stock ajusté avec succès"
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "400", 
+            description = "Erreur lors de l'ajustement du stock"
+        )
+    })
+    public ResponseEntity<Map<String, Object>> ajusterStock(
+            @io.swagger.v3.oas.annotations.Parameter(description = "ID du produit") 
+            @PathVariable Long id, 
+            @io.swagger.v3.oas.annotations.Parameter(description = "Informations d'ajustement (quantite, raison)") 
+            @RequestBody Map<String, Object> ajustement) {
         try {
-            // Note: Cette méthode nécessiterait une implémentation dans le service
-            // Pour l'instant, on retourne un message générique
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "Ajustement de stock non encore implémenté");
-            response.put("produitId", id);
-            response.put("ajustement", ajustement);
-            return ResponseEntity.ok(response);
+            // Utiliser le service pour effectuer l'ajustement
+            Map<String, Object> result = produitService.ajusterStock(id, ajustement);
+            
+            if ((Boolean) result.get("success")) {
+                return ResponseEntity.ok(result);
+            } else {
+                return ResponseEntity.badRequest().body(result);
+            }
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
             response.put("error", "Erreur lors de l'ajustement du stock: " + e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }

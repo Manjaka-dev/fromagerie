@@ -29,6 +29,9 @@ public class StatistiqueProductionController {
 
     @Autowired
     private StatistiqueProductionService statistiqueProductionService;
+    
+    @Autowired
+    private itu.fromagerie.fromagerie.service.produit.ProduitService produitService;
 
     // === Endpoints de base ===
 
@@ -36,11 +39,34 @@ public class StatistiqueProductionController {
      * Récupère toutes les statistiques de production pour un produit
      */
     @GetMapping("/produit/{produitId}")
-    public ResponseEntity<List<StatistiqueProduction>> getStatistiquesByProduit(@PathVariable Long produitId) {
-        // TODO: Récupérer le produit par ID depuis le service produit
-        // Produit produit = produitService.getProduitById(produitId);
-        // List<StatistiqueProduction> stats = statistiqueProductionService.getStatistiquesByProduit(produit);
-        return ResponseEntity.ok().build();
+    @Operation(
+        summary = "Statistiques par produit",
+        description = "Récupère toutes les statistiques de production pour un produit spécifique"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Statistiques trouvées"),
+        @ApiResponse(responseCode = "404", description = "Produit non trouvé"),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur")
+    })
+    public ResponseEntity<?> getStatistiquesByProduit(@PathVariable Long produitId) {
+        try {
+            // Récupérer le produit par ID depuis le service produit
+            Produit produit = produitService.getProduitById(produitId);
+            
+            if (produit == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("message", "Produit non trouvé avec l'ID: " + produitId);
+                return ResponseEntity.status(404).body(response);
+            }
+            
+            List<StatistiqueProduction> stats = statistiqueProductionService.getStatistiquesByProduit(produit);
+            
+            return ResponseEntity.ok(stats);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("erreur", "Erreur lors de la récupération des statistiques: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
     }
 
     /**
@@ -59,15 +85,40 @@ public class StatistiqueProductionController {
      * Calcule la quantité totale produite pour un produit
      */
     @GetMapping("/produit/{produitId}/total")
-    public ResponseEntity<Map<String, Object>> getTotalQuantiteProduiteByProduit(@PathVariable Long produitId) {
-        // TODO: Récupérer le produit par ID depuis le service produit
-        // Produit produit = produitService.getProduitById(produitId);
-        // Integer total = statistiqueProductionService.getTotalQuantiteProduiteByProduit(produit);
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("produitId", produitId);
-        response.put("totalProduit", 0); // À remplacer par la vraie valeur
-        return ResponseEntity.ok(response);
+    @Operation(
+        summary = "Total produit par produit",
+        description = "Calcule la quantité totale produite pour un produit spécifique"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Total calculé avec succès"),
+        @ApiResponse(responseCode = "404", description = "Produit non trouvé"),
+        @ApiResponse(responseCode = "500", description = "Erreur interne du serveur")
+    })
+    public ResponseEntity<?> getTotalQuantiteProduiteByProduit(@PathVariable Long produitId) {
+        try {
+            // Récupérer le produit par ID depuis le service produit
+            Produit produit = produitService.getProduitById(produitId);
+            
+            if (produit == null) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("message", "Produit non trouvé avec l'ID: " + produitId);
+                return ResponseEntity.status(404).body(errorResponse);
+            }
+            
+            Integer total = statistiqueProductionService.getTotalQuantiteProduiteByProduit(produit);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("produitId", produitId);
+            response.put("nomProduit", produit.getNom());
+            response.put("totalProduit", total != null ? total : 0);
+            response.put("unite", "unités");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("erreur", "Erreur lors du calcul du total: " + e.getMessage());
+            return ResponseEntity.status(500).body(errorResponse);
+        }
     }
 
     /**

@@ -27,4 +27,7 @@ public class PerteProduction {
     
     @Column(columnDefinition = "TEXT")
     private String raison;
+    
+    @Column(name = "type_perte", length = 50)
+    private String typePerte;
 }

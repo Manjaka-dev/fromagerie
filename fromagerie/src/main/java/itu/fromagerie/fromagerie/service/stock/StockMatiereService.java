@@ -14,7 +14,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -210,17 +212,12 @@ public class StockMatiereService {
      * Obtenir les alertes actives
      */
     public List<AlertePeremptionDTO> getAlertesActives() {
-        // TODO: Implémenter findActiveAlertes dans AlertePeremptionRepository
-        // Pour l'instant, retourner une liste vide
-        return new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        List<AlertePeremption> alertes = alertePeremptionRepository.findActiveAlertes(today);
         
-        // Code original commenté :
-        // LocalDate today = LocalDate.now();
-        // List<AlertePeremption> alertes = alertePeremptionRepository.findActiveAlertes(today);
-        // 
-        // return alertes.stream()
-        //         .map(this::convertToAlertePeremptionDTO)
-        //         .collect(Collectors.toList());
+        return alertes.stream()
+                .map(this::convertToAlertePeremptionDTO)
+                .collect(Collectors.toList());
     }
 
     // ==================== RESUME STOCK ====================
@@ -259,10 +256,82 @@ public class StockMatiereService {
         estimation.setNomProduit(produit.getNom());
         estimation.setQuantiteSouhaitee(quantiteSouhaitee);
         
-        // TODO: Implémenter la logique de calcul basée sur les recettes
-        // Pour l'instant, simulation simple
-        estimation.setProductionPossible(true);
-        estimation.setMatieresManquantes(List.of());
+        // Vérifier les stocks des matières premières principales 
+        // Récupérer toutes les matières premières disponibles
+        List<StockMatiere> stocksDisponibles = stockMatiereRepository.findAll();
+        List<MatierePremiere> matieres = matierePremiereRepository.findAll();
+        
+        // Pour un fromage, on estime qu'il faut en moyenne:
+        // - 8 litres de lait par kg de fromage
+        // - 0.02 kg de ferment lactique par kg de fromage
+        // - 0.001 kg de présure par kg de fromage
+        // - 0.2 kg de sel par kg de fromage
+        
+        BigDecimal poidsProduit = produit.getPoids() != null ? produit.getPoids() : new BigDecimal("1.0");
+        BigDecimal quantiteTotale = poidsProduit.multiply(new BigDecimal(quantiteSouhaitee));
+        
+        // Quantités nécessaires
+        Map<String, BigDecimal> quantitesNecessaires = new HashMap<>();
+        quantitesNecessaires.put("LAIT", new BigDecimal("8.0").multiply(quantiteTotale));
+        quantitesNecessaires.put("FERMENT", new BigDecimal("0.02").multiply(quantiteTotale));
+        quantitesNecessaires.put("PRÉSURE", new BigDecimal("0.001").multiply(quantiteTotale));
+        quantitesNecessaires.put("SEL", new BigDecimal("0.2").multiply(quantiteTotale));
+        
+        // Vérifier la disponibilité
+        List<EstimationProductionDTO.MatiereMangante> matieresManquantes = new ArrayList<>();
+        boolean estPossible = true;
+        
+        for (Map.Entry<String, BigDecimal> entry : quantitesNecessaires.entrySet()) {
+            String nomMatiere = entry.getKey();
+            BigDecimal quantiteNecessaire = entry.getValue();
+            
+            // Chercher la matière première correspondante
+            Optional<MatierePremiere> matiereOpt = matieres.stream()
+                .filter(m -> m.getNom().toUpperCase().contains(nomMatiere))
+                .findFirst();
+                
+            if (matiereOpt.isPresent()) {
+                MatierePremiere matiere = matiereOpt.get();
+                
+                // Chercher son stock
+                Optional<StockMatiere> stockOpt = stocksDisponibles.stream()
+                    .filter(s -> s.getMatiere().getId().equals(matiere.getId()))
+                    .findFirst();
+                    
+                BigDecimal stockDisponible = stockOpt.isPresent() ? 
+                    stockOpt.get().getQuantite() : BigDecimal.ZERO;
+                    
+                if (stockDisponible.compareTo(quantiteNecessaire) < 0) {
+                    // Stock insuffisant
+                    EstimationProductionDTO.MatiereMangante manquante = new EstimationProductionDTO.MatiereMangante();
+                    manquante.setMatiereId(matiere.getId());
+                    manquante.setNomMatiere(matiere.getNom());
+                    manquante.setQuantiteNecessaire(quantiteNecessaire);
+                    manquante.setQuantiteDisponible(stockDisponible);
+                    manquante.setQuantiteManquante(quantiteNecessaire.subtract(stockDisponible));
+                    
+                    matieresManquantes.add(manquante);
+                    estPossible = false;
+                }
+            } else {
+                // Matière non trouvée
+                EstimationProductionDTO.MatiereMangante manquante = new EstimationProductionDTO.MatiereMangante();
+                manquante.setMatiereId(null);
+                manquante.setNomMatiere(nomMatiere);
+                manquante.setQuantiteNecessaire(quantiteNecessaire);
+                manquante.setQuantiteDisponible(BigDecimal.ZERO);
+                manquante.setQuantiteManquante(quantiteNecessaire);
+                
+                matieresManquantes.add(manquante);
+                estPossible = false;
+            }
+        }
+        
+        estimation.setProductionPossible(estPossible);
+        estimation.setMatieresManquantes(matieresManquantes);
+        if (!estPossible) {
+            estimation.setRaisonImpossible("Stock insuffisant pour certaines matières premières");
+        }
         
         return estimation;
     }
@@ -270,11 +339,8 @@ public class StockMatiereService {
     // ==================== METHODES UTILITAIRES ====================
     
     private void updateStock(Long matiereId, String typeMouvement, BigDecimal quantite) {
-        // TODO: Implémenter findByMatiereId dans StockMatiereRepository
-        // Pour l'instant, utiliser findAll() et filtrer
-        StockMatiere stock = stockMatiereRepository.findAll().stream()
-                .filter(s -> s.getMatiere().getId().equals(matiereId))
-                .findFirst()
+        // Utiliser la méthode findByMatiereId pour récupérer le stock
+        StockMatiere stock = stockMatiereRepository.findByMatiereId(matiereId)
                 .orElseGet(() -> {
                     StockMatiere newStock = new StockMatiere();
                     MatierePremiere matiere = matierePremiereRepository.findById(matiereId).orElse(null);
@@ -304,6 +370,29 @@ public class StockMatiereService {
         stockMatiereRepository.save(stock);
     }
     
+    /**
+     * Détermine le statut d'un stock en fonction de sa quantité et d'une quantité minimale
+     * 
+     * @param quantite Quantité actuelle en stock
+     * @param seuilMinimum Quantité minimum requise (seuil critique)
+     * @return Statut du stock (VIDE, CRITIQUE, FAIBLE, NORMAL)
+     */
+    private String determinerStatutStock(BigDecimal quantite, BigDecimal seuilMinimum) {
+        if (quantite.compareTo(BigDecimal.ZERO) == 0) {
+            return "VIDE";
+        } else if (quantite.compareTo(seuilMinimum) < 0) {
+            return "CRITIQUE";
+        } else if (quantite.compareTo(seuilMinimum.multiply(new BigDecimal("2"))) < 0) {
+            return "FAIBLE";
+        } else {
+            return "NORMAL";
+        }
+    }
+    
+    /**
+     * Détermine le statut d'un stock en fonction de sa quantité avec seuils fixes
+     * @deprecated Utiliser determinerStatutStock(BigDecimal, BigDecimal) à la place
+     */
     private String determinerStatutStock(BigDecimal quantite) {
         if (quantite.compareTo(BigDecimal.ZERO) == 0) {
             return "VIDE";
@@ -378,10 +467,55 @@ public class StockMatiereService {
         dto.setNomMatiere(stock.getMatiere().getNom());
         dto.setUnite(stock.getMatiere().getUnite());
         dto.setQuantiteActuelle(stock.getQuantite());
-        dto.setQuantiteMinimum(BigDecimal.valueOf(10)); // TODO: configurable
-        dto.setStatutStock(determinerStatutStock(stock.getQuantite()));
-        dto.setJoursRestantsStock(30); // TODO: calculer basé sur consommation
-        dto.setValeurStock(BigDecimal.ZERO); // TODO: calculer basé sur prix
+        
+        // Déterminer la quantité minimum basée sur le type de matière
+        // On utilise des seuils différents selon le type de matière
+        String nomMatiere = stock.getMatiere().getNom().toUpperCase();
+        BigDecimal quantiteMinimum;
+        
+        if (nomMatiere.contains("LAIT")) {
+            // Pour le lait, maintenir un stock minimum plus élevé
+            quantiteMinimum = BigDecimal.valueOf(100);
+        } else if (nomMatiere.contains("SEL")) {
+            quantiteMinimum = BigDecimal.valueOf(20);
+        } else if (nomMatiere.contains("FERMENT") || nomMatiere.contains("PRÉSURE")) {
+            // Pour les ferments et présures, petites quantités mais essentiels
+            quantiteMinimum = BigDecimal.valueOf(5);
+        } else {
+            // Par défaut
+            quantiteMinimum = BigDecimal.valueOf(10);
+        }
+        
+        dto.setQuantiteMinimum(quantiteMinimum);
+        dto.setStatutStock(determinerStatutStock(stock.getQuantite(), quantiteMinimum));
+        
+        // Calculer les jours restants basés sur la consommation historique
+        // Pour l'instant, utiliser une estimation basée sur le ratio stock/minimum
+        int joursEstimes = 0;
+        if (stock.getQuantite().compareTo(BigDecimal.ZERO) > 0) {
+            // Formule: (quantité / minimum) * 30 jours (stock minimum = 1 mois)
+            joursEstimes = (int) Math.round(stock.getQuantite().divide(
+                quantiteMinimum, 2, java.math.RoundingMode.HALF_UP).doubleValue() * 30);
+            // Max 90 jours
+            joursEstimes = Math.min(joursEstimes, 90);
+        }
+        dto.setJoursRestantsStock(joursEstimes);
+        
+        // Estimer la valeur du stock basée sur des prix moyens du marché
+        BigDecimal prixUnitaire;
+        if (nomMatiere.contains("LAIT")) {
+            prixUnitaire = new BigDecimal("500"); // 500 Ar par litre
+        } else if (nomMatiere.contains("SEL")) {
+            prixUnitaire = new BigDecimal("1500"); // 1500 Ar par kg
+        } else if (nomMatiere.contains("FERMENT")) {
+            prixUnitaire = new BigDecimal("15000"); // 15000 Ar par kg
+        } else if (nomMatiere.contains("PRÉSURE")) {
+            prixUnitaire = new BigDecimal("20000"); // 20000 Ar par kg
+        } else {
+            prixUnitaire = new BigDecimal("5000"); // Prix par défaut
+        }
+        
+        dto.setValeurStock(stock.getQuantite().multiply(prixUnitaire));
         return dto;
     }
     
