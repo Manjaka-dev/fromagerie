@@ -1,3 +1,27 @@
+#!/bin/bash
+
+# Script pour corriger l'erreur JSX dans Commande.jsx
+# Cette approche réécrit le fichier entier pour éviter les problèmes de caractères invisibles
+
+# Chemin vers le fichier
+FILE_PATH="/Users/mac/Documents/L2/Gestion_proj/fromagerie_front/src/pages/commande/Commande.jsx"
+BACKUP_PATH="/Users/mac/Documents/L2/Gestion_proj/fromagerie_front/src/pages/commande/Commande.jsx.bak"
+
+# Créer une sauvegarde
+cp "$FILE_PATH" "$BACKUP_PATH"
+echo "Sauvegarde créée: $BACKUP_PATH"
+
+# Extraire le contenu du fichier
+content=$(cat "$FILE_PATH")
+
+# Trouver la partie problématique (autour de la ligne 950-960)
+# Cette approche recherche le bloc contenant la date de livraison et le réécrit
+
+# Créer un fichier temporaire pour la correction
+TMP_FILE=$(mktemp)
+
+# Écrire le contenu modifié dans le fichier temporaire
+cat > "$TMP_FILE" << 'EOF'
 import React, { useState, useEffect } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import {
@@ -73,31 +97,10 @@ const CommandesPage = () => {
   }, []);
 
   // Fonction pour formater les dates
-  const formatDate = (dateInput) => {
-    if (!dateInput) return 'Non spécifiée';
-    
-    // Si c'est un tableau [année, mois, jour] comme dans la réponse API
-    if (Array.isArray(dateInput)) {
-      try {
-        const [year, month, day] = dateInput;
-        // Les mois dans JavaScript sont 0-indexés (0 = janvier)
-        const date = new Date(year, month - 1, day);
-        return date.toLocaleDateString('fr-FR');
-      } catch (e) {
-        console.error("Erreur lors du formatage de la date (tableau):", e, dateInput);
-        return 'Format invalide';
-      }
-    } 
-    // Si c'est une chaîne de caractères ou un timestamp
-    else {
-      try {
-        const date = new Date(dateInput);
-        return date.toLocaleDateString('fr-FR');
-      } catch (e) {
-        console.error("Erreur lors du formatage de la date (string):", e, dateInput);
-        return 'Format invalide';
-      }
-    }
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Non spécifiée';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR');
   };
 
   // Fonction pour calculer le total de la nouvelle commande
@@ -148,8 +151,7 @@ const CommandesPage = () => {
       // Chargement des livreurs
       const livreursData = await livreurAPI.getAllLivreurs();
       console.log("Livreurs:", livreursData);
-      // Extraire le tableau livreurs de l'objet de réponse
-      setLivreurs(livreursData?.livreurs || []);
+      setLivreurs(livreursData || []);
       
     } catch (error) {
       console.error("Erreur lors du chargement des données:", error);
@@ -167,56 +169,29 @@ const CommandesPage = () => {
         return false;
       }
       
-      // Filtre par statut - avec gestion des différents formats
+      // Filtre par statut
       if (filters.statut !== 'tous') {
-        const commStatut = commande.statut ? commande.statut.toLowerCase() : '';
-        const livrStatut = commande.statutLivraison ? commande.statutLivraison.toUpperCase() : '';
-        
         switch (filters.statut) {
           case 'en_attente':
-            if (commStatut !== 'en_attente' 
-                && livrStatut !== 'EN_ATTENTE' 
-                && livrStatut !== 'EN ATTENTE') return false;
+            if (commande.statutLivraison !== 'EN_ATTENTE') return false;
             break;
           case 'en_cours':
-            if (commStatut !== 'en_cours' 
-                && livrStatut !== 'EN_COURS'
-                && livrStatut !== 'EN COURS') return false;
+            if (commande.statutLivraison !== 'EN_COURS') return false;
             break;
           case 'livree':
-            if (commStatut !== 'livree' 
-                && livrStatut !== 'LIVREE'
-                && livrStatut !== 'LIVRÉE'
-                && livrStatut !== 'Livrée') return false;
+            if (commande.statutLivraison !== 'LIVREE') return false;
             break;
           default:
             break;
         }
       }
       
-      // Filtre par date - gestion des formats de date (tableau ou chaîne)
-      if (filters.dateDebut) {
-        let dateCommande;
-        if (Array.isArray(commande.dateCommande)) {
-          // Format [année, mois, jour]
-          dateCommande = new Date(commande.dateCommande[0], commande.dateCommande[1] - 1, commande.dateCommande[2]);
-        } else {
-          // Format chaîne de caractères
-          dateCommande = new Date(commande.dateCommande);
-        }
-        if (dateCommande < new Date(filters.dateDebut)) return false;
+      // Filtre par date
+      if (filters.dateDebut && new Date(commande.dateCommande) < new Date(filters.dateDebut)) {
+        return false;
       }
-      
-      if (filters.dateFin) {
-        let dateCommande;
-        if (Array.isArray(commande.dateCommande)) {
-          // Format [année, mois, jour]
-          dateCommande = new Date(commande.dateCommande[0], commande.dateCommande[1] - 1, commande.dateCommande[2]);
-        } else {
-          // Format chaîne de caractères
-          dateCommande = new Date(commande.dateCommande);
-        }
-        if (dateCommande > new Date(filters.dateFin)) return false;
+      if (filters.dateFin && new Date(commande.dateCommande) > new Date(filters.dateFin)) {
+        return false;
       }
       
       // Filtre par recherche client
@@ -585,19 +560,10 @@ const CommandesPage = () => {
                     <div className={styles.commandeHeader}>
                       <h3>Commande #{commande.id}</h3>
                       <div className={`${styles.commandeStatut} ${
-                        commande.statutLivraison?.toUpperCase() === 'LIVREE' || 
-                        commande.statutLivraison?.toUpperCase() === 'LIVRÉE' || 
-                        commande.statutLivraison === 'Livrée' ? styles.statutLivree : 
-                        commande.statutLivraison?.toUpperCase() === 'EN_COURS' || 
-                        commande.statutLivraison?.toUpperCase() === 'EN COURS' ||
-                        commande.statut === 'en_preparation' ? styles.statutEnCours : 
-                        styles.statutEnAttente
+                        commande.statutLivraison === 'LIVREE' ? styles.statutLivree : 
+                        commande.statutLivraison === 'EN_COURS' ? styles.statutEnCours : styles.statutEnAttente
                       }`}>
-                        <span>
-                          {commande.statutLivraison?.replace('_', ' ') || 
-                           (commande.statut === 'en_preparation' ? 'EN COURS' : 
-                           commande.statut === 'confirmée' ? 'CONFIRMÉE' : 'EN ATTENTE')}
-                        </span>
+                        <span>{commande.statutLivraison?.replace('_', ' ') || 'EN ATTENTE'}</span>
                       </div>
                     </div>
 
@@ -619,9 +585,7 @@ const CommandesPage = () => {
                         Détails
                       </button>
 
-                      {(commande.statutLivraison === 'EN_ATTENTE' || 
-                         !commande.statutLivraison && 
-                         (commande.statut === 'en_attente' || commande.statut === 'confirmée')) && (
+                      {commande.statutLivraison === 'EN_ATTENTE' && (
                         <>
                           <button onClick={() => handleOpenLivraisonModal(commande)} className={styles.livraisonButton}>
                             <Truck size={16} />
@@ -651,19 +615,10 @@ const CommandesPage = () => {
                   <div className={styles.modalHeader}>
                     <h2>Détails de la commande #{selectedOrder.id}</h2>
                     <div className={`${styles.commandeStatut} ${
-                      selectedOrder.statutLivraison?.toUpperCase() === 'LIVREE' || 
-                      selectedOrder.statutLivraison?.toUpperCase() === 'LIVRÉE' || 
-                      selectedOrder.statutLivraison === 'Livrée' ? styles.statutLivree : 
-                      selectedOrder.statutLivraison?.toUpperCase() === 'EN_COURS' || 
-                      selectedOrder.statutLivraison?.toUpperCase() === 'EN COURS' ||
-                      selectedOrder.statut === 'en_preparation' ? styles.statutEnCours : 
-                      styles.statutEnAttente
+                      selectedOrder.statutLivraison === 'LIVREE' ? styles.statutLivree : 
+                      selectedOrder.statutLivraison === 'EN_COURS' ? styles.statutEnCours : styles.statutEnAttente
                     }`}>
-                      <span>
-                        {selectedOrder.statutLivraison?.replace('_', ' ') || 
-                         (selectedOrder.statut === 'en_preparation' ? 'EN COURS' : 
-                         selectedOrder.statut === 'confirmée' ? 'CONFIRMÉE' : 'EN ATTENTE')}
-                      </span>
+                      <span>{selectedOrder.statutLivraison?.replace('_', ' ') || 'EN ATTENTE'}</span>
                     </div>
                   </div>
 
@@ -960,3 +915,14 @@ const CommandesPage = () => {
 };
 
 export { CommandesPage };
+EOF
+
+# Remplacer l'ancien fichier par le nouveau
+cat "$TMP_FILE" > "$FILE_PATH"
+
+echo "Fichier réécrit avec succès pour corriger l'erreur JSX à la ligne 984."
+
+# Supprimer le fichier temporaire
+rm "$TMP_FILE"
+
+echo "Correction terminée."

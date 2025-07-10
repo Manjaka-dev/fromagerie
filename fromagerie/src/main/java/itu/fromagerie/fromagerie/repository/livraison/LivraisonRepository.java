@@ -87,4 +87,10 @@ public interface LivraisonRepository extends JpaRepository<Livraison, Long> {
         WHERE c.id = :id
     """)
     List<Long> listIDProduit(@Param("id") Long id);
+
+    /**
+     * Trouver toutes les livraisons par zone
+     */
+    @Query("SELECT l FROM Livraison l WHERE l.zone = :zoneLivraison")
+    List<Livraison> findByZoneLivraison(@Param("zoneLivraison") String zoneLivraison);
 }

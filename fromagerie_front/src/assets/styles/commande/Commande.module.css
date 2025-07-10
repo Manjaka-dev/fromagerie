@@ -147,6 +147,131 @@
   height: 24px;
 }
 
+/* Styles pour les commandes */
+.commandesContainer {
+  margin-top: 20px;
+  width: 100%;
+}
+
+.noCommandes {
+  text-align: center;
+  padding: 20px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.commandesList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.commandeCard {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+
+.commandeCard:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.commandeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.commandeHeader h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.commandeStatut {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.statutEnAttente {
+  background-color: #ffe9d1;
+  color: #c2410c;
+}
+
+.statutEnCours {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+.statutLivree {
+  background-color: #dcfce7;
+  color: #14532d;
+}
+
+.commandeContent {
+  margin-bottom: 16px;
+}
+
+.commandeContent p {
+  margin: 4px 0;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.commandeActions {
+  display: flex;
+  gap: 8px;
+}
+
+.commandeActions button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.detailsButton {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.detailsButton:hover {
+  background-color: #e5e7eb;
+}
+
+.livraisonButton {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.livraisonButton:hover {
+  background-color: #bfdbfe;
+}
+
+.deleteButton {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.deleteButton:hover {
+  background-color: #fecaca;
+}
+
 .statusCardOrange .statusIconHaute {
   color: #f97316;
 }

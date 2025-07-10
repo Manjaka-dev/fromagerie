@@ -38,9 +38,20 @@ public class FicheProductionController {
     }
 
     @PostMapping
-    public ResponseEntity<FicheProduction> createFicheProduction(@RequestBody FicheProduction ficheProduction) {
-        FicheProduction savedFiche = ficheProductionService.saveFicheProduction(ficheProduction);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedFiche);
+    public ResponseEntity<?> createFicheProduction(@RequestBody itu.fromagerie.fromagerie.dto.FicheProductionDTO ficheDTO) {
+        try {
+            // Logique pour transformer le DTO en entités et les sauvegarder
+            // Cela sera implémenté dans le service
+            FicheProduction savedFiche = ficheProductionService.creerFicheProductionDepuisDTO(ficheDTO);
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedFiche);
+        } catch (Exception e) {
+            // Log l'erreur et retourne un message d'erreur approprié
+            System.err.println("Erreur lors de la création de la fiche de production: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body("Erreur lors de la création de la fiche: " + e.getMessage());
+        }
     }
 
     @GetMapping("/{id}")

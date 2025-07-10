@@ -246,3 +246,29 @@ textarea.formInputText {
     grid-template-columns: 1fr;
   }
 }
+/* Styles pour les messages d'état */
+.loading-message, .error-message, .empty-message {
+  padding: 2rem;
+  text-align: center;
+  border-radius: 8px;
+  margin: 1rem 0;
+  font-weight: 500;
+}
+
+.loading-message {
+  background-color: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.error-message {
+  background-color: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.empty-message {
+  background-color: #f9fafb;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
+}

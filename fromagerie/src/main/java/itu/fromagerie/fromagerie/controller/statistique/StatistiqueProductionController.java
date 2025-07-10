@@ -23,7 +23,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/statistiques/production")
-@CrossOrigin(origins = "*")
+
 @Tag(name = "Statistiques de Production", description = "Endpoints pour analyser et suivre les statistiques de production")
 public class StatistiqueProductionController {
 

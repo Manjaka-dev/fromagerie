@@ -10,14 +10,14 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class LivraisonInfoDTO {
     
     // Informations de base
-    private Long livraisonId;
+    private Long id;
     private LocalDate dateLivraison;
-    private StatutLivraisonEnum statut;
-    private String zone;
+    private String statut;
+    private String zoneLivraison;
+    private String adresseLivraison;
     
     // Informations commande
     private Long commandeId;
@@ -26,7 +26,7 @@ public class LivraisonInfoDTO {
     // Informations client
     private Long clientId;
     private String nomClient;
-    private String telephoneClient;
+    private String telephone;
     private String adresseClient;
     
     // Informations livreur

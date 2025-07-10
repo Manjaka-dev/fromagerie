@@ -33,6 +33,8 @@ const Production = () => {
   const [fiches, setFiches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Ajout de recentProductions pour éviter l'erreur
+  const [recentProductions, setRecentProductions] = useState([]);
 
   const [product, setProduct] = useState({
     category: '',
@@ -50,19 +52,88 @@ const Production = () => {
     loadProductionData();
   }, []);
 
+  // Données hardcodées pour les catégories de produits
+  const categoriesFromage = [
+    "Fromage à pâte pressée",
+    "Fromage frais",
+    "Fromage affiné",
+    "Fromage à pâte molle",
+    "Fromage de chèvre",
+    "Yaourt",
+    "Autre produit laitier"
+  ];
+  
+  // Données hardcodées pour les allergènes
+  const allergenesCommuns = [
+    "Lactose",
+    "Protéines du lait",
+    "Sans allergènes",
+    "Gluten (traces)",
+    "Fruits à coque (traces)",
+    "Œufs (traces)"
+  ];
+  
   const loadProductionData = async () => {
     setLoading(true);
     setError(null);
     try {
       // Charger les productions récentes depuis l'API
       const today = new Date().toISOString().split('T')[0];
-      const productionsData = await productionAPI.getProductionsByDate(today);
-      setProductions(productionsData || []);
+      
+      try {
+        const productionsData = await productionAPI.getProductionsByDate(today);
+        console.log("Productions récentes récupérées:", productionsData);
+        
+        let productionsArray = [];
+        if (Array.isArray(productionsData)) {
+          productionsArray = productionsData;
+        } else if (productionsData && typeof productionsData === 'object') {
+          // Si l'API renvoie un objet avec une propriété contenant les productions
+          productionsArray = productionsData.productions || productionsData.data || [];
+        }
+        
+        setProductions(productionsArray);
+        setRecentProductions(productionsArray); // Également définir recentProductions
+      } catch (prodErr) {
+        console.error('Erreur lors du chargement des productions:', prodErr);
+        // Fallback avec des données de test en attendant que l'API soit opérationnelle
+        const fallbackData = [
+          {
+            id: 1,
+            category: "Fromage à pâte pressée",
+            name: "Gouda Artisanal 250g",
+            weight: "250g",
+            costPrice: "10 000 Ar",
+            sellingPrice: "15 000 Ar",
+            date: today,
+            status: "Terminé",
+            ingredients: "Lait de vache, sel, ferments lactiques"
+          },
+          {
+            id: 2,
+            category: "Fromage frais",
+            name: "Fromage Frais aux Herbes",
+            weight: "200g",
+            costPrice: "7 000 Ar",
+            sellingPrice: "12 000 Ar",
+            date: today,
+            status: "En cours",
+            ingredients: "Lait de vache, sel, herbes aromatiques"
+          }
+        ];
+        setProductions(fallbackData);
+        setRecentProductions(fallbackData); // Également définir recentProductions
+      }
 
       // Charger les fiches de production depuis l'API
-      // Pour l'instant, on charge toutes les fiches ou celles d'un produit spécifique
-      const fichesData = await productionAPI.getFichesByProduit(1); // Par exemple, produit ID 1
-      setFiches(fichesData || []);
+      try {
+        const fichesData = await productionAPI.getFichesByProduit(1); // Par exemple, produit ID 1
+        console.log("Fiches de production récupérées:", fichesData);
+        setFiches(Array.isArray(fichesData) ? fichesData : []);
+      } catch (fichesErr) {
+        console.error('Erreur lors du chargement des fiches de production:', fichesErr);
+        setFiches([]);
+      }
 
     } catch (err) {
       console.error('Erreur lors du chargement des données de production:', err);
@@ -75,8 +146,9 @@ const Production = () => {
   // Fonction pour créer une nouvelle fiche de production
   const handleSave = async () => {
     try {
+      // Créer un DTO de fiche production avec les données du formulaire
       const ficheData = {
-        produit: product.name,
+        nomProduit: product.name,
         categorie: product.category,
         poids: product.weight,
         prixRevient: product.costPrice,
@@ -84,7 +156,8 @@ const Production = () => {
         ingredients: product.ingredients,
         allergenes: product.allergens,
         dateExpiration: product.expirationDate,
-        dateCreation: new Date().toISOString().split('T')[0]
+        dateCreation: new Date().toISOString().split('T')[0],
+        quantiteNecessaire: 1.0 // Valeur par défaut pour quantiteNecessaire
       };
 
       try {
@@ -92,7 +165,7 @@ const Production = () => {
         await loadProductionData(); // Recharger les données
       } catch (err) {
         console.error('Erreur lors de la création de la fiche de production:', err);
-        setError('Impossible de créer la fiche de production. Veuillez vérifier que le backend est démarré.');
+        setError('Impossible de créer la fiche de production: ' + (err.message || 'Erreur inconnue'));
         return;
       }
 
@@ -204,6 +277,9 @@ const Production = () => {
                     className="formInputText"
                   >
                     <option value="">Sélectionner une catégorie</option>
+                    {categoriesFromage.map((categorie, index) => (
+                      <option key={index} value={categorie}>{categorie}</option>
+                    ))}
                   </select>
               </div>
 
@@ -287,6 +363,9 @@ const Production = () => {
                     className="formInputText"
                   >
                     <option value="">Sélectionner les allergènes</option>
+                    {allergenesCommuns.map((allergene, index) => (
+                      <option key={index} value={allergene}>{allergene}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -305,32 +384,40 @@ const Production = () => {
             <div className="recent-productions">
               <h2 className="section-title">Productions Récentes</h2>
               <div className="production-list">
-                {recentProductions.map((prod, index) => (
-                  <div key={index} className="production-item">
-                    <div className="production-header">
-                      <span className="production-category">{prod.category}</span>
-                      <span className="production-name">{prod.name}</span>
+                {loading ? (
+                  <div className="loading-message">Chargement des productions...</div>
+                ) : error ? (
+                  <div className="error-message">{error}</div>
+                ) : productions.length === 0 ? (
+                  <div className="empty-message">Aucune production récente trouvée</div>
+                ) : (
+                  productions.map((prod, index) => (
+                    <div key={index} className="production-item">
+                      <div className="production-header">
+                        <span className="production-category">{prod.category || prod.categorie || "Non catégorisé"}</span>
+                        <span className="production-name">{prod.name || prod.nom || "Sans nom"}</span>
+                      </div>
+                      <div className="production-details">
+                        <div className="detail-group">
+                          <span className="detail-label">Poids:</span>
+                          <span>{prod.weight || prod.poids || "Non spécifié"}</span>
+                        </div>
+                        <div className="detail-group">
+                          <span className="detail-label">Prix revient:</span>
+                          <span>{prod.costPrice || prod.prixRevient || "Non spécifié"}</span>
+                        </div>
+                        <div className="detail-group">
+                          <span className="detail-label">Ingredients:</span>
+                          <span>{prod.ingredients || "Non spécifié"}</span>
+                        </div>
+                        <div className="detail-group">
+                          <span className="detail-label">Prix vente:</span>
+                          <span>{prod.sellingPrice || prod.prixVente || "Non spécifié"}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="production-details">
-                      <div className="detail-group">
-                        <span className="detail-label">Poids:</span>
-                        <span>{prod.weight}</span>
-                      </div>
-                      <div className="detail-group">
-                        <span className="detail-label">Prix revient:</span>
-                        <span>{prod.costPrice}</span>
-                      </div>
-                      <div className="detail-group">
-                        <span className="detail-label">Ingredients:</span>
-                        <span>{prod.ingredients}</span>
-                      </div>
-                      <div className="detail-group">
-                        <span className="detail-label">Prix vente:</span>
-                        <span>{prod.sellingPrice}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
 

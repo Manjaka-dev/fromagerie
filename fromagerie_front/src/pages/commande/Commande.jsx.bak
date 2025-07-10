@@ -47,13 +47,31 @@ const CommandesPage = () => {
     client: 'tous'
   });
 
-  // État pour la modale de création d'une commande
+  // Fonction pour réinitialiser les filtres
+  const clearFilters = () => {
+    setFilters({
+      dateDebut: '',
+      dateFin: '',
+      statut: 'tous',
+      client: 'tous'
+    });
+    setSearchClient('');
+  };
+
+  // États pour les modales
   const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedProduits, setSelectedProduits] = useState([]);
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showOrderModal, setShowOrderModal] = useState(false);
   const [showLivraisonModal, setShowLivraisonModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
   
+  // Nouveau format pour les commandes
+  const [newOrder, setNewOrder] = useState({
+    clientId: '',
+    date: new Date().toISOString().split('T')[0],
+    statut: 'en attente',
+    produits: [] // Liste des produits sélectionnés avec format {produitId, quantite, prixUnitaire}
+  });
+
   // État pour le formulaire de livraison
   const [livraisonForm, setLivraisonForm] = useState({
     livreurId: '',
@@ -61,252 +79,320 @@ const CommandesPage = () => {
     dateLivraison: ''
   });
 
-  // État pour la nouvelle commande
-  const [newOrder, setNewOrder] = useState({
-    clientId: '',
-    date: new Date().toISOString().split('T')[0],
-    produits: []
-  });
-  
+  // État pour la sélection de produits
+  const [selectedProduits, setSelectedProduits] = useState([]);
+
+  // Charger les données au montage du composant
   useEffect(() => {
     loadData();
   }, []);
 
-  // Fonction pour formater les dates
-  const formatDate = (dateInput) => {
-    if (!dateInput) return 'Non spécifiée';
-    
-    // Si c'est un tableau [année, mois, jour] comme dans la réponse API
-    if (Array.isArray(dateInput)) {
-      try {
-        const [year, month, day] = dateInput;
-        // Les mois dans JavaScript sont 0-indexés (0 = janvier)
-        const date = new Date(year, month - 1, day);
-        return date.toLocaleDateString('fr-FR');
-      } catch (e) {
-        console.error("Erreur lors du formatage de la date (tableau):", e, dateInput);
-        return 'Format invalide';
-      }
-    } 
-    // Si c'est une chaîne de caractères ou un timestamp
-    else {
-      try {
-        const date = new Date(dateInput);
-        return date.toLocaleDateString('fr-FR');
-      } catch (e) {
-        console.error("Erreur lors du formatage de la date (string):", e, dateInput);
-        return 'Format invalide';
-      }
-    }
-  };
-
-  // Fonction pour calculer le total de la nouvelle commande
-  const calculateOrderTotal = () => {
-    let total = 0;
-    newOrder.produits.forEach(produitData => {
-      const produit = produits.find(p => p.id === produitData.produitId);
-      if (produit) {
-        total += (produit.prixVente || 0) * produitData.quantite;
-      }
-    });
-    return total;
-  };
-
-  // Fonction pour charger les données
   const loadData = async () => {
     setLoading(true);
+    setError(null);
     try {
-      // Chargement des commandes
-      const commandesData = await commandeAPI.getAllCommandes();
+      // Charger les commandes depuis l'API
+      const commandesResponse = await commandeAPI.getAllCommandes();
       
-      // Log pour le débogage
-      console.log("Données brutes des commandes:", commandesData);
-      
-      // Gérer différents formats de réponse potentiels
-      let processedCommandes = [];
-      if (Array.isArray(commandesData)) {
-        processedCommandes = commandesData;
-      } else if (commandesData && Array.isArray(commandesData.commandes)) {
-        processedCommandes = commandesData.commandes;
-      } else if (commandesData && typeof commandesData === 'object') {
-        processedCommandes = [commandesData];
+      // Gestion plus robuste de la réponse : vérifie si la réponse est un objet avec une propriété commandes
+      // ou si c'est directement un tableau de commandes
+      if (commandesResponse && Array.isArray(commandesResponse)) {
+        setCommandes(commandesResponse);
+        console.log("Format de réponse: tableau direct", commandesResponse);
+      } else if (commandesResponse && commandesResponse.commandes) {
+        setCommandes(commandesResponse.commandes);
+        console.log("Format de réponse: objet avec propriété commandes", commandesResponse.commandes);
+      } else {
+        // Si aucun format valide n'est trouvé, initialiser avec un tableau vide
+        setCommandes([]);
+        console.warn("Format de réponse non reconnu:", commandesResponse);
       }
-      
-      console.log("Commandes traitées:", processedCommandes);
-      setCommandes(processedCommandes || []);
-      
-      // Chargement des clients
-      const clientsData = await clientAPI.getAllClients();
-      console.log("Clients:", clientsData);
-      setClients(clientsData || []);
-      
-      // Chargement des produits
-      const produitsData = await produitAPI.getAllProduits();
-      console.log("Produits:", produitsData);
-      setProduits(produitsData || []);
-      
-      // Chargement des livreurs
-      const livreursData = await livreurAPI.getAllLivreurs();
-      console.log("Livreurs:", livreursData);
-      // Extraire le tableau livreurs de l'objet de réponse
-      setLivreurs(livreursData?.livreurs || []);
-      
-    } catch (error) {
-      console.error("Erreur lors du chargement des données:", error);
-      setError(error.message);
+
+      // Charger les clients depuis l'API
+      const clientsResponse = await clientAPI.getAllClients();
+      setClients(clientsResponse || []);
+
+      // Charger les produits depuis l'API
+      const produitsResponse = await produitAPI.getAllProduits();
+      // Gestion robuste si le format est différent
+      if (produitsResponse && Array.isArray(produitsResponse)) {
+        setProduits(produitsResponse);
+      } else if (produitsResponse && produitsResponse.produits) {
+        setProduits(produitsResponse.produits);
+      } else {
+        setProduits([]);
+      }
+
+      // Charger les livreurs depuis l'API
+      const livreursResponse = await livreurAPI.getAllLivreurs();
+      setLivreurs(livreursResponse || []);
+
+    } catch (err) {
+      console.error('Erreur lors du chargement des données:', err);
+      setError('Impossible de charger les données. Veuillez vérifier que le backend est démarré.');
     } finally {
       setLoading(false);
     }
   };
 
+
   // Fonction pour filtrer les commandes
-  const getFilteredCommandes = () => {
-    return commandes.filter(commande => {
-      // Filtre par client
-      if (filters.client !== 'tous' && commande.client?.id !== parseInt(filters.client)) {
-        return false;
-      }
-      
-      // Filtre par statut - avec gestion des différents formats
-      if (filters.statut !== 'tous') {
-        const commStatut = commande.statut ? commande.statut.toLowerCase() : '';
-        const livrStatut = commande.statutLivraison ? commande.statutLivraison.toUpperCase() : '';
+  const filteredCommandes = commandes.filter(commande => {
+    const matchSearch = commande.clientNom?.toLowerCase().includes(searchClient.toLowerCase()) || false;
+    const matchDateDebut = !filters.dateDebut || commande.date >= filters.dateDebut;
+    const matchDateFin = !filters.dateFin || commande.date <= filters.dateFin;
+    const matchStatut = filters.statut === 'tous' || commande.statut === filters.statut;
+    const matchClient = filters.client === 'tous' || commande.clientId.toString() === filters.client;
+
+    return matchSearch && matchDateDebut && matchDateFin && matchStatut && matchClient;
+  });
+
+  // Fonction pour créer une nouvelle commande
+  const handleCreateCommande = async () => {
+    try {
+      const commandeData = {
+        ...newOrder,
+        produits: selectedProduits
+      };
+
+      try {
+        await commandeAPI.createCommande(commandeData);
+        await loadData(); // Recharger les données
         
-        switch (filters.statut) {
-          case 'en_attente':
-            if (commStatut !== 'en_attente' 
-                && livrStatut !== 'EN_ATTENTE' 
-                && livrStatut !== 'EN ATTENTE') return false;
-            break;
-          case 'en_cours':
-            if (commStatut !== 'en_cours' 
-                && livrStatut !== 'EN_COURS'
-                && livrStatut !== 'EN COURS') return false;
-            break;
-          case 'livree':
-            if (commStatut !== 'livree' 
-                && livrStatut !== 'LIVREE'
-                && livrStatut !== 'LIVRÉE'
-                && livrStatut !== 'Livrée') return false;
-            break;
-          default:
-            break;
-        }
+        // Réinitialiser le formulaire
+        setNewOrder({
+          clientId: '',
+          date: new Date().toISOString().split('T')[0],
+          statut: 'en attente',
+          produits: []
+        });
+        setSelectedProduits([]);
+        setShowAddModal(false);
+      } catch (err) {
+        throw err; // Propager l'erreur pour la gestion globale
       }
-      
-      // Filtre par date - gestion des formats de date (tableau ou chaîne)
-      if (filters.dateDebut) {
-        let dateCommande;
-        if (Array.isArray(commande.dateCommande)) {
-          // Format [année, mois, jour]
-          dateCommande = new Date(commande.dateCommande[0], commande.dateCommande[1] - 1, commande.dateCommande[2]);
-        } else {
-          // Format chaîne de caractères
-          dateCommande = new Date(commande.dateCommande);
-        }
-        if (dateCommande < new Date(filters.dateDebut)) return false;
-      }
-      
-      if (filters.dateFin) {
-        let dateCommande;
-        if (Array.isArray(commande.dateCommande)) {
-          // Format [année, mois, jour]
-          dateCommande = new Date(commande.dateCommande[0], commande.dateCommande[1] - 1, commande.dateCommande[2]);
-        } else {
-          // Format chaîne de caractères
-          dateCommande = new Date(commande.dateCommande);
-        }
-        if (dateCommande > new Date(filters.dateFin)) return false;
-      }
-      
-      // Filtre par recherche client
-      if (searchClient) {
-        const clientName = commande.client?.nom?.toLowerCase() || '';
-        if (!clientName.includes(searchClient.toLowerCase())) {
-          return false;
-        }
-      }
-      
-      return true;
-    });
+    } catch (err) {
+      console.error('Erreur lors de la création de la commande:', err);
+      setError('Erreur lors de la création de la commande');
+    }
   };
 
-  // Fonction pour ouvrir le modal de détails
-  const handleShowDetails = (commande) => {
-    setSelectedOrder(commande);
-    setShowDetailsModal(true);
+  const [showFilters, setShowFilters] = useState(false);
+  const [searchDate, setSearchDate] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
+
+  const statusCards = [
+    {
+      title: 'CA en cours',
+      amount: '$4,156.45',
+      icon: Clock,
+      className: 'statusCardOrange'
+    },
+    {
+      title: 'En attente',
+      amount: '$4,156.45',
+      icon: Truck,
+      className: 'statusCardRed'
+    },
+    {
+      title: 'En préparation',
+      amount: '$3,146.45',
+      icon: Package,
+      className: 'statusCardBlue'
+    },
+    {
+      title: 'Livrés ce mois',
+      amount: '$1,146.45',
+      icon: CheckCircle,
+      className: 'statusCardGreen'
+    }
+  ];
+
+
+  const orderSections = [
+    {
+      title: 'Confirmé',
+      count: 2,
+      orders: [
+        {
+          client: 'Fromagerie Martin',
+          status: 'haute',
+          amount: '200 000 Ar',
+          contact: 'Contact: M.Martin',
+          details: 'Gouda offre - 50 kg',
+          date: '2025-06-05'
+        },
+        {
+          client: 'Fromagerie Martin',
+          status: 'basse', // 'normale', 'haute', 'basse'
+          amount: '200 000 Ar',
+          contact: 'Contact: M.Martin',
+          details: 'Gouda offre - 50 kg',
+          date: '2025-06-05'
+        }
+      ]
+    },
+    {
+      title: 'Préparation',
+      count: 2,
+      orders: [
+        {
+          client: 'Fromagerie Martin',
+          status: 'normale', // 'normale', 'haute', 'basse'
+          amount: '200 000 Ar',
+          contact: 'Contact: M.Martin',
+          details: 'Gouda offre - 50 kg',
+          date: '2025-06-05'
+        },
+        {
+          client: 'Fromagerie Martin',
+          status: 'haute', // 'normale', 'haute', 'basse'
+          amount: '200 000 Ar',
+          contact: 'Contact: M.Martin',
+          details: 'Gouda offre - 50 kg',
+          date: '2025-06-05'
+        }
+      ]
+    },
+    {
+      title: 'Livré',
+      count: 2,
+      orders: [
+        {
+          client: 'Fromagerie Martin',
+          status: 'haute', // 'normale', 'haute', 'basse'
+          amount: '200 000 Ar',
+          contact: 'Contact: M.Martin',
+          details: 'Gouda offre - 50 kg',
+          date: '2025-06-05'
+        },
+        {
+          client: 'Fromagerie Martin',
+          status: 'haute', // 'normale', 'haute', 'basse'
+          amount: '200 000 Ar',
+          contact: 'Contact: M.Martin',
+          details: 'Gouda offre - 50 kg',
+          date: '2025-06-05'
+        }
+      ]
+    },
+    {
+      title: 'Devis',
+      count: 2,
+      orders: [
+        {
+          client: 'Fromagerie Martin',
+          status: 'basse', // 'normale', 'haute', 'basse'
+          amount: '200 000 Ar',
+          contact: 'Contact: M.Martin',
+          details: 'Gouda offre - 50 kg',
+          date: '2025-06-05'
+        },
+        {
+          client: 'Fromagerie Martin',
+          status: 'basse', // 'normale', 'haute', 'basse'
+          amount: '200 000 Ar',
+          contact: 'Contact: M.Martin',
+          details: 'Gouda offre - 50 kg',
+          date: '2025-06-05'
+        }
+      ]
+    }
+  ];
+
+  // Fonction pour calculer le montant total de la commande
+  const calculateOrderTotal = () => {
+    return newOrder.produits.reduce((total, produitData) => {
+      const produit = produits.find(p => p.id === produitData.produitId);
+      if (produit) {
+        // Gérer les BigDecimal du backend
+        let prixProduit = produit.prixVente;
+        if (typeof prixProduit === 'object' && prixProduit !== null) {
+          prixProduit = parseFloat(prixProduit.toString()) || 0;
+        } else {
+          prixProduit = parseFloat(prixProduit) || 0;
+        }
+        return total + (prixProduit * produitData.quantite);
+      }
+      return total;
+    }, 0);
   };
-  
-  // Fonction pour ajouter un produit à la commande
+
+  // Fonction pour ajouter les produits sélectionnés à la commande
   const addProduitToOrder = () => {
     if (selectedProduits.length === 0) {
       alert('Veuillez sélectionner au moins un produit');
       return;
     }
-    
-    const newProduits = [...newOrder.produits];
-    
-    selectedProduits.forEach(produit => {
-      // Vérifier si le produit est déjà dans la commande
-      const existingIndex = newProduits.findIndex(p => p.produitId === produit.id);
-      
-      if (existingIndex >= 0) {
-        // Mettre à jour la quantité si le produit existe déjà
-        newProduits[existingIndex].quantite += parseInt(produit.quantite) || 1;
-      } else {
-        // Ajouter le nouveau produit à la commande
-        newProduits.push({
-          produitId: parseInt(produit.id),
-          quantite: parseInt(produit.quantite) || 1
-        });
-      }
+
+    // Convertir les produits sélectionnés au format attendu par l'API
+    const produitsToAdd = selectedProduits.map(produit => {
+      // Assurer que produitId est bien transmis comme une valeur et non un objet
+      return {
+        produitId: produit.id, // Utiliser directement l'ID du produit sélectionné
+        quantite: parseInt(produit.quantite, 10) || 1, // Convertir en nombre entier
+        prixUnitaire: typeof produit.prix === 'object' ? 
+          parseFloat(produit.prix.toString()) : parseFloat(produit.prix) || 0
+      };
     });
-    
-    setNewOrder({ ...newOrder, produits: newProduits });
+
+    // Ajouter les produits à la commande et éviter les doublons
+    const existingProduitIds = newOrder.produits.map(p => p.produitId);
+    const newProduits = [
+      ...newOrder.produits,
+      ...produitsToAdd.filter(p => !existingProduitIds.includes(p.produitId))
+    ];
+
+    setNewOrder({
+      ...newOrder,
+      produits: newProduits
+    });
+
+    // Réinitialiser la sélection
     setSelectedProduits([]);
   };
-  
-  // Fonction pour retirer un produit de la commande
+
+  // Fonction pour supprimer un produit de la commande
   const removeProduitFromOrder = (index) => {
-    const newProduits = [...newOrder.produits];
-    newProduits.splice(index, 1);
-    setNewOrder({ ...newOrder, produits: newProduits });
+    const updatedProduits = [...newOrder.produits];
+    updatedProduits.splice(index, 1);
+    setNewOrder({
+      ...newOrder,
+      produits: updatedProduits
+    });
   };
 
-  // Fonction pour créer une nouvelle commande
   const handleAddOrder = async () => {
     try {
-      // Vérifier que tous les champs requis sont remplis
       if (!newOrder.clientId) {
         alert('Veuillez sélectionner un client');
         return;
       }
-      
+
       if (newOrder.produits.length === 0) {
         alert('Veuillez ajouter au moins un produit à la commande');
         return;
       }
-      
-      // Préparation des données à envoyer
+
+      // Créer la commande avec les produits
       const commandeData = {
-        clientId: parseInt(newOrder.clientId),
-        dateCommande: newOrder.date,
-        ligneCommandes: newOrder.produits.map(p => ({
-          produitId: parseInt(p.produitId),
-          quantite: parseInt(p.quantite)
+        clientId: newOrder.clientId,
+        dateCommande: newOrder.date, // "dateCommande" et non "date" pour correspondre au backend
+        produits: newOrder.produits.map(p => ({
+          produitId: p.produitId, // S'assurer que c'est bien une chaîne/nombre et non un objet
+          quantite: parseInt(p.quantite, 10) // Convertir explicitement en nombre entier
         }))
       };
       
-      console.log("Données de la commande à envoyer:", commandeData);
+      // Déboguer les données avant envoi
+      console.log("Format de la commande à envoyer:", JSON.stringify(commandeData, null, 2));
       
-      // Envoi de la requête
-      const result = await commandeAPI.createCommande(commandeData);
-      console.log("Résultat de la création:", result);
+      await commandeAPI.createCommande(commandeData);
       
       // Recharger les données
       await loadData();
       
-      // Réinitialiser le formulaire
+      // Fermer la modale et réinitialiser
       setShowAddModal(false);
       setNewOrder({
         clientId: '',
@@ -415,9 +501,9 @@ const CommandesPage = () => {
           <SidebarMenu />
         </div>
         <div className="main-content">
-          <div className={styles.loaderContainer}>
-            <Loader size={48} className={styles.loader} />
-            <p>Chargement des commandes...</p>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <Loader className="animate-spin" size={48} />
+            <span style={{ marginLeft: '10px' }}>Chargement des commandes...</span>
           </div>
         </div>
       </div>
@@ -436,10 +522,10 @@ const CommandesPage = () => {
           <SidebarMenu />
         </div>
         <div className="main-content">
-          <div className={styles.errorContainer}>
-            <AlertTriangle size={48} className={styles.errorIcon} />
-            <p>Erreur de chargement: {error}</p>
-            <button onClick={loadData} className={styles.retryButton}>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
+            <AlertTriangle size={48} color="red" />
+            <p style={{ marginTop: '10px', color: 'red' }}>{error}</p>
+            <button onClick={loadData} style={{ marginTop: '10px', padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '5px' }}>
               Réessayer
             </button>
           </div>
@@ -472,84 +558,86 @@ const CommandesPage = () => {
 
             <input
               type="text"
-              placeholder="Rechercher un client..."
+              placeholder="Rechercher des commandes..."
+              className={styles.searchInput}
               value={searchClient}
               onChange={(e) => setSearchClient(e.target.value)}
-              className={styles.searchInput}
             />
 
+            <Link to="/promotion" className={styles.ventes_promo_btn}>
+              <FaTag className={styles.gestion_promotion} /> Gestion promotion
+            </Link>
+
             <div className="header-right">
-              <div className={styles.userMenuContainer}>
-                <div className={styles.userMenu}>
-                  <User size={24} className={styles.userIcon} />
-                  <span className={styles.username}>Admin</span>
-                  <ChevronDown size={20} className={styles.chevronIcon} />
-                </div>
+              <div className="time-selector">
+                <Clock className="time-icon" />
+                <span className="time-text">7 jours</span>
+                <ChevronDown className="time-chevron" />
               </div>
+
+              <Bell className="notification-icon" />
+
+              <div className="user-avatar">
+                <User className="user-icon" />
+              </div>
+              <ChevronDown className="user-chevron" />
             </div>
           </div>
         </header>
 
-        {/* Main Content */}
-        <div className={styles.contentContainer}>
-          <div className={styles.pageHeader}>
-            <div className={styles.pageTitle}>
-              <ShoppingCart className={styles.pageTitleIcon} />
-              <h1>Commandes</h1>
+        <div className={styles.contenus}>
+          <div className={styles.dashboardContainer}>
+            {/* Bouton d'ajout de commande */}
+            <div className={styles.addOrderSection}>
+              <button
+                className={styles.addOrderButton}
+                onClick={() => setShowAddModal(true)}
+              >
+                <Plus className={styles.addIcon} />
+                Nouvelle Commande
+              </button>
             </div>
 
-            <button onClick={() => setShowAddModal(true)} className={styles.addButton}>
-              <Plus size={20} />
-              Nouvelle commande
-            </button>
-          </div>
-
-          {/* Filtres */}
-          <div className={styles.filterSection}>
-            <div className={styles.filterHeader}>
-              <Filter size={20} />
-              <h2>Filtres</h2>
-            </div>
-
-            <div className={styles.filterControls}>
+            {/* Section filtres */}
+            <div className={styles.filtersSection}>
               <div className={styles.filterGroup}>
-                <label>Date début</label>
+                <label>Date de début</label>
                 <input
                   type="date"
                   value={filters.dateDebut}
                   onChange={(e) => setFilters({ ...filters, dateDebut: e.target.value })}
                 />
               </div>
-
+              
               <div className={styles.filterGroup}>
-                <label>Date fin</label>
+                <label>Date de fin</label>
                 <input
                   type="date"
                   value={filters.dateFin}
                   onChange={(e) => setFilters({ ...filters, dateFin: e.target.value })}
                 />
               </div>
-
+              
               <div className={styles.filterGroup}>
                 <label>Statut</label>
                 <select
                   value={filters.statut}
                   onChange={(e) => setFilters({ ...filters, statut: e.target.value })}
                 >
-                  <option value="tous">Tous</option>
-                  <option value="en_attente">En attente</option>
-                  <option value="en_cours">En cours</option>
-                  <option value="livree">Livrée</option>
+                  <option value="tous">Tous les statuts</option>
+                  <option value="en attente">En attente</option>
+                  <option value="confirmée">Annulée</option>
+                  <option value="annulée">Annulée</option>
                 </select>
               </div>
-
+              
               <div className={styles.filterGroup}>
                 <label>Client</label>
                 <select
                   value={filters.client}
                   onChange={(e) => setFilters({ ...filters, client: e.target.value })}
                 >
-                  <option value="tous">Tous</option>
+                  <option value="tous">Tous les clients</option>
                   {clients.map(client => (
                     <option key={client.id} value={client.id}>
                       {client.nom}
@@ -557,168 +645,107 @@ const CommandesPage = () => {
                   ))}
                 </select>
               </div>
-
-              <button
-                onClick={() => setFilters({
-                  dateDebut: '',
-                  dateFin: '',
-                  statut: 'tous',
-                  client: 'tous'
-                })}
-                className={styles.resetButton}
-              >
-                Réinitialiser
+              
+              <button className={styles.clearFiltersBtn} onClick={clearFilters}>
+                Effacer les filtres
               </button>
             </div>
-          </div>
 
-          {/* Liste des commandes */}
-          <div className={styles.commandesContainer}>
-            {getFilteredCommandes().length === 0 ? (
-              <div className={styles.noCommandes}>
-                <p>Aucune commande ne correspond aux critères de recherche.</p>
-              </div>
-            ) : (
-              <div className={styles.commandesList}>
-                {getFilteredCommandes().map((commande) => (
-                  <div key={commande.id} className={styles.commandeCard}>
-                    <div className={styles.commandeHeader}>
-                      <h3>Commande #{commande.id}</h3>
-                      <div className={`${styles.commandeStatut} ${
-                        commande.statutLivraison?.toUpperCase() === 'LIVREE' || 
-                        commande.statutLivraison?.toUpperCase() === 'LIVRÉE' || 
-                        commande.statutLivraison === 'Livrée' ? styles.statutLivree : 
-                        commande.statutLivraison?.toUpperCase() === 'EN_COURS' || 
-                        commande.statutLivraison?.toUpperCase() === 'EN COURS' ||
-                        commande.statut === 'en_preparation' ? styles.statutEnCours : 
-                        styles.statutEnAttente
-                      }`}>
-                        <span>
-                          {commande.statutLivraison?.replace('_', ' ') || 
-                           (commande.statut === 'en_preparation' ? 'EN COURS' : 
-                           commande.statut === 'confirmée' ? 'CONFIRMÉE' : 'EN ATTENTE')}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className={styles.commandeContent}>
-                      <p>
-                        <strong>Client:</strong> {commande.client?.nom || 'Client inconnu'}
-                      </p>
-                      <p>
-                        <strong>Date:</strong> {formatDate(commande.dateCommande)}
-                      </p>
-                      <p>
-                        <strong>Montant:</strong> {formatCurrency(commande.montantTotal || 0)}
-                      </p>
-                    </div>
-
-                    <div className={styles.commandeActions}>
-                      <button onClick={() => handleShowDetails(commande)} className={styles.detailsButton}>
-                        <Search size={16} />
-                        Détails
-                      </button>
-
-                      {(commande.statutLivraison === 'EN_ATTENTE' || 
-                         !commande.statutLivraison && 
-                         (commande.statut === 'en_attente' || commande.statut === 'confirmée')) && (
-                        <>
-                          <button onClick={() => handleOpenLivraisonModal(commande)} className={styles.livraisonButton}>
-                            <Truck size={16} />
-                            Livraison
-                          </button>
-                          
-                          <button onClick={() => handleDeleteOrder(commande.id)} className={styles.deleteButton}>
-                            <Trash2 size={16} />
-                            Supprimer
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Modale de détails d'une commande */}
-            {showDetailsModal && selectedOrder && (
-              <div className={styles.modalOverlay}>
-                <div className={styles.orderModal}>
-                  <button onClick={() => setShowDetailsModal(false)}>
-                    <X size={15} className={styles.closeButton} />
+            {/* Liste des commandes */}
+            <div className={styles.commandesList}>
+              <h2 className={styles.listTitle}>Liste des Commandes</h2>
+              
+              {filteredCommandes.length === 0 ? (
+                <div className={styles.emptyState}>
+                  <Package size={48} color="#9ca3af" />
+                  <p>Aucune commande trouvée</p>
+                  <button
+                    className={styles.addOrderButton}
+                    onClick={() => setShowAddModal(true)}
+                  >
+                    <Plus className={styles.addIcon} />
+                    Créer la première commande
                   </button>
-
-                  <div className={styles.modalHeader}>
-                    <h2>Détails de la commande #{selectedOrder.id}</h2>
-                    <div className={`${styles.commandeStatut} ${
-                      selectedOrder.statutLivraison?.toUpperCase() === 'LIVREE' || 
-                      selectedOrder.statutLivraison?.toUpperCase() === 'LIVRÉE' || 
-                      selectedOrder.statutLivraison === 'Livrée' ? styles.statutLivree : 
-                      selectedOrder.statutLivraison?.toUpperCase() === 'EN_COURS' || 
-                      selectedOrder.statutLivraison?.toUpperCase() === 'EN COURS' ||
-                      selectedOrder.statut === 'en_preparation' ? styles.statutEnCours : 
-                      styles.statutEnAttente
-                    }`}>
-                      <span>
-                        {selectedOrder.statutLivraison?.replace('_', ' ') || 
-                         (selectedOrder.statut === 'en_preparation' ? 'EN COURS' : 
-                         selectedOrder.statut === 'confirmée' ? 'CONFIRMÉE' : 'EN ATTENTE')}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className={styles.modalContent}>
-                    <div className={styles.orderDetails}>
-                      <div className={styles.detailSection}>
-                        <h3>Informations générales</h3>
-                        <p><strong>Client:</strong> {selectedOrder.client?.nom || 'Client inconnu'}</p>
-                        <p><strong>Date de commande:</strong> {formatDate(selectedOrder.dateCommande)}</p>
-                        <p><strong>Montant total:</strong> {formatCurrency(selectedOrder.montantTotal || 0)}</p>
+                </div>
+              ) : (
+                <div className={styles.commandesGrid}>
+                  {filteredCommandes.map((commande, index) => (
+                    <div 
+                      key={index} 
+                      className={styles.commandeCard}
+                      onClick={() => handleOpenLivraisonModal(commande)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                                          <div className={styles.commandeHeader}>
+                                              <div className={styles.clientInfo}>
+                          <h3 className={styles.clientName}>{commande.client?.nom || 'Client inconnu'}</h3>
+                        </div>
+                        <div className={styles.commandeActions}>
+                          <button
+                            className={styles.cancelButton}
+                            onClick={() => handleCancelOrder(commande.id)}
+                          >
+                            Annuler
+                          </button>
+                          <button
+                            className={styles.deleteButton}
+                            onClick={() => handleDeleteOrder(commande.id)}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </div>
 
-                      <div className={styles.detailSection}>
-                        <h3>Produits commandés</h3>
-                        {selectedOrder.ligneCommandes && selectedOrder.ligneCommandes.length > 0 ? (
-                          <div className={styles.produitsTable}>
-                            <div className={styles.produitsHeader}>
-                              <span>Produit</span>
-                              <span>Quantité</span>
-                              <span>Prix unitaire</span>
-                              <span>Total</span>
-                            </div>
-                            {selectedOrder.ligneCommandes.map((ligne, index) => {
-                              const produit = produits.find(p => p.id === ligne.produit?.id);
-                              return (
-                                <div key={index} className={styles.produitItem}>
-                                  <span>{ligne.produit?.nom || produit?.nom || 'Produit inconnu'}</span>
-                                  <span>{ligne.quantite}</span>
-                                  <span>{formatCurrency(ligne.produit?.prixVente || produit?.prixVente || 0)}</span>
-                                  <span>{formatCurrency((ligne.produit?.prixVente || produit?.prixVente || 0) * ligne.quantite)}</span>
-                                </div>
-                              );
-                            })}
+                      <div className={styles.commandeDetails}>
+                        <div className={styles.detailRow}>
+                          <Wallet className={styles.detailIcon} />
+                          <span className={styles.detailLabel}>Prix total:</span>
+                          <span className={styles.detailValue}>{formatCurrency(commande.montantTotal || 0)}</span>
+                        </div>
+
+                        <div className={styles.detailRow}>
+                          <Calendar className={styles.detailIcon} />
+                          <span className={styles.detailLabel}>Date:</span>
+                          <span className={styles.detailValue}>{formatDate(commande.dateCommande)}</span>
+                        </div>
+
+                        <div className={styles.detailRow}>
+                          <User className={styles.detailIcon} />
+                          <span className={styles.detailLabel}>Contact:</span>
+                          <span className={styles.detailValue}>{commande.client?.telephone || 'Non défini'}</span>
+                        </div>
+                      </div>
+
+                      {/* Liste des produits */}
+                      <div className={styles.produitsSection}>
+                        <h4 className={styles.produitsTitle}>Produits commandés:</h4>
+                        {commande.lignesCommande && commande.lignesCommande.length > 0 ? (
+                          <div className={styles.produitsList}>
+                            {commande.lignesCommande.map((ligne, ligneIndex) => (
+                              <div key={ligneIndex} className={styles.produitItem}>
+                                <span className={styles.produitName}>
+                                  {ligne.produit?.nom || 'Produit inconnu'}
+                                </span>
+                                <span className={styles.produitQuantity}>
+                                  Quantité: {ligne.quantite}
+                                </span>
+                                <span className={styles.produitPrice}>
+                                  {formatCurrency(ligne.prixUnitaire || 0)}
+                                </span>
+                              </div>
+                            ))}
                           </div>
                         ) : (
-                          <p>Aucun produit dans cette commande</p>
+                          <p className={styles.noProduits}>Aucun produit dans cette commande</p>
                         )}
                       </div>
-
-                      {selectedOrder.livraison && (
-                        <div className={styles.detailSection}>
-                          <h3>Informations de livraison</h3>
-                          <p><strong>Livreur:</strong> {selectedOrder.livraison.livreur?.nom || 'Livreur non spécifié'}</p>
-                          <p><strong>Zone:</strong> {selectedOrder.livraison.zone || 'Non spécifiée'}</p>
-                          <p><strong>Date prévue:</strong> {formatDate(selectedOrder.livraison.dateLivraison)}</p>
-                          <p><strong>Statut:</strong> {selectedOrder.statutLivraison?.replace('_', ' ') || 'EN ATTENTE'}</p>
-                        </div>
-                      )}
                     </div>
-                  </div>
+                  ))}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
-            {/* Modale d'ajout d'une commande */}
+            {/* Modale d'ajout de commande */}
             {showAddModal && (
               <div className={styles.modalOverlayNewCommande}>
                 <div className={styles.orderModalNewCommande}>
@@ -731,7 +758,7 @@ const CommandesPage = () => {
                   </div>
 
                   <div className={styles.modalContentNewCommande}>
-                    {/* Sélection du client */}
+                    {/* Informations de base */}
                     <div className={styles.formGroup}>
                       <label className={styles.formLabel}>Client</label>
                       <select
@@ -742,13 +769,14 @@ const CommandesPage = () => {
                         <option value="">Sélectionner un client</option>
                         {clients.map(client => (
                           <option key={client.id} value={client.id}>
-                            {client.nom} - {client.adresse}
+                            {client.nom} - {client.telephone}
                           </option>
                         ))}
                       </select>
                     </div>
 
-                    {/* Date de commande */}
+
+
                     <div className={styles.formGroup}>
                       <label className={styles.formLabel}>Date</label>
                       <input
@@ -759,12 +787,12 @@ const CommandesPage = () => {
                       />
                     </div>
 
-                    {/* Sélection des produits */}
+                    {/* Section sélection de produits */}
                     <div className={styles.formGroup}>
-                      <label className={styles.formLabel}>Produits disponibles</label>
-                      <div className={styles.produitsCheckboxes}>
+                      <label className={styles.formLabel}>Sélectionner des produits</label>
+                      <div className={styles.productSelection}>
                         {produits.map(produit => (
-                          <div key={produit.id} className={styles.produitCheckboxItem}>
+                          <div key={produit.id} className={styles.productOption}>
                             <input
                               type="checkbox"
                               id={`produit-${produit.id}`}

@@ -186,11 +186,10 @@ const Livraison = () => {
   // Fonction pour mettre à jour le statut d'une livraison
   const updateStatutLivraison = async (id, nouveauStatut) => {
     try {
-      console.log(`Mise à jour du statut de la livraison ${id} vers ${nouveauStatut}`);
-      // Le backend détermine automatiquement le nouveau statut en fonction du statut actuel
+      // Utiliser l'endpoint backend pour mettre à jour le statut
       const response = await livraisonAPI.updateStatutLivraison(id);
       
-      if (response && response.action === 'confirmation_paiement') {
+      if (response.action === 'confirmation_paiement') {
         // Si une confirmation de paiement est nécessaire, ouvrir la modal
         setSelectedLivraison(response.livraison);
         setPaiementForm({
@@ -211,11 +210,7 @@ const Livraison = () => {
   // Fonction pour traiter le paiement
   const handlePaiement = async () => {
     try {
-      if (!selectedLivraison || !selectedLivraison.livraisonId) {
-        throw new Error('Information de livraison incomplète');
-      }
-      
-      await livraisonAPI.confirmerLivraisonPaiement(selectedLivraison.livraisonId, paiementForm);
+      await livraisonAPI.confirmerLivraisonEtPaiement(selectedLivraison.livraisonId, paiementForm);
       
       // Fermer la modal et réinitialiser
       setShowPaiementModal(false);

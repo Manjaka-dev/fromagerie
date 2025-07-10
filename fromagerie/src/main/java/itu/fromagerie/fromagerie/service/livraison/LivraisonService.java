@@ -8,6 +8,7 @@ import itu.fromagerie.fromagerie.entities.livraison.Livreur;
 import itu.fromagerie.fromagerie.entities.livraison.StatutLivraison;
 import itu.fromagerie.fromagerie.entities.livraison.RetourLivraison;
 import itu.fromagerie.fromagerie.entities.vente.Paiement;
+import itu.fromagerie.fromagerie.dto.livraison.LivraisonInfoDTO;
 import itu.fromagerie.fromagerie.entities.livraison.ConfirmationReception;
 import itu.fromagerie.fromagerie.entities.vente.LigneCommande;
 import itu.fromagerie.fromagerie.projection.CommandeLivraisonGroup;
@@ -357,12 +358,11 @@ public class LivraisonService {
      * Récupère les livraisons d'un livreur spécifique
      */
     public List<itu.fromagerie.fromagerie.dto.livraison.LivraisonInfoDTO> getLivraisonsByLivreur(Long livreurId) {
-        // Vérifier que le livreur existe
-        Optional<Livreur> livreur = livreurRepository.findById(livreurId);
-        if (livreur.isEmpty()) {
-            throw new RuntimeException("Livreur non trouvé avec l'ID: " + livreurId);
+        Optional<Livreur> livreurOpt = livreurRepository.findById(livreurId);
+        if (!livreurOpt.isPresent()) {
+            return new ArrayList<>();
         }
-
+        
         List<Livraison> livraisons = livraisonRepository.findByLivreurId(livreurId);
         return convertToLivraisonInfoDTO(livraisons);
     }
@@ -371,7 +371,11 @@ public class LivraisonService {
      * Récupère les livraisons d'une zone spécifique
      */
     public List<itu.fromagerie.fromagerie.dto.livraison.LivraisonInfoDTO> getLivraisonsByZone(String zone) {
-        List<Livraison> livraisons = livraisonRepository.findByZone(zone);
+        if (zone == null || zone.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        List<Livraison> livraisons = livraisonRepository.findByZoneLivraison(zone);
         return convertToLivraisonInfoDTO(livraisons);
     }
 
@@ -385,9 +389,9 @@ public class LivraisonService {
             itu.fromagerie.fromagerie.dto.livraison.LivraisonInfoDTO dto = new itu.fromagerie.fromagerie.dto.livraison.LivraisonInfoDTO();
             
             // Informations de base
-            dto.setLivraisonId(livraison.getId());
+            dto.setId(livraison.getId());
             dto.setDateLivraison(livraison.getDateLivraison());
-            dto.setZone(livraison.getZone());
+            dto.setZoneLivraison(livraison.getZone());
             
             // Informations commande
             if (livraison.getCommande() != null) {
@@ -398,7 +402,7 @@ public class LivraisonService {
                 if (livraison.getCommande().getClient() != null) {
                     dto.setClientId(livraison.getCommande().getClient().getId());
                     dto.setNomClient(livraison.getCommande().getClient().getNom());
-                    dto.setTelephoneClient(livraison.getCommande().getClient().getTelephone());
+                    dto.setTelephone(livraison.getCommande().getClient().getTelephone());
                     dto.setAdresseClient(livraison.getCommande().getClient().getAdresse());
                 }
             }
@@ -415,12 +419,9 @@ public class LivraisonService {
                 .findTopByLivraisonOrderByDateStatutDesc(livraison);
             if (dernierStatut.isPresent()) {
                 String statutStr = dernierStatut.get().getStatut();
-                try {
-                    dto.setStatut(itu.fromagerie.fromagerie.entities.livraison.StatutLivraisonEnum.valueOf(statutStr.toUpperCase()));
-                } catch (IllegalArgumentException e) {
-                    // Si le statut ne correspond à aucun enum, utiliser PLANIFIEE par défaut
-                    dto.setStatut(itu.fromagerie.fromagerie.entities.livraison.StatutLivraisonEnum.PLANIFIEE);
-                }
+                dto.setStatut(statutStr);
+            } else {
+                dto.setStatut("Planifiée");
             }
             
             livraisonDTOs.add(dto);
@@ -474,6 +475,29 @@ public class LivraisonService {
         }
     }
 
+    /**
+     * Corrige la séquence PostgreSQL pour la table livreur
+     */
+    @Transactional
+    public void fixLivreurSequence() {
+        try {
+            // Récupérer le plus grand ID de livreur
+            Long maxLivreurId = livreurRepository.findAll()
+                    .stream()
+                    .mapToLong(livreur -> livreur.getId())
+                    .max()
+                    .orElse(0L);
+            
+            // Corriger la séquence en la positionnant après le plus grand ID
+            String sql = "SELECT setval('livreur_id_seq', " + (maxLivreurId + 1) + ", false)";
+            entityManager.createNativeQuery(sql).getSingleResult();
+            System.out.println("Séquence livreur corrigée - prochain ID: " + (maxLivreurId + 1));
+        } catch (Exception e) {
+            System.out.println("Erreur lors de la correction de la séquence livreur: " + e.getMessage());
+            throw e;
+        }
+    }
+
     // ==================== MÉTHODES UTILITAIRES ====================
 
     /**
@@ -506,5 +530,81 @@ public class LivraisonService {
             // En cas d'erreur, retourner une liste vide plutôt que null
             return new ArrayList<>();
         }
+    }
+
+    /**
+     * Sauvegarde un livreur dans la base de données
+     * @param livreur Le livreur à sauvegarder
+     * @return Le livreur sauvegardé avec son ID généré
+     */
+    @Transactional
+    public Livreur saveLivreur(Livreur livreur) {
+        return livreurRepository.save(livreur);
+    }
+
+    /**
+     * Met à jour les informations d'un livreur
+     * @param livreur Le livreur avec les nouvelles informations
+     * @return Le livreur mis à jour
+     */
+    @Transactional
+    public Livreur updateLivreur(Livreur livreur) {
+        // Vérifier si le livreur existe
+        if (livreur.getId() == null || !livreurRepository.existsById(livreur.getId())) {
+            throw new RuntimeException("Livreur non trouvé avec l'ID: " + livreur.getId());
+        }
+        return livreurRepository.save(livreur);
+    }
+
+    /**
+     * Supprime un livreur par son ID
+     * @param livreurId L'identifiant du livreur à supprimer
+     * @return true si le livreur a été supprimé avec succès
+     */
+    @Transactional
+    public boolean deleteLivreur(Long livreurId) {
+        if (!livreurRepository.existsById(livreurId)) {
+            return false;
+        }
+        
+        // Vérifier si le livreur a des livraisons assignées
+        List<Livraison> livraisons = livraisonRepository.findByLivreurId(livreurId);
+        if (!livraisons.isEmpty()) {
+            // Option 1: Renvoyer false si le livreur est utilisé
+            // return false;
+            
+            // Option 2: Mettre à null le livreur dans les livraisons
+            for (Livraison livraison : livraisons) {
+                livraison.setLivreur(null);
+                livraisonRepository.save(livraison);
+            }
+        }
+        
+        livreurRepository.deleteById(livreurId);
+        return true;
+    }
+
+    /**
+     * Récupère une livraison par son ID et la convertit en DTO
+     *
+     * @param id L'identifiant de la livraison
+     * @return DTO de la livraison
+     */
+    public LivraisonInfoDTO getLivraisonById(Long id) {
+        Optional<Livraison> livraisonOpt = livraisonRepository.findById(id);
+        if (livraisonOpt.isPresent()) {
+            List<LivraisonInfoDTO> dtos = convertToLivraisonInfoDTO(List.of(livraisonOpt.get()));
+            return dtos.isEmpty() ? null : dtos.get(0);
+        }
+        return null;
+    }
+
+    /**
+     * Récupère une commande par son ID
+     * @param commandeId L'identifiant de la commande
+     * @return La commande si elle existe
+     */
+    public Optional<Commande> getCommandeById(Long commandeId) {
+        return commandeRepository.findById(commandeId);
     }
 }

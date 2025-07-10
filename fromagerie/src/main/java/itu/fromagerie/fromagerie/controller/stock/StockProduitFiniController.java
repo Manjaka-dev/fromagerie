@@ -17,7 +17,7 @@ import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/stock/produit-fini")
-@CrossOrigin(origins = "*")
+
 @Tag(name = "Stock Produit Fini", description = "Endpoints pour gérer le stock de produits finis")
 public class StockProduitFiniController {
 

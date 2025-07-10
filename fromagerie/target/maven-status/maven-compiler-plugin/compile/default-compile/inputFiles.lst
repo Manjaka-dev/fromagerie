@@ -28,6 +28,7 @@
 /Users/mac/Documents/L2/Gestion_proj/fromagerie/src/main/java/itu/fromagerie/fromagerie/controller/stock/StockMatiereController.java
 /Users/mac/Documents/L2/Gestion_proj/fromagerie/src/main/java/itu/fromagerie/fromagerie/controller/stock/StockProduitFiniController.java
 /Users/mac/Documents/L2/Gestion_proj/fromagerie/src/main/java/itu/fromagerie/fromagerie/controller/utilisateur/UtilisateurController.java
+/Users/mac/Documents/L2/Gestion_proj/fromagerie/src/main/java/itu/fromagerie/fromagerie/dto/FicheProductionDTO.java
 /Users/mac/Documents/L2/Gestion_proj/fromagerie/src/main/java/itu/fromagerie/fromagerie/dto/auth/LoginRequestDTO.java
 /Users/mac/Documents/L2/Gestion_proj/fromagerie/src/main/java/itu/fromagerie/fromagerie/dto/auth/LoginResponseDTO.java
 /Users/mac/Documents/L2/Gestion_proj/fromagerie/src/main/java/itu/fromagerie/fromagerie/dto/auth/RegisterRequestDTO.java

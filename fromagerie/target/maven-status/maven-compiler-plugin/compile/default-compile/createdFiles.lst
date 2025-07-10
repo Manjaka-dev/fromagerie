@@ -103,6 +103,7 @@ itu/fromagerie/fromagerie/repository/comptabilite/RevenuRepository.class
 itu/fromagerie/fromagerie/entities/livraison/LivraisonProduit.class
 itu/fromagerie/fromagerie/config/JacksonConfig.class
 itu/fromagerie/fromagerie/controller/HelloController.class
+itu/fromagerie/fromagerie/dto/FicheProductionDTO.class
 itu/fromagerie/fromagerie/repository/livraison/LivreurRepository.class
 itu/fromagerie/fromagerie/dto/livraison/UpdateStatutLivraisonDTO.class
 itu/fromagerie/fromagerie/dto/auth/RegisterRequestDTO.class

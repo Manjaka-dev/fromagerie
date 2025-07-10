@@ -20,13 +20,40 @@ const apiRequest = async (endpoint, options = {}) => {
   }
 
   try {
+    // Journaliser la requête pour le débogage
+    console.log(`API Request ${config.method} ${url}`, config.body ? JSON.parse(config.body) : {});
+    
     const response = await fetch(url, config);
     
+    // Clone la réponse pour pouvoir la lire plusieurs fois
+    const clonedResponse = response.clone();
+    
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      // Essayer d'extraire les détails de l'erreur de la réponse
+      try {
+        const errorText = await clonedResponse.text();
+        console.error(`Server error response for ${url}:`, errorText);
+        
+        try {
+          // Essayer de parser le texte en JSON
+          const errorData = JSON.parse(errorText);
+          console.error("Erreur détaillée:", errorData);
+          throw new Error(`HTTP error! status: ${response.status}, message: ${JSON.stringify(errorData)}`);
+        } catch (jsonError) {
+          // Si ce n'est pas du JSON valide, utiliser le texte brut
+          console.error("Erreur brute:", errorText);
+          throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+      } catch (parseError) {
+        // Si on ne peut pas lire le corps de la réponse
+        console.error("Erreur non parseable:", parseError);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
     }
     
-    return await response.json();
+    const responseData = await response.json();
+    console.log(`API Response from ${url}:`, responseData);
+    return responseData;
   } catch (error) {
     console.error(`API Error on ${endpoint}:`, error);
     throw error;
@@ -46,8 +73,13 @@ export const commandeAPI = {
     apiRequest(`/commandes/${id}`),
 
   // Créer une nouvelle commande
-  createCommande: (commandeData) => 
-    apiRequest('/commandes', { method: 'POST', body: commandeData }),
+  createCommande: (commandeData) => {
+    console.log("Données de commande à envoyer:", commandeData);
+    return apiRequest('/commandes/create', { 
+      method: 'POST', 
+      body: commandeData 
+    });
+  },
 
   // Mettre à jour une commande
   updateCommande: (id, commandeData) => 
@@ -235,8 +267,11 @@ export const livraisonAPI = {
   getLivraisonById: (id) =>
     apiRequest(`/livraisons/${id}`),
   
-  createLivraison: (livraisonData) => 
-    apiRequest('/livraisons', { method: 'POST', body: livraisonData }),
+  createLivraison: (commandeId, livreurId, zone, dateLivraison) => 
+    apiRequest(`/commandes/${commandeId}/livraison`, { 
+      method: 'POST', 
+      body: { livreurId, zone, dateLivraison } 
+    }),
   
   // 🆕 MODIFICATION COMPLÈTE D'UNE LIVRAISON
   updateLivraison: (id, updateData) =>
@@ -246,8 +281,8 @@ export const livraisonAPI = {
   deleteLivraison: (id) =>
     apiRequest(`/livraisons/${id}`, { method: 'DELETE' }),
   
-  updateStatutLivraison: (id, statut) => 
-    apiRequest(`/livraisons/${id}/statut`, { method: 'PUT', body: { statut } }),
+  updateStatutLivraison: (id) => 
+    apiRequest(`/livraisons/${id}/statut`, { method: 'POST' }),
 
   // 🆕 CONFIRMATION PAIEMENT ET LIVRAISON
   confirmerLivraisonPaiement: (id, paiementData) =>
